@@ -1,46 +1,36 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.world.entity.projectile.FireworkRocketEntity;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
-import net.minecraft.world.entity.projectile.arrow.Arrow;
-import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
-import net.minecraft.world.entity.projectile.hurtingprojectile.AbstractHurtingProjectile;
-import net.minecraft.world.entity.projectile.hurtingprojectile.windcharge.AbstractWindCharge;
-import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
-import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThrownPotion;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 import ravex.utility.render.Render3DUtility;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
 @Module(name = "Trails", category = "Render")
 public class Trails {
     @Parameter(name = "Color", color = true)
-    public int color = 0xFF33AAFF;
+    public int color = 0xFF40A9F8;
     @Parameter(name = "Width", min = 1.0, max = 6.0, step = 0.5)
     public double width = 2.0;
     @Parameter(name = "Time", min = 0.5, max = 10.0, step = 0.5)
     public double time = 3.0;
-    @Parameter(name = "Arrows")
-    public boolean arrows = true;
-    @Parameter(name = "Pearls")
-    public boolean pearls = true;
-    @Parameter(name = "Tridents")
-    public boolean tridents = true;
-    @Parameter(name = "Fireworks")
-    public boolean fireworks = true;
-    @Parameter(name = "Potions")
-    public boolean potions = true;
-    @Parameter(name = "Fireballs")
-    public boolean fireballs = true;
-    @Parameter(name = "WindCharges")
-    public boolean windCharges = true;
-    @Parameter(name = "OtherProj")
-    public boolean other = false;
+    @Parameter(name = "Glow")
+    public boolean glow = true;
+    @Parameter(name = "GlowLayers", min = 1, max = 8, step = 1, visible = "glow")
+    public double glowLayers = 4;
+    @Parameter(name = "GlowSpread", min = 0.5, max = 5.0, step = 0.5, visible = "glow")
+    public double glowSpread = 1.5;
     @Parameter(name = "Self")
     public boolean self = true;
     @Parameter(name = "Players")
@@ -51,18 +41,12 @@ public class Trails {
     public double playerWidth = 2.0;
     @Parameter(name = "PlayerTime", min = 0.5, max = 10.0, step = 0.5, visible = "playerEnabled")
     public double playerTime = 3.0;
-    @Parameter(name = "Glow")
-    public boolean glow = true;
-    @Parameter(name = "GlowLayers", min = 1, max = 8, step = 1, visible = "glow")
-    public double glowLayers = 4;
-    @Parameter(name = "GlowSpread", min = 0.5, max = 5.0, step = 0.5, visible = "glow")
-    public double glowSpread = 1.5;
     @Parameter(name = "Mobs")
     public boolean mobs = false;
     private static final Map<Integer, List<TrailPoint>> entityTrails = new HashMap<>();
     private static final Map<Integer, List<TrailPoint>> playerTrails = new HashMap<>();
 
-    private record TrailPoint(net.minecraft.world.phys.Vec3 pos, long time) {
+    private record TrailPoint(Vec3 pos, long time) {
     }
 
     public void onTick() {
@@ -75,10 +59,10 @@ public class Trails {
         if (self) {
             addPoint(entityTrails, mc.getPlayer().getId(), mc.getPlayer().position(), now);
         }
-        for (net.minecraft.world.entity.Entity entity : mc.getLevel().entitiesForRendering()) {
+        for (Entity entity : mc.getLevel().entitiesForRendering()) {
             if (entity == mc.getPlayer())
                 continue;
-            if (entity instanceof net.minecraft.world.entity.player.Player && playerEnabled) {
+            if (entity instanceof Player && playerEnabled) {
                 addPoint(playerTrails, entity.getId(), entity.position(), now);
             } else if (shouldTrack(entity)) {
                 addPoint(entityTrails, entity.getId(), entity.position(), now);
@@ -86,29 +70,14 @@ public class Trails {
         }
     }
 
-    private boolean shouldTrack(net.minecraft.world.entity.Entity entity) {
-        if (arrows && entity instanceof Arrow)
-            return true;
-        if (pearls && entity instanceof ThrownEnderpearl)
-            return true;
-        if (tridents && entity instanceof ThrownTrident)
-            return true;
-        if (fireworks && entity instanceof FireworkRocketEntity)
-            return true;
-        if (potions && entity instanceof AbstractThrownPotion)
-            return true;
-        if (fireballs && entity instanceof AbstractHurtingProjectile)
-            return true;
-        if (windCharges && entity instanceof AbstractWindCharge)
-            return true;
-        if (other && entity instanceof Projectile)
-            return true;
-        if (mobs && !(entity instanceof Projectile))
-            return true;
-        return false;
+    private boolean shouldTrack(Entity entity) {
+        // projectiles are the job of the trajectories module
+        if (entity instanceof Projectile)
+            return false;
+        return mobs;
     }
 
-    private static void addPoint(Map<Integer, List<TrailPoint>> map, int id, net.minecraft.world.phys.Vec3 pos, long now) {
+    private static void addPoint(Map<Integer, List<TrailPoint>> map, int id, Vec3 pos, long now) {
         List<TrailPoint> trail = map.computeIfAbsent(id, k -> new ArrayList<>());
         TrailPoint last = trail.isEmpty() ? null : trail.get(trail.size() - 1);
         if (last != null && last.pos.distanceToSqr(pos) < 0.01)
@@ -132,12 +101,12 @@ public class Trails {
         return Modules.enabled(Trails.class) || toggleAlpha > 0.001f;
     }
 
-    public static void renderTrails(Matrix4f modelViewMatrix, net.minecraft.world.phys.Vec3 camPos) {
+    public static void renderTrails(Matrix4f modelViewMatrix, Vec3 camPos) {
         try {
             long now = System.currentTimeMillis();
             boolean enabled = Modules.enabled(Trails.class);
             
-            // Smoothly animate the global module toggle fade-in and fade-out
+            // fade the whole module in and out
             float targetToggle = enabled ? 1.0f : 0.0f;
             if (Math.abs(toggleAlpha - targetToggle) > 0.001f) {
                 toggleAlpha += (targetToggle - toggleAlpha) * 0.12f;
@@ -145,7 +114,7 @@ public class Trails {
                 toggleAlpha = targetToggle;
             }
 
-            // Clean up and skip render if module is disabled and fully faded out
+            // clear once fully faded out
             if (!enabled && toggleAlpha <= 0.001f) {
                 entityTrails.clear();
                 playerTrails.clear();
@@ -169,7 +138,7 @@ public class Trails {
     }
 
     private static void renderFadingTrail(Map<Integer, List<TrailPoint>> map,
-            Matrix4f matrix, net.minecraft.world.phys.Vec3 camPos, long now,
+            Matrix4f matrix, Vec3 camPos, long now,
             int colorARGB, float lineWidth, long maxAge,
             boolean glowEnabled, int glowLayersVal, float glowSpreadVal) {
         float cr = ((colorARGB >> 16) & 0xFF) / 255.0f;
@@ -188,7 +157,7 @@ public class Trails {
                 if (alpha <= 0.001f)
                     continue;
 
-                // Unique Animation: Tapered width at the tail + active sine pulse wave along the trail
+                // tapered tail plus a sine pulse
                 float renderAlpha = alpha * toggleAlpha;
                 float wave = 1.0f + 0.15f * (float) Math.sin((System.currentTimeMillis() / 150.0) + (p1.time / 400.0));
                 float renderWidth = lineWidth * (float) Math.pow(alpha, 0.75) * wave;
@@ -259,7 +228,7 @@ public class Trails {
                 alpha, width);
     }
     public void onDisable() {
-        // Do nothing to let existing trails smoothly fade out
+        // keep trails so they can fade out
     }
 
 

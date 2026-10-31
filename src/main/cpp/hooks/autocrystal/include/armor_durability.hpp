@@ -1,5 +1,4 @@
 #pragma once
-/* Header for armor_durability */
 namespace ravex {
 namespace armorfucker {
     class ArmorDurability {

@@ -1,11 +1,9 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.mixin.network.AccessorClientIntentionPacket;
+import ravex.utility.network.NetworkUtility;
 
 import ravex.manager.LuaManager;
 import org.luaj.vm2.LuaValue;
@@ -23,11 +21,12 @@ public class Handshake {
     @Subscribe
     public void onPacket(PacketEvent event) {
         if (!Modules.enabled(Handshake.class) || !event.isSend()) return;
-        Packet<?> packet = event.getPacket();
-        if (packet instanceof ClientIntentionPacket handshakePacket) {
-            AccessorClientIntentionPacket accessor = (AccessorClientIntentionPacket) (Object) handshakePacket;
-            accessor.setHostName(getSpoofedHost(handshakePacket.hostName()));
-            accessor.setProtocolVersion(getSpoofedProtocol(handshakePacket.protocolVersion()));
+        var packet = event.getPacket();
+        if (NetworkUtility.isHandshakePacket(packet)) {
+            String host = NetworkUtility.handshakeHost(packet);
+            if (host == null) return;
+            NetworkUtility.setHandshakeHost(packet, getSpoofedHost(host));
+            NetworkUtility.setHandshakeProtocol(packet, getSpoofedProtocol(NetworkUtility.handshakeProtocol(packet)));
         }
     }
 

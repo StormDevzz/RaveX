@@ -605,6 +605,15 @@ public class TextureLoaderUtility {
         for (String hudName : new String[]{"coords", "tps", "indicators", "currency", "media", "cooldown", "inventory", "chat", "serverbrand", "waypoint", "fps", "arraylist"}) {
             getHudIconWhite(hudName);
         }
+
+        try {
+            Render2DUtility.prewarmGuiShapes();
+            for (ravex.modules.Module m : ravex.manager.ModuleManager.INSTANCE.getModules()) {
+                getModuleIcon(m.getName());
+            }
+            ravex.manager.LayoutManager.INSTANCE.load();
+            ravex.gui.clickgui.ClickGUI.getOrCreate();
+        } catch (Throwable ignored) {}
     }
 
     public static Identifier getMarkerTexture(int color) {
@@ -799,37 +808,39 @@ public class TextureLoaderUtility {
         }
     }
 
-    private static AbstractTexture createNearestTexture(NativeImage image) {
-        DynamicTexture tex = new DynamicTexture(() -> "nearest_icon", image);
+    private static Field cachedSamplerField = null;
+    private static boolean samplerFieldResolved = false;
+
+    private static void applySampler(AbstractTexture tex, FilterMode filterMode) {
         try {
-            GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST);
-            for (Field f : AbstractTexture.class.getDeclaredFields()) {
-                if (GpuSampler.class.isAssignableFrom(f.getType())) {
-                    f.setAccessible(true);
-                    f.set(tex, sampler);
-                    break;
+            if (!samplerFieldResolved) {
+                samplerFieldResolved = true;
+                for (Field f : AbstractTexture.class.getDeclaredFields()) {
+                    if (GpuSampler.class.isAssignableFrom(f.getType())) {
+                        f.setAccessible(true);
+                        cachedSamplerField = f;
+                        break;
+                    }
                 }
             }
+            if (cachedSamplerField != null) {
+                GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(filterMode);
+                cachedSamplerField.set(tex, sampler);
+            }
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to set nearest sampler: {}", e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to set sampler: {}", e.getMessage());
         }
+    }
+
+    private static AbstractTexture createNearestTexture(NativeImage image) {
+        DynamicTexture tex = new DynamicTexture(() -> "nearest_icon", image);
+        applySampler(tex, FilterMode.NEAREST);
         return tex;
     }
 
     private static AbstractTexture createLinearTexture(NativeImage image) {
         DynamicTexture tex = new DynamicTexture(() -> "linear_icon", image);
-        try {
-            GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.LINEAR);
-            for (Field f : AbstractTexture.class.getDeclaredFields()) {
-                if (GpuSampler.class.isAssignableFrom(f.getType())) {
-                    f.setAccessible(true);
-                    f.set(tex, sampler);
-                    break;
-                }
-            }
-        } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to set linear sampler: {}", e.getMessage());
-        }
+        applySampler(tex, FilterMode.LINEAR);
         return tex;
     }
 }

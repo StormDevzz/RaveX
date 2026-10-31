@@ -16,6 +16,7 @@
 #include <shobjidl.h>
 #include <string>
 #include <thread>
+#include <atomic>
 #include <algorithm>
 #include <vector>
 namespace ravex::setup {
@@ -38,11 +39,11 @@ constexpr int IDC_DISK_BAR = 2017;
 constexpr int IDC_AUTOSTART = 2018;
 constexpr int IDC_AUTOLAUNCH = 2019;
 constexpr int IDC_THEME_SETUP = 2020;
-constexpr int IDC_COLOR_BG = 2030;      // palette swatches .. IDC_COLOR_GLOW = 2035
+constexpr int IDC_COLOR_BG = 2030;
 constexpr UINT_PTR TIMER_PAGE_ANIM = 60;
 constexpr UINT_PTR TIMER_CHECK_ANIM = 61;
 constexpr int PAGE_ANIM_MS = 260;   // page transition duration
-constexpr int PAGE_SLIDE = 60;      // slide distance in pixels (down = out, up = in)
+constexpr int PAGE_SLIDE = 60;      // slide distance, px
 constexpr int CHECK_ANIM_MS = 150;  // checkbox tick appear/disappear
 struct SetupData {
     HWND hwnd = nullptr;
@@ -67,14 +68,13 @@ struct SetupData {
     HWND hThemeLabel = nullptr;
     HWND hPaletteLabel = nullptr;
     HWND hColorBtns[6] = {};
-    // custom palette cache - the SAME launcher.json fields the launcher uses.
+    // palette cache, same launcher.json fields the launcher uses
     uint32_t palColors[6] = {0x1C1C1E, 0x282828, 0xE1E1E1, 0x5A8CFF, 0x5A8CFF, 0xC8E1FF};
     bool themeIsCustom = false;
     HWND hDiskIcon = nullptr;
     HICON hDiskIco = nullptr;
     std::vector<HBITMAP> flagBmps;
-    // smooth appear/disappear of the checkbox ticks (order: desktop, start,
-    // autostart, autolaunch).
+    // checkbox tick fade, order: desktop, start, autostart, autolaunch
     float chkAnim[4] = {1.0f, 1.0f, 0.0f, 1.0f};
     bool chkTarget[4] = {true, true, false, true};
     HWND hWinIcon = nullptr;
@@ -100,14 +100,14 @@ struct SetupData {
     bool startChecked = true;
     bool detailsVisible = false;
     float spinnerPhase = 0;
+    ULONGLONG spinnerStart = 0;
     float fadeAlpha = 1.0f;
     int fadeDir = 0;
     int slideOffset = 0;
     std::wstring detailsLog;
     int page = 0;
     int nextPage = 0;
-    // page transition animation: outgoing content slides down & fades out,
-    // incoming content slides down from the top & fades in.
+    // page transition: old content slides down and fades out, new fades in
     bool animActive = false;
     float animT = 0.0f;
     std::vector<HWND> animOut, animIn;
@@ -116,9 +116,62 @@ struct SetupData {
     bool taskbarReady = false;
 };
 SetupData g_setup;
+
+// everything the worker needs is copied before the thread starts, the worker
+// never touches a window handle directly
+struct SetupJob {
+    std::wstring installDir;
+    bool desktopChecked = true;
+    bool startChecked = true;
+    bool autoStartChecked = false;
+    bool autoLaunchChecked = true;
+};
+
+// shell APIs used by the worker (shortcuts, folder lookup) expect COM on the
+// calling thread; the UI thread already has its own apartment
+struct ScopedCom {
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    ~ScopedCom() { if (SUCCEEDED(hr)) CoUninitialize(); }
+};
+
+void postSetupStatus(HWND hwnd, const std::string& text, bool appendOnly = false) {
+    auto* payload = new std::string(text);
+    if (!PostMessageW(hwnd, WM_APP + 10, appendOnly ? 1 : 0, (LPARAM)payload)) delete payload;
+}
+
+bool progressGate() {
+    // 16 download threads report tiny chunks. Without this gate the UI thread
+    // drowns in thousands of messages and the spinner looks frozen.
+    static std::atomic<ULONGLONG> lastPost{0};
+    ULONGLONG now = GetTickCount64();
+    ULONGLONG prev = lastPost.load(std::memory_order_relaxed);
+    if (now - prev < 80) return false;
+    lastPost.store(now, std::memory_order_relaxed);
+    return true;
+}
+
+void postSetupProgress(HWND hwnd, int percent, const std::string& text) {
+    if (!progressGate()) return;
+    auto* payload = new std::string(text);
+    if (!PostMessageW(hwnd, WM_APP + 13, (WPARAM)percent, (LPARAM)payload)) delete payload;
+}
+
+void postSetupActivity(HWND hwnd, const std::string& text) {
+    if (!progressGate()) return;
+    postSetupStatus(hwnd, text);
+}
+
+void postSetupError(HWND hwnd, const std::string& text) {
+    auto* payload = new std::string(text);
+    if (!PostMessageW(hwnd, WM_APP + 14, 0, (LPARAM)payload)) delete payload;
+}
+
+void postSetupCancelled(HWND hwnd) {
+    PostMessageW(hwnd, WM_APP + 15, 0, 0);
+}
+
 HFONT makeSetupFont() {
-    // grayscale antialiasing instead of ClearType: ClearType is tuned for light
-    // backgrounds and produces pixelated-looking color fringes on our dark one.
+    // grayscale AA, ClearType fringes look bad on dark
     HFONT f = CreateFontW(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI");
     if (!f) f = CreateFontW(-13, 0, 0, 0, FW_NORMAL, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI Variable");
     return f;
@@ -128,7 +181,6 @@ HFONT makeTitleFont() {
     if (!f) f = CreateFontW(-19, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE, DEFAULT_CHARSET, OUT_OUTLINE_PRECIS, CLIP_DEFAULT_PRECIS, ANTIALIASED_QUALITY, VARIABLE_PITCH | FF_SWISS, L"Segoe UI Variable");
     return f;
 }
-// --- language flags (same visual style as the Settings dialog) -------------
 HBITMAP loadFlagBmp(const std::wstring& path, int w = 24, int h = 16) {
     Gdiplus::Bitmap* bmp = Gdiplus::Bitmap::FromFile(path.c_str());
     if (!bmp || bmp->GetLastStatus() != Gdiplus::Ok) { delete bmp; return nullptr; }
@@ -145,8 +197,7 @@ HBITMAP loadFlagBmp(const std::wstring& path, int w = 24, int h = 16) {
     delete bmp; delete scaled;
     return hb;
 }
-// robust flag lookup: next to the exe first, then walk up the tree looking for
-// the source tree - flags are always shipped inside the "flags" folder.
+// flags live next to the exe or in the source tree, up to 6 levels up
 std::wstring flagPathForCode(const std::string& code) {
     wchar_t exe[MAX_PATH]; GetModuleFileNameW(nullptr, exe, MAX_PATH);
     std::wstring exeDir = exe;
@@ -165,13 +216,9 @@ std::wstring flagPathForCode(const std::string& code) {
     }
     return L"";
 }
-// --- install-path drive icon (Win10 "Local Disk" style) --------------------
 std::wstring setupIconPath(const std::wstring& name) {
     wchar_t exe[MAX_PATH]; GetModuleFileNameW(nullptr, exe, MAX_PATH);
-    // keep the trailing separator - dropping it made every concatenation produce
-    // "...launcher-checkicons\..." which never matched, so the themed logo was
-    // silently skipped and the default file (found via the source-tree walk)
-    // was used for every theme.
+    // keep the trailing separator or themed logo lookup never matches
     std::wstring s = exe; size_t p = s.find_last_of(L"\\/"); if (p != std::wstring::npos) s = s.substr(0, p + 1);
     if (!themeIconSubdir().empty()) {
         std::wstring themed = s + L"icons\\" + themeIconSubdir() + name + L".png";
@@ -209,17 +256,14 @@ HICON loadPngIcon(const std::wstring& path, int size) {
     delete src;
     return out;
 }
-// (Re)loads the Windows logo for the active theme: the themed icon set wins
-// (real Win95 / Win7 flag for those themes), otherwise the default monochrome
-// logo is recoloured white on dark themes / black on light ones.
+// themed set wins, else the monochrome logo is recoloured per theme
 void reloadSetupLogo() {
     if (g_setup.winIconBmp) { delete g_setup.winIconBmp; g_setup.winIconBmp = nullptr; }
-    std::wstring cand = setupIconPath(L"win10");  // theme folder first, then default
+    std::wstring cand = setupIconPath(L"win10");
     bool themed = isThemedIconPath(cand);
     if (!cand.empty() && fileExists(cand)) g_setup.winIconBmp = Gdiplus::Bitmap::FromFile(cand.c_str());
     if (g_setup.winIconBmp && g_setup.winIconBmp->GetLastStatus() != Gdiplus::Ok) { delete g_setup.winIconBmp; g_setup.winIconBmp = nullptr; }
-    if (!g_setup.winIconBmp || themed) return;   // themed flags keep their colours
-    // force the monochrome colour instead of hoping the source already matches.
+    if (!g_setup.winIconBmp || themed) return;   // themed flags keep their colors
     BYTE target = g_setup.theme.isDark ? 255 : 18;
     Gdiplus::Rect rc(0, 0, g_setup.winIconBmp->GetWidth(), g_setup.winIconBmp->GetHeight());
     Gdiplus::BitmapData d;
@@ -231,24 +275,23 @@ void reloadSetupLogo() {
         g_setup.winIconBmp->UnlockBits(&d);
     }
 }
-// --- live theme switching inside Setup -------------------------------------
 void applySetupTheme(const std::string& name) {
     LauncherConfig lc = loadLauncherConfig();
     lc.theme = name;
-    saveLauncherConfig(lc);              // applied automatically on first launcher start
+    saveLauncherConfig(lc);              // picked up on first launcher start
     setThemeIconSubdir(themeIconSubdirFor(name));
     g_setup.theme = getThemeForConfig(name, lc.customBg, lc.customPanel, lc.customText, lc.customAccent, lc.customButton, lc.customAlpha, lc.customGlow, lc.glowEnabled);
-    // same normalisation as at startup, but only for the built-in themes.
+    // normalise built-in themes only, win95 and vista keep their palette
     if (name == "dark") { g_setup.theme.bg = RGB(18,18,18); g_setup.theme.panel = RGB(30,30,30); }
     else if (name == "light") { g_setup.theme.bg = RGB(232,232,235); g_setup.theme.panel = RGB(248,248,250); g_setup.theme.text = RGB(18,18,20); }
-    // glow in Setup is exclusive to the Dark theme.
+    // glow in Setup is dark theme only
     g_setup.theme.glowEnabled = (name == "dark");
     if (g_setup.theme.isDark) g_setup.theme.glow = RGB(255,255,255);
     if (g_setup.bgBrush) DeleteObject(g_setup.bgBrush);
     g_setup.bgBrush = CreateSolidBrush(g_setup.theme.bg);
-    reloadSetupLogo();  // the Windows logo follows the theme: white / black
+    reloadSetupLogo();  // logo follows the theme, white or black
     applyWindowTheme(g_setup.hwnd, g_setup.theme);
-    // ERASE included: every child/static must repaint over the old colour.
+    // erase included, every child must repaint over the old colour
     RedrawWindow(g_setup.hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW | RDW_FRAME);
 }
 void updateLangTexts() {
@@ -283,18 +326,16 @@ void appendDetail(const std::string& s) {
         SendMessageW(g_setup.hDetailsEdit, EM_SCROLLCARET, 0, 0);
     }
 }
-void setStatusDetail(const std::string& s) {
-    setStatus(s);
-    appendDetail(s);
-}
-static constexpr float kWin10Cycle = 4.8f;
+static constexpr float kWin10Cycle = 4.0f;
 static constexpr int kWin10Dots = 5;
 static constexpr float kWin10Delay = 0.24f;
 static constexpr float kWin10Radius = 18.0f;
 static constexpr float kWin10DotR = 2.5f;
 static constexpr float kWin10PI = 3.14159265f;
 static constexpr float kWin10FadeIn = 0.05f;
-static constexpr float kWin10FadeOut = 0.03f;
+static constexpr float kWin10FadeOut = 0.04f;
+// dots used to disappear for a quarter of the cycle, which read as a freeze
+static constexpr float kWin10VisibleEnd = 0.92f;
 static constexpr int kWin10LUTSize = 256;
 static float kWin10LUT[kWin10LUTSize];
 void initWin10LUT() {
@@ -341,10 +382,10 @@ void drawSpinner(HDC hdc, int cx, int cy, float phase) {
         float dotPhase = fmod(phase - i * kWin10Delay, kWin10Cycle);
         if (dotPhase < 0) dotPhase += kWin10Cycle;
         float t = dotPhase / kWin10Cycle;
-        if (t >= 0.76f) continue;
+        if (t >= kWin10VisibleEnd) continue;
         float alpha = 1.0f;
         if (t < kWin10FadeIn) alpha = t / kWin10FadeIn;
-        else if (t > 0.76f - kWin10FadeOut) alpha = (0.76f - t) / kWin10FadeOut;
+        else if (t > kWin10VisibleEnd - kWin10FadeOut) alpha = (kWin10VisibleEnd - t) / kWin10FadeOut;
         float angleRad = win10EvalLUT(t);
         float px = cx + sinf(angleRad) * kWin10Radius;
         float py = cy - cosf(angleRad) * kWin10Radius;
@@ -353,9 +394,7 @@ void drawSpinner(HDC hdc, int cx, int cy, float phase) {
         g.FillEllipse(&br, px - kWin10DotR, py - kWin10DotR, kWin10DotR * 2.0f, kWin10DotR * 2.0f);
     }
 }
-// controls that belong to a page's content area and take part in the slide
-// transition. Navigation buttons, spinner and details panel are "chrome" and
-// switch instantly.
+// page content slides; nav, spinner and details switch instantly
 std::vector<HWND> pageContent(int page) {
     std::vector<HWND> v;
     switch (page) {
@@ -372,7 +411,7 @@ std::vector<HWND> pageContent(int page) {
     return v;
 }
 
-// --- Custom palette (shared with the launcher: the same launcher.json fields)
+// palette uses the same launcher.json fields as the launcher
 void loadPaletteColors() {
     LauncherConfig lc = loadLauncherConfig();
     g_setup.palColors[0] = lc.customBg;
@@ -382,9 +421,9 @@ void loadPaletteColors() {
     g_setup.palColors[4] = lc.customButton ? lc.customButton : lc.customAccent;
     g_setup.palColors[5] = lc.customGlow;
 }
-// palette swatches are visible only when "Custom" is selected on the Language page.
+// swatches show only when Custom is selected on the language page
 void updatePaletteVisibility() {
-    loadPaletteColors();  // stay in sync with launcher.json
+    loadPaletteColors();
     bool show = g_setup.themeIsCustom && g_setup.page == 0;
     int cmd = show ? SW_SHOW : SW_HIDE;
     if (g_setup.hPaletteLabel) ShowWindow(g_setup.hPaletteLabel, cmd);
@@ -393,13 +432,13 @@ void updatePaletteVisibility() {
     }
 }
 
-// everything that switches instantly on a page change (step indicator state,
-// navigation buttons, summary text, spinner timer).
+// chrome switches instantly: step indicator, nav, spinner
 void showPageChrome(int page) {
     g_setup.page = page;
     ShowWindow(g_setup.hProgress, SW_HIDE);
     ShowWindow(g_setup.hDetailsEdit, (page == 6 && g_setup.detailsVisible) ? SW_SHOW : SW_HIDE);
-    ShowWindow(g_setup.hInstall, page == 5 ? SW_SHOW : SW_HIDE);
+    // on the install page the same slot switches between Install and Cancel
+    ShowWindow(g_setup.hInstall, (page == 5 || (page == 6 && !g_setup.busy)) ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hNext, (page >= 0 && page < 5) ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hBack, (page > 0 && page < 6) ? SW_SHOW : SW_HIDE);
     ShowWindow(g_setup.hCancelSetup, (page == 6 && g_setup.busy) ? SW_SHOW : SW_HIDE);
@@ -410,7 +449,13 @@ void showPageChrome(int page) {
         std::wstring sum = fromUtf8(lang("setup_summary_to")) + std::wstring(path) + L"\r\n" + fromUtf8(lang("setup_summary_menu")) + std::wstring(menu);
         SetWindowTextW(g_setup.hSummary, sum.c_str());
     }
-    if (page == 6) SetTimer(g_setup.hwnd, 50, 16, nullptr); else KillTimer(g_setup.hwnd, 50);
+    if (page == 6 && g_setup.busy) {
+        g_setup.spinnerStart = GetTickCount64();
+        g_setup.spinnerPhase = 0.0f;
+        SetTimer(g_setup.hwnd, 50, 16, nullptr);
+    } else {
+        KillTimer(g_setup.hwnd, 50);
+    }
     EnableWindow(g_setup.hNext, TRUE);
     RECT wrc; GetClientRect(g_setup.hwnd, &wrc);
     RECT stepRc = {0, 0, wrc.right, 90};
@@ -439,18 +484,17 @@ bool captureClientPos(HWND h, POINT& p) {
     return true;
 }
 
-// snap any running transition to its final state.
+// snap any running transition to its final state
 void finishPageAnim() {
     if (!g_setup.animActive) return;
     KillTimer(g_setup.hwnd, TIMER_PAGE_ANIM);
-    // let the canonical layout re-place everything, then settle visibility.
+    // canonical layout re-places everything, then settle visibility
     RECT rc; GetClientRect(g_setup.hwnd, &rc);
     SendMessageW(g_setup.hwnd, WM_SIZE, 0, MAKELPARAM(rc.right, rc.bottom));
     for (HWND h : g_setup.animIn) if (IsWindow(h)) SetLayeredWindowAttributes(h, 0, 255, LWA_ALPHA);
     for (HWND h : g_setup.animOut) if (IsWindow(h)) { ShowWindow(h, SW_HIDE); SetLayeredWindowAttributes(h, 0, 255, LWA_ALPHA); }
-    // drop the WS_EX_LAYERED style again: controls left as layered windows
-    // repaint through a composited surface, which smudged buttons/combos on
-    // later presses. Plain GDI children render crisply.
+    // drop WS_EX_LAYERED: layered children repainted through a composited
+    // surface and smudged buttons on later presses
     auto stripLayered = [](HWND h) {
         if (!h || !IsWindow(h)) return;
         LONG_PTR ex = GetWindowLongPtrW(h, GWL_EXSTYLE);
@@ -470,11 +514,11 @@ void finishPageAnim() {
 
 void doFadeTo(int target) {
     if (target == g_setup.page && !g_setup.animActive) return;
-    finishPageAnim();               // complete a previous flight instantly
+    finishPageAnim();
     if (target == g_setup.page) return;
     std::vector<HWND> outC = pageContent(g_setup.page);
     std::vector<HWND> inC = pageContent(target);
-    showPageChrome(target);         // header + navigation switch right away
+    showPageChrome(target);
     bool layeredOk = false;
     POINT p{};
     for (HWND h : inC) {
@@ -496,8 +540,7 @@ void doFadeTo(int target) {
         SetLayeredWindowAttributes(h, 0, 255, LWA_ALPHA);
     }
     if (!layeredOk) {
-        // per-child alpha is unsupported (Windows 7) - fall back to an instant
-        // switch, exactly like the launcher behaved before the animation.
+        // per-child alpha unsupported here, fall back to an instant switch
         finishPageAnim();
         return;
     }
@@ -509,7 +552,7 @@ void doFadeTo(int target) {
 }
 void showPage(int page) { doFadeTo(page); }
 void createShortcut(const std::wstring& target, const std::wstring& linkPath, const std::wstring& desc) {
-    CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
+    HRESULT hr = CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     IShellLinkW* psl = nullptr;
     if (SUCCEEDED(CoCreateInstance(CLSID_ShellLink, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&psl)))) {
         psl->SetPath(target.c_str());
@@ -523,6 +566,7 @@ void createShortcut(const std::wstring& target, const std::wstring& linkPath, co
         }
         psl->Release();
     }
+    if (SUCCEEDED(hr)) CoUninitialize();
 }
 bool isUserAdmin() {
     BOOL admin = FALSE;
@@ -628,15 +672,13 @@ void updateDiskInfo() {
         SendMessageW(g_setup.hDiskBar, PBM_SETPOS, 0, 0);
     }
 }
-void workerSetup() {
-    g_setup.busy = true;
-    g_setup.cancelRequested = false;
-    g_setup.detailsLog.clear();
-    if (g_setup.hDetailsEdit) SetWindowTextW(g_setup.hDetailsEdit, L"");
-    EnableWindow(g_setup.hInstall, FALSE);
-    wchar_t pathBuf[MAX_PATH]; GetWindowTextW(g_setup.hPath, pathBuf, MAX_PATH);
-    std::wstring installDir = pathBuf;
-    if (installDir.empty()) { setStatusDetail(lang("setup_select_folder")); EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return; }
+void workerSetup(HWND hwnd, SetupJob job) {
+    ScopedCom com;
+    const std::wstring& installDir = job.installDir;
+    if (installDir.empty()) {
+        postSetupError(hwnd, lang("setup_select_folder"));
+        return;
+    }
     {
         LauncherConfig lcSave = loadLauncherConfig();
         std::string narrowDir = toUtf8(installDir);
@@ -644,20 +686,18 @@ void workerSetup() {
         if (it != lcSave.installHistory.end()) lcSave.installHistory.erase(it);
         lcSave.installHistory.push_back(narrowDir);
         if (lcSave.installHistory.size() > 5) lcSave.installHistory.erase(lcSave.installHistory.begin(), lcSave.installHistory.begin() + (lcSave.installHistory.size() - 5));
-        lcSave.autoStart = g_setup.autoStartChecked;
+        lcSave.autoStart = job.autoStartChecked;
         saveLauncherConfig(lcSave);
     }
     if (isProtectedPath(installDir) && !isUserAdmin()) {
         std::string msg = std::string(lang("setup_select_folder")) + " - " + lang("setup_admin_required");
-        setStatusDetail(msg);
-        appendDetail("ERROR: Admin required for: " + toUtf8(installDir));
-        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
-        MessageBoxW(g_setup.hwnd, fromUtf8(msg + "\n" + lang("setup_admin_hint")).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONWARNING);
-        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
-        EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return;
+        postSetupStatus(hwnd, msg);
+        postSetupStatus(hwnd, "ERROR: Admin required for: " + toUtf8(installDir), true);
+        postSetupError(hwnd, msg + "\n" + lang("setup_admin_hint"));
+        return;
     }
     createDirs(installDir);
-    if (g_setup.cancelRequested) { g_setup.busy=false; return; }
+    if (g_setup.cancelRequested) { postSetupCancelled(hwnd); return; }
     wchar_t exePath[MAX_PATH]; GetModuleFileNameW(nullptr, exePath, MAX_PATH);
     std::wstring srcDir = exePath; size_t p = srcDir.find_last_of(L"\\/"); if (p != std::wstring::npos) srcDir = srcDir.substr(0, p);
     std::wstring dstLauncher = joinPath(installDir, L"kickx_launcher.exe");
@@ -665,26 +705,22 @@ void workerSetup() {
     bool launcherCopied = false;
     if (fileExists(srcLauncher)) {
         launcherCopied = CopyFileW(srcLauncher.c_str(), dstLauncher.c_str(), FALSE) != 0;
-        if (launcherCopied && isValidLauncherBinary(dstLauncher)) appendDetail("Launcher copied from package: " + toUtf8(srcLauncher));
+        if (launcherCopied && isValidLauncherBinary(dstLauncher)) postSetupStatus(hwnd, "Launcher copied from package: " + toUtf8(srcLauncher), true);
         else if (launcherCopied) { DeleteFileW(dstLauncher.c_str()); launcherCopied = false; }
     }
     if (!launcherCopied || !isValidLauncherBinary(dstLauncher)) {
-        appendDetail("Side-by-side launcher not found, trying embedded resource...");
+        postSetupStatus(hwnd, "Side-by-side launcher not found, trying embedded resource...", true);
         if (extractEmbeddedLauncher(dstLauncher)) {
             launcherCopied = true;
-            appendDetail("Launcher extracted from embedded resource (" + std::to_string(GetFileAttributesW(dstLauncher.c_str()) != INVALID_FILE_ATTRIBUTES ? 1 : 0) + ")");
+            postSetupStatus(hwnd, "Launcher extracted from embedded resource", true);
         }
     }
     if (!launcherCopied || !isValidLauncherBinary(dstLauncher)) {
         if (launcherCopied) DeleteFileW(dstLauncher.c_str());
-        setStatusDetail(std::string(lang("setup_launcher_missing")) + " " + toUtf8(srcLauncher));
-        appendDetail("ERROR: kickx_launcher.exe not found next to installer. Expected at: " + toUtf8(srcLauncher));
-        appendDetail("Please extract the ZIP fully (both KickXSetup.exe and kickx_launcher.exe) and run setup from extracted folder.");
-        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
-        MessageBoxW(g_setup.hwnd, fromUtf8(std::string(lang("setup_launcher_missing")) + "\n" + toUtf8(srcLauncher) + "\n\n" + lang("setup_extract_hint")).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONERROR);
-        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
-        EnableWindow(g_setup.hInstall, TRUE);
-        g_setup.busy = false;
+        postSetupStatus(hwnd, std::string(lang("setup_launcher_missing")) + " " + toUtf8(srcLauncher));
+        postSetupStatus(hwnd, "ERROR: kickx_launcher.exe not found next to installer. Expected at: " + toUtf8(srcLauncher), true);
+        postSetupStatus(hwnd, "Please extract the ZIP fully (both KickXSetup.exe and kickx_launcher.exe) and run setup from extracted folder.", true);
+        postSetupError(hwnd, std::string(lang("setup_launcher_missing")) + "\n" + toUtf8(srcLauncher) + "\n\n" + lang("setup_extract_hint"));
         return;
     }
     std::wstring dstSetup = joinPath(installDir, L"KickXSetup.exe");
@@ -692,83 +728,72 @@ void workerSetup() {
     std::wstring srcIcons = joinPath(srcDir, L"icons");
     std::wstring dstIcons = joinPath(installDir, L"icons");
     if (fileExists(srcIcons)) { createDirs(dstIcons); }
-    SHFILEOPSTRUCTW op{}; op.wFunc = FO_COPY; std::wstring from = srcIcons + L"\\*\0"; std::wstring to = dstIcons + L"\0"; from.push_back(L'\0'); to.push_back(L'\0'); op.pFrom = from.c_str(); op.pTo = to.c_str(); op.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI; SHFileOperationW(&op);
+    SHFILEOPSTRUCTW op{}; op.wFunc = FO_COPY; std::wstring from = srcIcons + L"\\*\0"; std::wstring to = dstIcons + L"\0"; from.push_back(L'\0'); to.push_back(L'\0'); op.pFrom = from.c_str(); op.pTo = to.c_str(); op.fFlags = FOF_NOCONFIRMATION | FOF_NOERRORUI | FOF_SILENT; SHFileOperationW(&op);
     std::wstring srcFlags = joinPath(srcDir, L"flags");
     std::wstring dstFlags = joinPath(installDir, L"flags");
     if (fileExists(srcFlags)) { createDirs(dstFlags); std::wstring from2 = srcFlags + L"\\*\0"; std::wstring to2 = dstFlags + L"\0"; from2.push_back(L'\0'); to2.push_back(L'\0'); op.pFrom = from2.c_str(); op.pTo = to2.c_str(); SHFileOperationW(&op); }
     writeFileAtomic(joinPath(installDir, L"kickx_manifest.txt"), "kickx_launcher.exe\nKickXSetup.exe\nicons\nflags\n");
     std::string err;
     std::string version = "1.21.11";
-    auto postProgress = [](const ravex::net::Progress& p) {
-        if (!p.url.empty()) {
-            size_t pos = p.url.find_last_of("/\\");
-            std::string name = (pos == std::string::npos) ? p.url : p.url.substr(pos+1);
-            if (p.total > 0) {
-                int pct = int(p.downloaded * 100 / p.total);
-                std::string msg = std::string(lang("setup_downloading")) + " " + name + " (" + std::to_string(pct) + "%)";
-                PostMessageW(g_setup.hwnd, WM_APP + 10, 0, (LPARAM)new std::string(msg));
-                if (g_setup.taskbar && g_setup.taskbarReady) {
-                    g_setup.taskbar->SetProgressValue(g_setup.hwnd, pct, 100);
-                }
-            }
+    auto postProgress = [hwnd](const ravex::net::Progress& p) {
+        if (p.url.empty()) return;
+        size_t pos = p.url.find_last_of("/\\");
+        std::string name = (pos == std::string::npos) ? p.url : p.url.substr(pos + 1);
+        if (p.total > 0) {
+            int pct = int(p.downloaded * 100 / p.total);
+            if (pct > 100) pct = 100;
+            postSetupProgress(hwnd, pct, std::string(lang("setup_downloading")) + " " + name + " (" + std::to_string(pct) + "%)");
+        } else {
+            postSetupActivity(hwnd, std::string(lang("setup_downloading")) + " " + name);
         }
     };
-        setStatusDetail(std::string(lang("setup_checking_java")) + " 21...");
-    if (g_setup.cancelRequested) { g_setup.busy=false; return; }
+    postSetupStatus(hwnd, std::string(lang("setup_checking_java")) + " 21...");
+    if (g_setup.cancelRequested) { postSetupCancelled(hwnd); return; }
     std::wstring javaPath;
-    if (!ravex::game::ensureJava(21, javaPath, &err, [](const std::string& s){ PostMessageW(g_setup.hwnd, WM_APP + 10, 0, (LPARAM)new std::string(s)); }, nullptr)) {
-        setStatusDetail(std::string(lang("setup_checking_java")) + " fail: " + err);
-        PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
-        EnableWindow(g_setup.hInstall, TRUE);
-        g_setup.busy = false;
+    if (!ravex::game::ensureJava(21, javaPath, &err, [hwnd](const std::string& s){ postSetupStatus(hwnd, s); }, &g_setup.cancelRequested)) {
+        if (g_setup.cancelRequested) { postSetupCancelled(hwnd); return; }
+        postSetupError(hwnd, std::string(lang("setup_checking_java")) + " fail: " + err);
         return;
     }
-    Sleep(400);
-    setStatusDetail(lang("setup_verifying_java"));
-    Sleep(500);
-    if (!fileExists(javaPath)) { setStatusDetail(std::string(lang("setup_verifying_java")) + " fail"); EnableWindow(g_setup.hInstall, TRUE); g_setup.busy=false; return; }
-    appendDetail("Java 21 OK: " + toUtf8(javaPath));
-    Sleep(300);
-    setStatusDetail(std::string(lang("setup_checking_mc")) + " " + version + "...");
-    std::string assetId;
+    postSetupStatus(hwnd, lang("setup_verifying_java"));
+    if (!fileExists(javaPath)) { postSetupError(hwnd, std::string(lang("setup_verifying_java")) + " fail"); return; }
+    postSetupStatus(hwnd, "Java 21 OK: " + toUtf8(javaPath), true);
+    postSetupStatus(hwnd, std::string(lang("setup_checking_mc")) + " " + version + "...");
+    std::string assetId = ravex::game::getInstalledAssetIndexId(version);
     bool mcOk = false;
-    for (int attempt = 1; attempt <= 3; ++attempt) {
+    // A repeat setup run must not re-hash every library and asset. The quick
+    // sample check is enough to decide that the existing install is usable.
+    if (!assetId.empty() && ravex::game::quickIntegrityCheck(version, assetId, nullptr)) {
+        postSetupStatus(hwnd, "Minecraft " + version + " already installed, skipping download", true);
+        mcOk = true;
+    }
+    for (int attempt = 1; !mcOk && attempt <= 3; ++attempt) {
         err.clear();
         if (attempt > 1) {
-            appendDetail("Retrying Minecraft download, attempt " + std::to_string(attempt) + "/3 ...");
-            setStatusDetail(std::string(lang("setup_checking_mc")) + " " + version + " (retry " + std::to_string(attempt) + ")...");
-            Sleep(1200);
+            postSetupStatus(hwnd, "Retrying Minecraft download, attempt " + std::to_string(attempt) + "/3 ...", true);
+            postSetupStatus(hwnd, std::string(lang("setup_checking_mc")) + " " + version + " (retry " + std::to_string(attempt) + ")...");
         }
-        if (g_setup.cancelRequested) { g_setup.busy=false; return; }
-        if (!ravex::game::ensureMinecraft(version, &err, postProgress, nullptr, &assetId)) {
-            setStatusDetail(std::string(lang("setup_checking_mc")) + " fail: " + err);
-            appendDetail("ensureMinecraft attempt " + std::to_string(attempt) + " failed: " + err);
-            if (attempt == 3) { EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return; }
+        if (g_setup.cancelRequested) { postSetupCancelled(hwnd); return; }
+        if (!ravex::game::ensureMinecraft(version, &err, postProgress, &g_setup.cancelRequested, &assetId, 16)) {
+            if (g_setup.cancelRequested) { postSetupCancelled(hwnd); return; }
+            postSetupStatus(hwnd, std::string(lang("setup_checking_mc")) + " fail: " + err);
+            postSetupStatus(hwnd, "ensureMinecraft attempt " + std::to_string(attempt) + " failed: " + err, true);
+            if (attempt == 3) { postSetupError(hwnd, std::string(lang("setup_checking_mc")) + " fail: " + err); return; }
             continue;
         }
-        Sleep(400);
-        setStatusDetail(lang("setup_verifying_mc"));
-        Sleep(600);
+        postSetupStatus(hwnd, lang("setup_verifying_mc"));
         std::string verr;
         if (!ravex::game::quickIntegrityCheck(version, assetId, &verr)) {
-            appendDetail("Integrity attempt " + std::to_string(attempt) + " failed: " + verr);
-            if (attempt == 3) {
-                setStatusDetail(std::string(lang("setup_verifying_mc")) + " fail: " + verr);
-                PostMessageW(g_setup.hwnd, WM_APP+12, 0,0);
-        EnableWindow(g_setup.hInstall, TRUE);
-                g_setup.busy = false;
-                return;
-            }
+            postSetupStatus(hwnd, "Integrity attempt " + std::to_string(attempt) + " failed: " + verr, true);
+            if (attempt == 3) { postSetupError(hwnd, std::string(lang("setup_verifying_mc")) + " fail: " + verr); return; }
             continue;
         }
-        appendDetail("Integrity OK (attempt " + std::to_string(attempt) + ")");
-        Sleep(300);
+        postSetupStatus(hwnd, "Integrity OK (attempt " + std::to_string(attempt) + ")", true);
         mcOk = true;
         break;
     }
-    if (!mcOk) { EnableWindow(g_setup.hInstall, TRUE); g_setup.busy = false; return; }
-    setStatusDetail(lang("setup_preparing"));
-    Sleep(400);
+    if (!mcOk) { postSetupError(hwnd, lang("setup_verifying_mc")); return; }
+    postSetupStatus(hwnd, lang("setup_preparing"));
     std::wstring instDir = joinPath(joinPath(kickxDir(), L"instances"), L"Default");
     createDirs(instDir);
     InstanceCfg cfg;
@@ -777,37 +802,35 @@ void workerSetup() {
     cfg.loader = "vanilla";
     cfg.assetIndexId = assetId;
     saveInstance(instDir, cfg);
-    if (g_setup.desktopChecked) {
+    if (job.desktopChecked) {
         PWSTR pDesk = nullptr; if (SHGetKnownFolderPath(FOLDERID_Desktop, 0, nullptr, &pDesk) == S_OK) {
             std::wstring link = std::wstring(pDesk) + L"\\KickX.lnk";
             createShortcut(dstLauncher, link, fromUtf8(lang("setup_title")).c_str());
-            appendDetail(lang("setup_shortcut_desktop_created") ? lang("setup_shortcut_desktop_created") : "Desktop shortcut created");
+            postSetupStatus(hwnd, lang("setup_shortcut_desktop_created") ? lang("setup_shortcut_desktop_created") : "Desktop shortcut created", true);
             CoTaskMemFree(pDesk);
         }
     }
-    if (g_setup.startChecked) {
+    if (job.startChecked) {
         PWSTR pStart = nullptr; if (SHGetKnownFolderPath(FOLDERID_StartMenu, 0, nullptr, &pStart) == S_OK) {
             std::wstring dir = std::wstring(pStart) + L"\\KickX";
             createDirs(dir);
             std::wstring link = dir + L"\\KickX.lnk";
             createShortcut(dstLauncher, link, fromUtf8(lang("setup_title")).c_str());
-            appendDetail(lang("setup_shortcut_start_created") ? lang("setup_shortcut_start_created") : "Start Menu shortcut created");
+            postSetupStatus(hwnd, lang("setup_shortcut_start_created") ? lang("setup_shortcut_start_created") : "Start Menu shortcut created", true);
             CoTaskMemFree(pStart);
         }
     }
-    // autostart: put a visible shortcut into the user's Startup folder so the
-    // launcher runs on logon. Not elevated, not hidden - the user can always see
-    // and delete it (shell:startup), which is exactly what an honest autostart is.
+    // visible Startup shortcut, deletable via shell:startup
     {
         PWSTR pStartup = nullptr;
         if (SHGetKnownFolderPath(FOLDERID_Startup, 0, nullptr, &pStartup) == S_OK) {
             std::wstring link = std::wstring(pStartup) + L"\\KickX.lnk";
-            if (g_setup.autoStartChecked) {
+            if (job.autoStartChecked) {
                 createShortcut(dstLauncher, link, fromUtf8(lang("setup_title")).c_str());
-                appendDetail(fileExists(link) ? "Autostart shortcut created" : "Autostart shortcut FAILED");
+                postSetupStatus(hwnd, fileExists(link) ? "Autostart shortcut created" : "Autostart shortcut FAILED", true);
             } else {
                 DeleteFileW(link.c_str());
-                appendDetail("Autostart shortcut removed (option disabled)");
+                postSetupStatus(hwnd, "Autostart shortcut removed (option disabled)", true);
             }
             CoTaskMemFree(pStartup);
         }
@@ -816,15 +839,13 @@ void workerSetup() {
     HANDLE h = CreateFileW(marker.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_HIDDEN, nullptr);
     if (h != INVALID_HANDLE_VALUE) CloseHandle(h);
     createUninstallRegistry(installDir);
-    setStatusDetail(lang("setup_verifying_install"));
-    Sleep(600);
+    postSetupStatus(hwnd, lang("setup_verifying_install"));
     bool ok = fileExists(dstLauncher) && fileExists(dstSetup) && fileExists(joinPath(kickxDir(), L".setup_done"));
-    appendDetail(ok ? (lang("setup_verifying_install") ? std::string(lang("setup_verifying_install")) + " OK" : "Verification: all components installed") : "Verification: missing files");
-    Sleep(400);
-    setStatusDetail(lang("setup_done"));
-    g_setup.busy = false;
-    EnableWindow(g_setup.hInstall, TRUE);
-    PostMessageW(g_setup.hwnd, WM_APP + 11, 0, (LPARAM)new std::wstring(installDir));
+    postSetupStatus(hwnd, ok ? (lang("setup_verifying_install") ? std::string(lang("setup_verifying_install")) + " OK" : "Verification: all components installed") : "Verification: missing files", true);
+    postSetupStatus(hwnd, lang("setup_done"));
+    if (g_setup.cancelRequested) { postSetupCancelled(hwnd); return; }
+    auto* done = new std::wstring(installDir);
+    if (!PostMessageW(hwnd, WM_APP + 11, 0, (LPARAM)done)) delete done;
 }
 LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     static UINT s_taskbarMsg = 0;
@@ -843,10 +864,8 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             {
                 LauncherConfig lc0 = loadLauncherConfig();
                 g_setup.theme = getThemeForConfig(lc0.theme, lc0.customBg, lc0.customPanel, lc0.customText, lc0.customAccent, lc0.customButton, lc0.customAlpha, lc0.customGlow, lc0.glowEnabled);
-                // normalise only the built-in themes - Win95 / Vista keep their palette.
                 if (lc0.theme == "dark") { g_setup.theme.bg = RGB(18,18,18); g_setup.theme.panel = RGB(30,30,30); }
                 else if (lc0.theme == "light") { g_setup.theme.bg = RGB(232,232,235); g_setup.theme.panel = RGB(248,248,250); g_setup.theme.text = RGB(18,18,20); }
-                // glow in Setup is exclusive to the Dark theme.
                 g_setup.theme.glowEnabled = (lc0.theme == "dark");
                 if (g_setup.theme.isDark) g_setup.theme.glow = RGB(255,255,255);
             }
@@ -856,7 +875,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             HINSTANCE inst = (HINSTANCE)GetWindowLongPtrW(hwnd, GWLP_HINSTANCE);
                     g_setup.hTitle = CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_title")).c_str(), WS_CHILD | WS_VISIBLE | SS_CENTER, 0, 10, 560, 26, hwnd, nullptr, inst, nullptr);
             g_setup.hWinIcon = CreateWindowExW(0, L"STATIC", nullptr, WS_CHILD | WS_VISIBLE | SS_OWNERDRAW, 12, 320, 44, 44, hwnd, nullptr, inst, nullptr);
-            reloadSetupLogo();  // default Windows logo, coloured for the active theme
+            reloadSetupLogo();
             g_setup.hLangLabel = CreateWindowExW(0, L"STATIC", fromUtf8(lang("setup_lang")).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 20, 50, 500, 22, hwnd, nullptr, inst, nullptr);
             g_setup.hLangCombo = CreateWindowExW(0, L"COMBOBOX", nullptr, WS_CHILD | WS_VISIBLE | CBS_OWNERDRAWFIXED | CBS_DROPDOWNLIST | CBS_HASSTRINGS | WS_VSCROLL, 20, 74, 300, 200, hwnd, (HMENU)IDC_LANG, inst, nullptr);
             for (int i = 0; i < langCount(); ++i) {
@@ -1071,9 +1090,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return 0;
             }
             if (id == IDC_THEME_SETUP && HIWORD(wParam) == CBN_SELCHANGE) {
-                // deferred: apply AFTER the dropdown has closed and finished its
-                // own painting - repainting while the list is still open left
-                // stale colour patches behind the labels.
+                // defer: repainting with the list still open left stale patches
                 int sel = (int)SendMessageW(g_setup.hThemeCombo, CB_GETCURSEL, 0, 0);
                 g_setup.themeIsCustom = (sel == 4);
                 updatePaletteVisibility();
@@ -1081,9 +1098,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return 0;
             }
             if (id >= IDC_COLOR_BG && id <= IDC_COLOR_BG + 5) {
-                // custom palette swatch: pick any colour - stored in the SAME
-                // launcher.json fields the launcher itself uses, so the palette
-                // is shared with the launcher (and applied after installation).
+                // swatch colour uses the same launcher.json fields
                 int idx = id - IDC_COLOR_BG;
                 static COLORREF s_cust[16] = {
                     RGB(0,0,0), RGB(192,192,192), RGB(128,0,0), RGB(0,128,0),
@@ -1107,7 +1122,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         default: lc.customGlow = cc.rgbResult; break;
                     }
                     saveLauncherConfig(lc);
-                    applySetupTheme("custom");   // live repaint with the new palette
+                    applySetupTheme("custom");
                     updatePaletteVisibility();
                 }
                 return 0;
@@ -1128,8 +1143,13 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return 0;
             }
             if (id == IDC_CANCEL_SETUP) {
-                if (g_setup.busy) { g_setup.cancelRequested = true; g_setup.busy = false; }
-                showPage(5);
+                if (g_setup.busy) {
+                    g_setup.cancelRequested = true;
+                    setStatus(lang("cancelled"));
+                    if (g_setup.taskbar && g_setup.taskbarReady) {
+                        g_setup.taskbar->SetProgressState(hwnd, TBPF_PAUSED);
+                    }
+                }
                 return 0;
             }
             if (id == IDC_INSTALL && !g_setup.busy) {
@@ -1138,9 +1158,20 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     MessageBoxW(hwnd, fromUtf8(verr).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONWARNING);
                     return 0;
                 }
+                SetupJob job;
+                job.installDir = pbuf;
+                job.desktopChecked = g_setup.desktopChecked;
+                job.startChecked = g_setup.startChecked;
+                job.autoStartChecked = g_setup.autoStartChecked;
+                job.autoLaunchChecked = g_setup.autoLaunchChecked;
                 g_setup.cancelRequested = false;
-                showPage(6);
-                std::thread(workerSetup).detach();
+                g_setup.detailsLog.clear();
+                if (g_setup.hDetailsEdit) SetWindowTextW(g_setup.hDetailsEdit, L"");
+                g_setup.busy = true;
+                EnableWindow(g_setup.hInstall, FALSE);
+                if (g_setup.page == 6) showPageChrome(6);
+                else showPage(6);
+                std::thread(workerSetup, hwnd, job).detach();
                 return 0;
             }
             return 0;
@@ -1167,7 +1198,6 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 return 1;
             }
             if (ds->CtlID == IDC_LANG) {
-                // language row with flag - same owner-draw style as Settings.
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
                 bool sel = (ds->itemState & ODS_SELECTED) != 0;
                 COLORREF bg = sel ? g_setup.theme.accent : g_setup.theme.bg;
@@ -1203,8 +1233,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 else { chk = g_setup.autoLaunchChecked; animIdx = 3; }
                 int bw = rc.right - rc.left, bh = rc.bottom - rc.top;
                 if (bw <= 0 || bh <= 0) return 1;
-                // double-buffered: painting straight into the item DC made the
-                // label flicker on every animation tick.
+                // double-buffered, painting straight into the item DC flickered
                 HDC memDC = CreateCompatibleDC(dc);
                 HBITMAP memBmp = CreateCompatibleBitmap(dc, bw, bh);
                 if (!memDC || !memBmp) { if (memDC) DeleteDC(memDC); if (memBmp) DeleteObject(memBmp); return 1; }
@@ -1224,7 +1253,6 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 path.AddArc(bx, by, 3, 3, 180, 90); path.AddArc(bx+box-3, by, 3, 3, 270, 90); path.AddArc(bx+box-3, by+box-3, 3, 3, 0, 90); path.AddArc(bx, by+box-3, 3, 3, 90, 90); path.CloseFigure();
                 g.FillPath(&br, &path); g.DrawPath(&pen, &path);
                 {
-                    // smooth tick: grows/fades in and out with chkAnim[] progress.
                     float a = g_setup.chkAnim[animIdx];
                     if (a > 0.01f) {
                         float ax = (float)(bx+5), ay = (float)(by+9);
@@ -1244,9 +1272,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 wchar_t txt[128]; GetWindowTextW(ds->hwndItem, txt, 128);
                 g.DrawString(txt, -1, &f, rf, &fmt, &tbrush);
                 g.Flush();
-                // source must be the buffer origin (0,0) - the bitmap is only
-                // bw x bh, so taking rc.left/rc.top clipped the copy and left
-                // the checkbox rows smudged on every repaint.
+                // copy from the buffer origin (0,0), rc.left/rc.top clipped it before
                 BitBlt(dc, rc.left, rc.top, bw, bh, memDC, 0, 0, SRCCOPY);
                 SelectObject(memDC, oldBmp); DeleteObject(memBmp); DeleteDC(memDC);
                 return 1;
@@ -1261,12 +1287,12 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 bool isDark = g_setup.theme.isDark;
                 COLORREF bg = isDark ? RGB(0,0,0) : RGB(248,248,250);
                 COLORREF fg = isDark ? RGB(240,240,240) : RGB(18,18,20);
-                if (isDisabled) { bg = isDark ? RGB(20,20,20) : RGB(220,220,220); fg = isDark ? RGB(100,100,100) : RGB(150,150,150); }
+                if (isDisabled) { bg = isDark ? RGB(20,20,20) : RGB(220,220,220); fg = isDark ? RGB(100,100,100) : themeMutedText(g_setup.theme.text, bg); }
                 else if (isPressed) { bg = isDark ? RGB(18,18,18) : RGB(220,220,230); }
                 else if (isHover) { bg = isDark ? RGB(18,18,18) : RGB(235,235,238); fg = isDark ? RGB(255,255,255) : RGB(18,18,20); }
                 bool isColorBtn = (ds->CtlID >= IDC_COLOR_BG && ds->CtlID <= IDC_COLOR_BG + 5);
                 if (isColorBtn && !isDisabled) {
-                    // swatch shows the actual palette colour, text picks its contrast.
+                    // swatch paints the palette colour, text picks its contrast
                     bg = static_cast<COLORREF>(g_setup.palColors[ds->CtlID - IDC_COLOR_BG]);
                     int lr = GetRValue(bg), lg = GetGValue(bg), lb = GetBValue(bg);
                     fg = (0.299 * lr + 0.587 * lg + 0.114 * lb) > 140 ? RGB(20,20,20) : RGB(245,245,245);
@@ -1307,10 +1333,8 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             HDC dc = (HDC)wParam;
             SetTextColor(dc, g_setup.theme.text);
             SetBkColor(dc, g_setup.theme.bg);
-            // OPAQUE (same as the main launcher): the static repaints its own
-            // rectangle with the CURRENT theme brush on every paint. The old
-            // TRANSPARENT mode never cleared the surface, so bars of the
-            // previously selected theme stayed behind the labels.
+            // opaque: the static repaints with the current theme brush,
+            // transparent mode left bars of the old theme behind
             SetBkMode(dc, OPAQUE);
             return (LRESULT)g_setup.bgBrush;
         }
@@ -1330,9 +1354,10 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             return (LRESULT)g_setup.bgBrush;
         }
         case WM_TIMER: {
-            if (wParam == 50 && g_setup.page == 6) {
-                g_setup.spinnerPhase += 0.024f;
-                if (g_setup.spinnerPhase > kWin10Cycle) g_setup.spinnerPhase -= kWin10Cycle;
+            if (wParam == 50 && g_setup.page == 6 && g_setup.busy) {
+                ULONGLONG now = GetTickCount64();
+                ULONGLONG elapsed = now - g_setup.spinnerStart;
+                g_setup.spinnerPhase = (float)(elapsed % (ULONGLONG)(kWin10Cycle * 1000.0f)) / 1000.0f;
                 RECT rc; GetClientRect(hwnd, &rc);
                 RECT sr = { (rc.right-60)/2, 120, (rc.right+60)/2, 180 };
                 InvalidateRect(hwnd, &sr, FALSE);
@@ -1351,8 +1376,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     else if (a > tgt) { a -= step; if (a < tgt) a = tgt; }
                     if (a != before) {
                         moving = true;
-                        // repaint ONLY the checkbox that actually changed - redrawing
-                        // all four every tick made their labels flicker.
+                        // repaint only the changed checkbox, all four flickered
                         if (ctls[i] && IsWindow(ctls[i])) InvalidateRect(ctls[i], nullptr, FALSE);
                     }
                 }
@@ -1394,14 +1418,13 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         case WM_PAINT: {
             PAINTSTRUCT ps; HDC hdc = BeginPaint(hwnd, &ps);
-            // live theme colour: a cached brush could still carry the previous
-            // theme's background (left-over teal bars after switching back).
+            // live theme colour, a cached brush can carry the old background
             HBRUSH liveBg = CreateSolidBrush(g_setup.theme.bg);
             FillRect(hdc, &ps.rcPaint, liveBg);
             DeleteObject(liveBg);
             RECT rc; GetClientRect(hwnd, &rc);
             int w = rc.right - rc.left;
-            if (g_setup.page == 6) {
+            if (g_setup.page == 6 && g_setup.busy) {
                 int cx = w/2; int cy = 150;
                 drawSpinner(hdc, cx, cy, g_setup.spinnerPhase);
             }
@@ -1412,10 +1435,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 int totalW = (steps - 1) * gap;
                 int startX = (w - totalW) / 2;
                 int dotY = 52;
-                // render the whole step band off-screen. Drawing antialiased GDI+
-                // strokes directly inside a partial update region clips the
-                // blending samples, which left the white ring around the current
-                // step visibly jagged; in a memory DC nothing is clipped.
+                // step band off-screen so AA strokes are not clipped
                 HDC hdrMem = CreateCompatibleDC(hdc);
                 HBITMAP hdrBmp = (w > 0) ? CreateCompatibleBitmap(hdc, w, 90) : nullptr;
                 HGDIOBJ hdrOld = nullptr;
@@ -1433,7 +1453,6 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 Gdiplus::Graphics g(hdrDC);
                 g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
-                // grayscale AA renders much cleaner than ClearType on dark panels.
                 g.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAliasGridFit);
                 g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
                 g.SetPixelOffsetMode(Gdiplus::PixelOffsetModeHighQuality);
@@ -1496,7 +1515,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     g.DrawString(wlabel, -1, &labelFont, labelRect, &lsf, &labelBr);
                 }
                 if (hdrMem && hdrBmp) {
-                    g.Flush();  // make sure GDI+ finished drawing into the buffer
+                    g.Flush();
                     BitBlt(hdc, 0, 0, w, 90, hdrMem, 0, 0, SRCCOPY);
                     SelectObject(hdrMem, hdrOld);
                     DeleteObject(hdrBmp);
@@ -1515,8 +1534,14 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         }
         case WM_APP + 10: {
             std::string* p = (std::string*)lParam;
-            setStatus(*p); appendDetail(*p); delete p;
-            if (g_setup.taskbar && g_setup.taskbarReady) {
+            if (p) {
+                // status-only messages must not grow the details log, otherwise
+                // per-percent updates turn into a huge SetWindowTextW call
+                if (wParam == 0) setStatus(*p);
+                else appendDetail(*p);
+                delete p;
+            }
+            if (wParam == 0 && g_setup.taskbar && g_setup.taskbarReady) {
                 g_setup.taskbar->SetProgressState(hwnd, TBPF_INDETERMINATE);
             }
             return 0;
@@ -1526,12 +1551,16 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             KillTimer(hwnd, 50);
             g_setup.busy = false;
             if (g_setup.taskbar && g_setup.taskbarReady) {
-                g_setup.taskbar->SetProgressState(hwnd, TBPF_PAUSED);
-                SetTimer(hwnd, 99, 5000, nullptr);
+                g_setup.taskbar->SetProgressValue(hwnd, 100, 100);
+                g_setup.taskbar->SetProgressState(hwnd, TBPF_NOPROGRESS);
             }
-            { std::wstring msg = fromUtf8(lang("setup_installed_msg")); size_t pos = msg.find(L"{path}"); if(pos != std::wstring::npos) msg.replace(pos, 6, *p);
-            MessageBoxW(hwnd, msg.c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONINFORMATION); }
-            delete p;
+            if (p) {
+                std::wstring msg = fromUtf8(lang("setup_installed_msg"));
+                size_t pos = msg.find(L"{path}");
+                if (pos != std::wstring::npos) msg.replace(pos, 6, *p);
+                MessageBoxW(hwnd, msg.c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONINFORMATION);
+                delete p;
+            }
             DestroyWindow(hwnd);
             return 0;
         }
@@ -1541,6 +1570,59 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             RECT rc; GetClientRect(hwnd, &rc);
             SendMessageW(hwnd, WM_SIZE, 0, MAKELPARAM(rc.right, rc.bottom));
             InvalidateRect(hwnd, nullptr, TRUE);
+            return 0;
+        }
+        case WM_APP + 13: {
+            std::string* p = (std::string*)lParam;
+            if (p) { setStatus(*p); delete p; }
+            if (g_setup.taskbar && g_setup.taskbarReady && wParam <= 100) {
+                g_setup.taskbar->SetProgressState(hwnd, TBPF_NORMAL);
+                g_setup.taskbar->SetProgressValue(hwnd, (ULONGLONG)wParam, 100);
+            }
+            return 0;
+        }
+        case WM_APP + 14: {
+            std::string* p = (std::string*)lParam;
+            std::string msg = p ? *p : std::string();
+            delete p;
+            g_setup.busy = false;
+            g_setup.detailsVisible = true;
+            // refresh the install page: the button slot switches back from
+            // Cancel to Install so a failed run can be retried in place
+            showPageChrome(6);
+            EnableWindow(g_setup.hInstall, TRUE);
+            if (g_setup.taskbar && g_setup.taskbarReady) {
+                g_setup.taskbar->SetProgressState(hwnd, TBPF_ERROR);
+            }
+            RECT rc; GetClientRect(hwnd, &rc);
+            SendMessageW(hwnd, WM_SIZE, 0, MAKELPARAM(rc.right, rc.bottom));
+            InvalidateRect(hwnd, nullptr, TRUE);
+            if (!msg.empty()) {
+                MessageBoxW(hwnd, fromUtf8(msg).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_OK | MB_ICONERROR);
+            }
+            return 0;
+        }
+        case WM_APP + 15: {
+            g_setup.busy = false;
+            g_setup.cancelRequested = false;
+            if (g_setup.taskbar && g_setup.taskbarReady) {
+                g_setup.taskbar->SetProgressState(hwnd, TBPF_NOPROGRESS);
+            }
+            setStatus(lang("cancelled"));
+            showPage(5);
+            return 0;
+        }
+        case WM_CLOSE: {
+            if (g_setup.busy) {
+                const char* q = lang("setup_cancel_confirm");
+                if (!q || strcmp(q, "setup_cancel_confirm") == 0) q = "Cancel the installation?";
+                if (MessageBoxW(hwnd, fromUtf8(q).c_str(), fromUtf8(lang("setup_title")).c_str(), MB_YESNO | MB_ICONQUESTION) != IDYES) {
+                    return 0;
+                }
+                g_setup.cancelRequested = true;
+                g_setup.busy = false;
+            }
+            DestroyWindow(hwnd);
             return 0;
         }
         case WM_GETMINMAXINFO: {
@@ -1587,7 +1669,7 @@ LRESULT CALLBACK SetupProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 placeCard(g_setup.hStatus, 0, 98, w, 16);
                 placeCard(g_setup.hDetailsBtn, 20, 120, 90, 22);
                 int editTop = g_setup.detailsVisible ? 150 : 176;
-                int editH = g_setup.detailsVisible ? (h - editTop - 60) : 0;
+                int editH = g_setup.detailsVisible ? (h - editTop - 100) : 0;
                 if (editH < 0) editH = 0;
                 placeCard(g_setup.hDetailsEdit, 20, editTop, w-40, editH);
                 placeCard(g_setup.hSummary, 20, 55, w-40, 60);

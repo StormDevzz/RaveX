@@ -95,7 +95,7 @@ std::wstring getSystemInfoTextForLang(const char* code) {
     typedef LONG (WINAPI* RtlGetVersion_t)(OSVERSIONINFOEXW*);
     if (auto fn=(RtlGetVersion_t)GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "RtlGetVersion")) fn(&os);
     else GetVersionExW((OSVERSIONINFOW*)&os);
-    std::wstring name = L"Windows 10";
+    std::wstring name = windowsVersionName();
     wchar_t ver[128]; swprintf(ver,128,L"%s Build %lu", name.c_str(), os.dwBuildNumber);
     std::wstring out = ver;
     HKEY hk; wchar_t disp[128]={}; DWORD sz=sizeof(disp);
@@ -104,7 +104,7 @@ std::wstring getSystemInfoTextForLang(const char* code) {
         if(disp[0]) { out+= L" "; out+=disp; }
         RegCloseKey(hk);
     }
-    out += L" (Windows 10)";
+    out += L" (" + name + L")";
     out += L"\r\n";
     MEMORYSTATUSEX mem{}; mem.dwLength=sizeof(mem); GlobalMemoryStatusEx(&mem);
     std::wstring ramLb = tr("sysinfo_ram","RAM");
@@ -215,10 +215,8 @@ void updateThemeState(SettingsData* d) {
         int previewY = 524 + dy;
         int sysY1 = 626 + dy;
         int sysY2 = 646 + dy;
-        // bottom button row must sit INSIDE the current window height - it used
-        // to stay at y=716 while the non-custom window is only 556px tall, which
-        // made Save/Cancel (and now Apply) invisible.
-        int clientH = isCustom ? 796 : 576;   // room for the dedicated build line above the buttons
+        // button row must fit the window height or save/cancel vanish
+        int clientH = isCustom ? 796 : 576;   // room for the build line above the buttons
         int btnY = clientH - 40;
         int hBuildY = btnY - 20;
         int infoH = hBuildY - 6 - sysY2;
@@ -323,9 +321,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             data->hSysHeader = CreateWindowExW(0, L"STATIC", fromUtf8(lang("system_info")).c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 626, 400, 16, hwnd, nullptr, inst, nullptr);
             data->hSysInfo = CreateWindowExW(0, L"STATIC", getSystemInfoText().c_str(), WS_CHILD | WS_VISIBLE | SS_LEFT, 16, 646, 404, 100, hwnd, reinterpret_cast<HMENU>(IDC_SYS_INFO), inst, nullptr);
             {
-                // restored from the original launcher implementation: a dedicated
-                // localized build line ("Build: 20261010  ·  v1.1.8") that follows
-                // the selected language.
+                // localized build line ("Build: 20261010  ·  v1.1.8")
                 const char* bk = lang("build");
                 if (!bk || strcmp(bk, "build") == 0) bk = "Build";
                 std::wstring buildText = fromUtf8(bk) + L": " + fromUtf8(RAVEX_BUILD) + L"  \x00B7  v" + fromUtf8(RAVEX_VERSION);
@@ -364,13 +360,14 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 bool sel = (ds->itemState & ODS_SELECTED) != 0;
                 bool hot = (ds->itemState & ODS_HOTLIGHT) != 0;
                 COLORREF base = data->cur.buttonBg;
-                if (sel) base = RGB(60,60,62); else if (hot) base = RGB(55,55,57);
-                if (dis) base = RGB(54,54,58);
                 if (data->cur.classic) {
-                    // windows 95: silver face, navy when pressed, grayed when disabled
+                    // windows 95: silver face, navy pressed, gray disabled
                     if (dis) base = RGB(192,192,192);
                     else if (sel || hot) base = data->cur.accent;
-                    else base = data->cur.buttonBg;
+                } else {
+                    if (sel) base = blendThemeColor(base, data->cur.text, 82);
+                    else if (hot) base = blendThemeColor(base, data->cur.text, 90);
+                    if (dis) base = blendThemeColor(data->cur.panel, data->cur.bg, 50);
                 }
                 Gdiplus::Graphics g(dc); g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
                 HBRUSH bgBr = CreateSolidBrush(base); FillRect(dc, &rc, bgBr); DeleteObject(bgBr);
@@ -383,7 +380,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                     Gdiplus::GraphicsPath path; path.AddArc(rc.left,rc.top,8,8,180,90); path.AddArc(rc.right-8,rc.top,8,8,270,90); path.AddArc(rc.right-8,rc.bottom-8,8,8,0,90); path.AddArc(rc.left,rc.bottom-8,8,8,90,90); path.CloseFigure();
                     g.FillPath(&br,&path);
                     if (data->cur.gloss) {
-                        // frutiger Aero glass sheen across the top half of the button.
+                        // aero glass sheen across the top half
                         Gdiplus::GraphicsState gs = g.Save();
                         g.SetClip(Gdiplus::RectF((Gdiplus::REAL)rc.left, (Gdiplus::REAL)rc.top,
                                                  (Gdiplus::REAL)(rc.right - rc.left),
@@ -398,8 +395,10 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 }
                 wchar_t txt[64]; GetWindowTextW(ds->hwndItem, txt, 64);
                 if(wcslen(txt)>0){
-                 BYTE tc = data->cur.classic ? (dis ? 120 : ((sel || hot) ? 255 : 0)) : 255;
-                 Gdiplus::SolidBrush tbr(Gdiplus::Color(tc,tc,tc));
+                 COLORREF tc = data->cur.classic
+                     ? (dis ? RGB(120,120,120) : ((sel || hot) ? RGB(255,255,255) : RGB(0,0,0)))
+                     : (dis ? themeMutedText(data->cur.text, base) : contrastText(base));
+                 Gdiplus::SolidBrush tbr(Gdiplus::Color(GetRValue(tc),GetGValue(tc),GetBValue(tc)));
                  Gdiplus::Font f(dc, data->font);
                  Gdiplus::StringFormat fmt; fmt.SetAlignment(Gdiplus::StringAlignmentCenter); fmt.SetLineAlignment(Gdiplus::StringAlignmentCenter);
                  Gdiplus::RectF rf((Gdiplus::REAL)rc.left,(Gdiplus::REAL)rc.top,(Gdiplus::REAL)(rc.right-rc.left),(Gdiplus::REAL)(rc.bottom-rc.top));
@@ -412,7 +411,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 HDC dc = ds->hDC; RECT rc = ds->rcItem;
                 bool sel = (ds->itemState & ODS_SELECTED) != 0;
                 COLORREF bg = sel ? data->cur.accent : data->cur.bg;
-                COLORREF fg = sel ? RGB(255,255,255) : data->cur.text;
+                COLORREF fg = sel ? contrastText(bg) : data->cur.text;
                 HBRUSH b = CreateSolidBrush(bg); FillRect(dc, &rc, b); DeleteObject(b);
                 if (ds->itemID == (UINT)-1) return TRUE;
                 int langIdx = (int)ds->itemData;
@@ -454,7 +453,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 HBRUSH oldB = (HBRUSH)SelectObject(dc, swb);
                 Rectangle(dc, sw.left, sw.top, sw.right, sw.bottom);
                 SelectObject(dc, oldB); SelectObject(dc, oldP); DeleteObject(swb);
-                SetBkMode(dc, TRANSPARENT); SetTextColor(dc, dis?RGB(120,120,120):contrastText(data->cur.bg));
+                SetBkMode(dc, TRANSPARENT); SetTextColor(dc, dis?themeMutedText(data->cur.text, data->cur.bg):data->cur.text);
                 HFONT old=(HFONT)SelectObject(dc, data->font);
                 RECT tr={sw.right+8, rc.top, rc.right-4, rc.bottom};
                 DrawTextW(dc, label.c_str(), -1, &tr, DT_LEFT|DT_VCENTER|DT_SINGLELINE);
@@ -481,16 +480,18 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
                 g.SetTextRenderingHint(Gdiplus::TextRenderingHintClearTypeGridFit);
                 Gdiplus::Color fill = chk ? Gdiplus::Color(255, GetRValue(data->cur.accent), GetGValue(data->cur.accent), GetBValue(data->cur.accent)) : Gdiplus::Color(255, GetRValue(data->cur.panel), GetGValue(data->cur.panel), GetBValue(data->cur.panel));
-                Gdiplus::Color bord = chk ? Gdiplus::Color(255, GetRValue(data->cur.accent), GetGValue(data->cur.accent), GetBValue(data->cur.accent)) : Gdiplus::Color(255, 225, 225, 225);
+                COLORREF borderCol = chk ? data->cur.accent : themeMutedText(data->cur.text, data->cur.panel);
+                Gdiplus::Color bord(255, GetRValue(borderCol), GetGValue(borderCol), GetBValue(borderCol));
                 Gdiplus::SolidBrush br(fill);
                 Gdiplus::Pen pen(bord, 1.0f);
                 Gdiplus::GraphicsPath path; path.AddArc(bx, by, 4,4,180,90); path.AddArc(bx+box-4, by,4,4,270,90); path.AddArc(bx+box-4, by+box-4,4,4,0,90); path.AddArc(bx, by+box-4,4,4,90,90); path.CloseFigure();
                 g.FillPath(&br, &path); g.DrawPath(&pen, &path);
                 if (chk) {
-                    Gdiplus::Pen cpen(Gdiplus::Color(255,255,255,255), 2.0f); cpen.SetLineCap(Gdiplus::LineCapRound,Gdiplus::LineCapRound,Gdiplus::DashCapFlat);
+                    COLORREF checkCol = contrastText(data->cur.accent);
+                    Gdiplus::Pen cpen(Gdiplus::Color(255,GetRValue(checkCol),GetGValue(checkCol),GetBValue(checkCol)), 2.0f); cpen.SetLineCap(Gdiplus::LineCapRound,Gdiplus::LineCapRound,Gdiplus::DashCapFlat);
                     g.DrawLine(&cpen, bx+4, by+8, bx+7, by+12); g.DrawLine(&cpen, bx+7, by+12, bx+13, by+4);
                 }
-                COLORREF tc = contrastText(data->cur.bg);
+                COLORREF tc = data->cur.text;
                 Gdiplus::SolidBrush tbr(Gdiplus::Color(GetRValue(tc), GetGValue(tc), GetBValue(tc)));
                 Gdiplus::Font f(dc, data->font);
                 Gdiplus::RectF rf((Gdiplus::REAL)(bx+box+8), (Gdiplus::REAL)rc.top, (Gdiplus::REAL)(rc.right - (bx+box+8)), (Gdiplus::REAL)(rc.bottom - rc.top));
@@ -503,7 +504,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 HBRUSH bg = CreateSolidBrush(data->cur.bg); FillRect(dc, &rc, bg); DeleteObject(bg);
                 RECT panel = {rc.left + 10, rc.top + 10, rc.right - 10, rc.top + 38};
                 HBRUSH pb = CreateSolidBrush(data->cur.panel); FillRect(dc, &panel, pb); DeleteObject(pb);
-                SetBkMode(dc, TRANSPARENT); SetTextColor(dc, contrastText(data->cur.bg));
+                SetBkMode(dc, TRANSPARENT); SetTextColor(dc, contrastText(data->cur.panel));
                 HFONT old = (HFONT)SelectObject(dc, data->font);
                 DrawTextW(dc, L"KickX Launcher - Preview", -1, &panel, DT_CENTER|DT_VCENTER|DT_SINGLELINE);
                 SelectObject(dc, old);
@@ -546,8 +547,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             if (LOWORD(wParam) == IDC_BUTTON_BTN) { COLORREF c = pickColor(hwnd, data->cfg.customButton ? data->cfg.customButton : data->cfg.customAccent, &data->cfg.customAlpha); data->cfg.customButton = c; data->cur.buttonBg = c; InvalidateRect(data->hButtonBtn, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_GLOW_BTN) { COLORREF c = pickColor(hwnd, data->cfg.customGlow, &data->cfg.customAlpha); data->cfg.customGlow = c; data->cur.glow = c; InvalidateRect(data->hGlowBtn, nullptr, TRUE); return 0; }
             if (LOWORD(wParam) == IDC_APPLY_THEME) {
-                // persist only the theme selection and tell the main window to
-                // re-apply it live - without closing the settings dialog.
+                // only persist the theme, the main window re-applies it live
                 applyThemeChoice(data);
                 int tSel = (int)SendMessageW(data->hThemeCombo, CB_GETCURSEL, 0, 0);
                 if (tSel == 0) data->cfg.theme = "dark";
@@ -577,8 +577,7 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
                 if (langIdx >=0) { int real = (int)SendMessageW(data->hLangCombo, CB_GETITEMDATA, langIdx, 0); if (real>=0 && real < ravex::langCount()) data->cfg.language = ravex::langCodeByIndex(real); }
                 int tSel = (int)SendMessageW(data->hThemeCombo, CB_GETCURSEL, 0, 0);
                 if (tSel==0) data->cfg.theme="dark"; else if(tSel==1) data->cfg.theme="light"; else if(tSel==2) data->cfg.theme="win95"; else if(tSel==3) data->cfg.theme="vista"; else data->cfg.theme="custom";
-                // only overwrite the Custom palette when Custom is actually
-                // selected - saving Dark/Light used to stomp the user's colors.
+                // keep the custom palette unless Custom is selected
                 if (data->selected == "custom") {
                     data->cfg.customBg = data->cur.bg; data->cfg.customPanel = data->cur.panel; data->cfg.customText = data->cur.text; data->cfg.customAccent = data->cur.accent; data->cfg.customButton = data->cur.buttonBg; data->cfg.customGlow = data->cur.glow; data->cfg.glowEnabled = data->cGlow; data->cfg.customDarkIcons = data->cDarkIcons; data->cfg.customAlpha = data->cur.colorAlpha;
                 }
@@ -592,12 +591,12 @@ LRESULT CALLBACK SettingsProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
             HDC dc = reinterpret_cast<HDC>(wParam);
             HWND ctrl = reinterpret_cast<HWND>(lParam);
             if (ctrl == data->hPreview) return reinterpret_cast<LRESULT>(GetStockObject(NULL_BRUSH));
-            SetBkColor(dc, data->cur.bg); SetTextColor(dc, contrastText(data->cur.bg));
+            SetBkColor(dc, data->cur.bg); SetTextColor(dc, data->cur.text);
             return reinterpret_cast<LRESULT>(data->bgBrush);
         }
         case WM_CTLCOLORBTN: {
             HDC dc = reinterpret_cast<HDC>(wParam);
-            SetBkColor(dc, data->cur.bg); SetTextColor(dc, RGB(238, 238, 238));
+            SetBkColor(dc, data->cur.bg); SetTextColor(dc, data->cur.text);
             return reinterpret_cast<LRESULT>(data->bgBrush);
         }
         case WM_ERASEBKGND: {

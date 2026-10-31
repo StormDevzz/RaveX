@@ -22,6 +22,8 @@ public class SoundUtility {
     private static final Identifier TOGGLE_ID          = id("toggle");
     private static final Identifier SLIDE_ID           = id("slide");
     private static final Identifier DONE_ID            = id("done");
+    private static final Identifier ONBOARDING_DONE_ID = id("onboarding_done");
+    private static final Identifier NO_SETTINGS_ID     = id("no_settings");
 
     public static SoundEvent ENABLE;
     public static SoundEvent DISABLE;
@@ -35,6 +37,8 @@ public class SoundUtility {
     public static SoundEvent TOGGLE;
     public static SoundEvent SLIDE;
     public static SoundEvent DONE;
+    public static SoundEvent ONBOARDING_DONE;
+    public static SoundEvent NO_SETTINGS;
 
     private static Identifier id(String name) {
         return Identifier.fromNamespaceAndPath("ravex", name);
@@ -56,6 +60,8 @@ public class SoundUtility {
         TOGGLE        = Registry.register(BuiltInRegistries.SOUND_EVENT, TOGGLE_ID,        SoundEvent.createVariableRangeEvent(TOGGLE_ID));
         SLIDE         = Registry.register(BuiltInRegistries.SOUND_EVENT, SLIDE_ID,         SoundEvent.createVariableRangeEvent(SLIDE_ID));
         DONE          = Registry.register(BuiltInRegistries.SOUND_EVENT, DONE_ID,          SoundEvent.createVariableRangeEvent(DONE_ID));
+        ONBOARDING_DONE = Registry.register(BuiltInRegistries.SOUND_EVENT, ONBOARDING_DONE_ID, SoundEvent.createVariableRangeEvent(ONBOARDING_DONE_ID));
+        NO_SETTINGS   = Registry.register(BuiltInRegistries.SOUND_EVENT, NO_SETTINGS_ID,     SoundEvent.createVariableRangeEvent(NO_SETTINGS_ID));
     }
 
 
@@ -74,6 +80,8 @@ public class SoundUtility {
     public static void playToggle()        { play(TOGGLE,         0.6f); }
     public static void playSlide()         { play(SLIDE,          0.4f); }
     public static void playDone(float volume) { play(DONE, volume); }
+    public static void playOnboardingDone(float volume) { play(ONBOARDING_DONE, volume); }
+    public static void playNoSettings()    { play(NO_SETTINGS,    0.8f); }
 
 
     private static void play(SoundEvent soundEvent, float volume) {

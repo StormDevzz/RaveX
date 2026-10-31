@@ -7,11 +7,15 @@ import net.minecraft.resources.Identifier;
 public class HudRendererUtility {
 
     private static final int ICON_SIZE = 10;
-    private static final int RADIUS = 4;
-    private static final int BG_COLOR = 0x800C0C0C;
+    private static final int RADIUS = 6;
 
     public static void drawBackground(GuiGraphics g, int x, int y, int w, int h) {
-        Render2DUtility.drawRound(g, x, y, w, h, RADIUS, BG_COLOR);
+        drawBackground(g, x, y, w, h, 1f);
+    }
+
+    public static void drawBackground(GuiGraphics g, int x, int y, int w, int h, float alpha) {
+        if (alpha <= 0.005f) return;
+        Render2DUtility.drawBlurBackground(g, x, y, w, h, RADIUS, alpha);
     }
 
     public static void drawIcon(GuiGraphics g, Identifier icon, int x, int y, int tintColor) {

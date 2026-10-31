@@ -15,12 +15,10 @@ struct ThemeColors {
     bool glowEnabled = true;
     int colorAlpha = 255;
     bool isDark = true;
-    // optional classic (Windows 95) styling. 0 means "use bg/text".
-    COLORREF caption = 0;        // title bar fill
-    COLORREF captionText = 0;    // title bar text
-    bool classic = false;        // square corners + raised/sunken 3D bevels, no glow
-    // frutiger Aero / Vista-7 styling: soft white glass sheen across the top
-    // half of buttons. Only meaningful when "classic" is off.
+    // classic windows 95 styling; 0 means "use bg/text"
+    COLORREF caption = 0;
+    COLORREF captionText = 0;
+    bool classic = false;        // square corners, 3D bevels, no glow
     bool gloss = false;
 };
 
@@ -31,9 +29,13 @@ int themeCount();
 const char* themeNameByIndex(int index);
 void applyWindowTheme(HWND hwnd, const ThemeColors& theme);
 
-// paints a themed box: rounded rect for modern themes, or - when "classic" is
-// set - a Windows 95 style square face with a raised/sunken 3D bevel.
-// "sunken" flips the bevel (used for pressed buttons and text fields).
+// color helpers for readable text on any background
+COLORREF blendThemeColor(COLORREF a, COLORREF b, int weightA);
+COLORREF themeContrastText(COLORREF background);
+COLORREF themeMutedText(COLORREF text, COLORREF background);
+
+// rounded rect normally, square 3D bevel for classic themes
+// sunken flips the bevel (pressed buttons, text fields)
 void paintThemedBox(Gdiplus::Graphics& g, const Gdiplus::RectF& rc, COLORREF fill, bool classic, bool sunken);
 
 }

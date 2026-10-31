@@ -119,6 +119,7 @@ public class SearchBrowserScreen extends Screen {
             allEntities.add(new Entry(t));
         }
         refilter();
+        restoreAtlasFilter();
     }
 
     @Override public boolean isPauseScreen() { return false; }
@@ -243,7 +244,6 @@ public class SearchBrowserScreen extends Screen {
 
         boolean transitioning = tabTransition < 1f;
 
-        setAtlasFilter(FilterMode.LINEAR);
         if (transitioning && !previousFiltered.isEmpty()) {
             float oldOffX = -swipeDirection * tabTransition * gw;
             int oldCols = Math.max(4, (gw + 2) / 28);
@@ -279,8 +279,6 @@ public class SearchBrowserScreen extends Screen {
         } else {
             renderGrid(g, sr, er, cols, gx, gy, cell, amx, amy, true, selColor, selHovColor, hovColor, false, alpha);
         }
-        setAtlasFilter(FilterMode.NEAREST);
-
         Render2DUtility.popScissor(g);
 
         if (maxScroll > 0) {
@@ -337,14 +335,7 @@ public class SearchBrowserScreen extends Screen {
 
     private void renderEntryIcon(GuiGraphics g, Entry item, int x, int y) {
         if (!item.stack.isEmpty()) {
-            var pose = g.pose();
-            pose.translate(x + 8f, y + 8f);
-            pose.scale(1.5f, 1.5f);
-            pose.translate(-(x + 8f), -(y + 8f));
             g.renderItem(item.stack, x, y);
-            pose.translate(x + 8f, y + 8f);
-            pose.scale(1f / 1.5f, 1f / 1.5f);
-            pose.translate(-(x + 8f), -(y + 8f));
         } else {
             int color = 0xFF404050;
             Render2DUtility.drawRound(g, x, y, 16, 16, 4, color);
@@ -356,7 +347,7 @@ public class SearchBrowserScreen extends Screen {
 
     private static Field samplerField = null;
 
-    public static void setAtlasFilter(FilterMode mode) {
+    public static void restoreAtlasFilter() {
         try {
             Identifier atlasId = Identifier.fromNamespaceAndPath("minecraft", "textures/atlas/blocks.png");
             AbstractTexture atlas = MinecraftWrapper.getWrapper().getTextureManager().getTexture(atlasId);
@@ -370,12 +361,17 @@ public class SearchBrowserScreen extends Screen {
                 }
             }
             if (samplerField != null) {
-                GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(mode);
+                // vanilla mipmapped nearest sampler
+                GpuSampler sampler = RenderSystem.getSamplerCache().getClampToEdge(FilterMode.NEAREST, true);
                 samplerField.set(atlas, sampler);
             }
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[SearchBrowser] Failed to set atlas sampler: {}", e.getMessage());
+            RaveX.LOGGER.warn("[SearchBrowser] Failed to restore atlas sampler: {}", e.getMessage());
         }
+    }
+
+    public static void setAtlasFilter(FilterMode mode) {
+        restoreAtlasFilter();
     }
 
     private void close() {

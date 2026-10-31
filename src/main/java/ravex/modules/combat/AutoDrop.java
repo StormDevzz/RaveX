@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
-import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.utility.player.SwingUtility;
@@ -37,7 +36,6 @@ public class AutoDrop {
     public boolean swapSwitchBack = true;
     @Parameter(name = "Delay", min = 1, max = 10, step = 1)
     public double placeDelay = 2;
-    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autodrop");
     private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     private int tickCounter = 0;
     private int originalSlot = -1;

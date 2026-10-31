@@ -14,44 +14,44 @@ import ravex.modules.Modules;
 @Module(name = "Particles", category = "Render")
 public class Particles {
 private static String lastTrigger = "";
+    @Parameter(name = "Mode", modes = {"AroundPlayer", "Fountain", "Rising", "Vortex", "Explosion"})
+    public String mode = "AroundPlayer";
     @Parameter(name = "Shape", modes = {"Square", "Circle", "Triangle", "All"})
     public String shape = "All";
     @Parameter(name = "Trigger", modes = {"Always", "Walking", "Attack", "Mine", "Attack&Mine"})
     public String trigger = "Walking";
-    @Parameter(name = "ThroughWalls")
-    public boolean throughWalls = true;
+    @Parameter(name = "Color", color = true)
+    public int color = 0xFF40A9F8;
+    @Parameter(name = "Rainbow")
+    public boolean rainbow = false;
+    @Parameter(name = "Alpha", min = 0.0, max = 1.0, step = 0.05)
+    public double alpha = 1.0;
+    @Parameter(name = "Glow")
+    public boolean glow = true;
     @Parameter(name = "Amount", min = 5, max = 200, step = 5)
     public double amount = 30;
     @Parameter(name = "Size", min = 0.05, max = 2.0, step = 0.05)
     public double size = 0.5;
     @Parameter(name = "Speed", min = 0.0, max = 5.0, step = 0.1)
     public double speed = 1.5;
-    @Parameter(name = "Color", color = true)
-    public int color = 0xFFFF9BC4;
-    @Parameter(name = "Lifetime", min = 0.5, max = 10.0, step = 0.5)
-    public double lifetime = 4.0;
-    @Parameter(name = "SpawnRate", min = 1, max = 20, step = 1)
-    public double spawnRate = 2;
     @Parameter(name = "Spread", min = 0.5, max = 10.0, step = 0.5)
     public double spread = 2.0;
+    @Parameter(name = "SpawnRate", min = 1, max = 20, step = 1)
+    public double spawnRate = 2;
+    @Parameter(name = "Lifetime", min = 0.5, max = 10.0, step = 0.5)
+    public double lifetime = 4.0;
     @Parameter(name = "Gravity")
     public boolean gravity = false;
-    @Parameter(name = "Mode", modes = {"AroundPlayer", "Fountain", "Rising", "Vortex", "Explosion"})
-    public String mode = "AroundPlayer";
-    @Parameter(name = "Alpha", min = 0.0, max = 1.0, step = 0.05)
-    public double alpha = 1.0;
+    @Parameter(name = "Collision")
+    public boolean collide = true;
+    @Parameter(name = "ThroughWalls")
+    public boolean throughWalls = true;
     @Parameter(name = "RotationSpeed", min = 0.0, max = 5.0, step = 0.1)
     public double rotationSpeed = 1.0;
-    @Parameter(name = "Glow")
-    public boolean glow = true;
-    @Parameter(name = "Rainbow")
-    public boolean rainbow = false;
     @Parameter(name = "LineWidth", min = 0.5, max = 10.0, step = 0.5)
     public double lineWidth = 3.5;
     @Parameter(name = "Segments", min = 6, max = 32, step = 2)
     public double segments = 16;
-    @Parameter(name = "Collision")
-    public boolean collide = true;
     public static boolean attackedThisTick = false;
     public static boolean minedThisTick = false;
     public static net.minecraft.world.phys.Vec3 lastAttackPos = null;

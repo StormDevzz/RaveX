@@ -14,4 +14,7 @@ public interface AccessorMinecraft {
 
     @org.spongepowered.asm.mixin.gen.Invoker("startUseItem")
     void invokeStartUseItem();
+
+    @org.spongepowered.asm.mixin.gen.Invoker("startAttack")
+    boolean invokeStartAttack();
 }

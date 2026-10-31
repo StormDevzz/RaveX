@@ -1,528 +1,362 @@
 package ravex.gui.clickgui;
-import ravex.utility.render.ColorUtility;
 
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
-import org.lwjgl.glfw.GLFW;
-import ravex.modules.player.invclean.InvCleanData;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.player.invclean.InvClean;
+import ravex.modules.player.invclean.InvCleanData;
+import ravex.utility.misc.LanguageUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
 
 import java.util.ArrayList;
 import java.util.List;
-import ravex.manager.ModuleManager;
-import ravex.modules.Modules;
 
-
+// one page of native size icons, those stay crisp
 public class InvCleanScreen extends Screen {
-
-    private static final int ITEM_SIZE   = 20;
-    private static final int COLS        = 8;
-    private static final int ROWS        = 6;
-    private static final int PAGE_SIZE   = COLS * ROWS;
-
     private final Screen parent;
 
+    // display name and search key cached per item
+    private static final class InvEntry {
+        final Identifier id;
+        final String idStr;
+        final ItemStack stack;
+        private String name;
+        private String nameLower;
 
-    private final List<Item> allItems = new ArrayList<>();
-
-    private final List<Item> filteredItems = new ArrayList<>();
-
-
-    private String searchQuery  = "";
-    private boolean searchFocus = false;
-
-
-    private int currentPage = 0;
-
-
-    private float selectedScroll = 0;
-
-
-    private String hoveredTooltip = null;
-    private int tooltipX, tooltipY;
-
-
-    private long openTime = -1;
-
-
-    private boolean cleanHovered = false;
-    private boolean quitHovered  = false;
-    private boolean prevHovered  = false;
-    private boolean nextHovered  = false;
-
-
-    private long cleanClickTime = -1;
-
-    public InvCleanScreen(Screen parent) {
-        super(Component.literal(ravex.utility.misc.LanguageUtility.t("ic_title")));
-        this.parent = parent;
-
-
-        for (Item item : BuiltInRegistries.ITEM) {
-            if (item == Items.AIR) continue;
-            allItems.add(item);
+        InvEntry(Identifier id, ItemStack stack) {
+            this.id = id;
+            this.idStr = id.toString();
+            this.stack = stack;
         }
-        rebuildFiltered();
+
+        String name() {
+            if (name == null) name = stack.getHoverName().getString();
+            return name;
+        }
+
+        String nameLower() {
+            if (nameLower == null) nameLower = name().toLowerCase();
+            return nameLower;
+        }
     }
 
-    private void rebuildFiltered() {
-        filteredItems.clear();
-        String q = searchQuery.toLowerCase().trim();
-        for (Item item : allItems) {
-            if (q.isEmpty()) {
-                filteredItems.add(item);
-            } else {
-                String name = new ItemStack(item).getHoverName().getString().toLowerCase();
-                Identifier rl = BuiltInRegistries.ITEM.getKey(item);
-                if (rl == null) continue;
-                String id = rl.toString();
-                if (name.contains(q) || id.contains(q)) {
-                    filteredItems.add(item);
-                }
-            }
-        }
+    private final List<InvEntry> allItems = new ArrayList<>();
+    private List<InvEntry> filtered = new ArrayList<>();
 
-        int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
-        if (currentPage > maxPage) currentPage = maxPage;
+    private enum Tab { ALL, SELECTED }
+    private Tab tab = Tab.ALL;
+    private int page = 0;
+
+    private static final int MAX_COLS = 24;
+    private static final int MIN_COLS = 6;
+    private static final int MAX_ROWS = 10;
+    private static final int MIN_ROWS = 4;
+    private static final int CELL = 28;
+
+    private String searchQuery = "";
+    private boolean searchFocused = false;
+
+    private InvEntry hovered = null;
+
+    public InvCleanScreen(Screen parent) {
+        super(net.minecraft.network.chat.Component.literal("InvClean"));
+        this.parent = parent;
+        ravex.gui.browser.SearchBrowserScreen.restoreAtlasFilter();
+        // names stay lazy so the screen opens fast
+        for (Item item : BuiltInRegistries.ITEM) {
+            Identifier id = BuiltInRegistries.ITEM.getKey(item);
+            if (id == null || id.getPath().equals("air")) continue;
+            allItems.add(new InvEntry(id, new ItemStack(item)));
+        }
+        refilter();
     }
 
     @Override
     public boolean isPauseScreen() { return false; }
 
+    private void refilter() {
+        String q = searchQuery.toLowerCase();
+        filtered = new ArrayList<>(allItems.size());
+        boolean selectedTab = tab == Tab.SELECTED;
+        for (InvEntry e : allItems) {
+            if (selectedTab && !InvCleanData.INSTANCE.isSelected(e.idStr)) continue;
+            if (!q.isEmpty() && !e.nameLower().contains(q) && !e.idStr.contains(q)) continue;
+            filtered.add(e);
+        }
+        int maxPage = Math.max(0, (filtered.size() - 1) / pageSize());
+        if (page > maxPage) page = maxPage;
+    }
+
+    // shared layout so render and clicks agree
+    private int panelX() { return (this.width - panelW()) / 2; }
+    private int panelY() { return (this.height - panelH()) / 2; }
+    private int panelW() { return Math.min(640, this.width - 60); }
+    private int panelH() { return Math.min(400, this.height - 60); }
+
+    private static final int TAB_W = 80;
+    private static final int TAB_H = 16;
+
+    private int cols() {
+        int c = (panelW() - 20) / CELL;
+        if (c < MIN_COLS) c = MIN_COLS;
+        if (c > MAX_COLS) c = MAX_COLS;
+        return c;
+    }
+    private int gridW() { return cols() * CELL; }
+    private int rows() {
+        int r = (panelH() - 94) / CELL;
+        if (r < MIN_ROWS) r = MIN_ROWS;
+        if (r > MAX_ROWS) r = MAX_ROWS;
+        return r;
+    }
+    private int pageSize() { return cols() * rows(); }
+    private int gridH() { return rows() * CELL; }
+    private int gridX() { return panelX() + (panelW() - gridW()) / 2; }
+    private int gridY() { return panelY() + 34 + TAB_H + 10; }
+
+    private int maxPage() { return Math.max(0, (filtered.size() - 1) / pageSize()); }
+
     @Override
     public void render(GuiGraphics g, int mouseX, int mouseY, float pt) {
-        long now = System.currentTimeMillis();
-        if (openTime < 0) openTime = now;
+        int px = panelX(), py = panelY(), pw = panelW(), ph = panelH();
+        int ac = ColorUtility.getActiveColor();
 
+        g.fill(0, 0, this.width, this.height, 0x8C000000);
 
-        float elapsed = (now - openTime);
-        float progress = Math.min(1.0f, elapsed / 200f);
-        float scale = progress * (2f - progress);
+        Render2DUtility.drawRound(g, px, py, pw, ph, 8, 0xFF0D0F14);
+        Render2DUtility.drawRoundBorder(g, px, py, pw, ph, 8, 1, ColorUtility.withAlpha(ac, 160));
 
-        int W = this.width;
-        int H = this.height;
+        FontRenderUtility.drawString(g, LanguageUtility.t("ic_title"), px + 12, py + 8, 0xFFE0E0E0, true);
 
+        long selected = InvCleanData.INSTANCE.getSelectedItems().size();
+        long total = tab == Tab.ALL ? allItems.size() : selected;
+        FontRenderUtility.drawString(g, selected + "/" + total, px + pw - 80, py + 10, 0xFF606060, true);
 
-        int bgA = (int)(progress * 0x99);
-        g.fill(0, 0, W, H, ColorUtility.setAlpha(0x05050E, bgA));
-
-
-        int panelW = 680;
-        int panelH = 420;
-        if (W < panelW + 40) panelW = W - 40;
-        if (H < panelH + 40) panelH = H - 40;
-
-        int panelX = (W - panelW) / 2;
-        int panelY = (H - panelH) / 2;
-
-        var pose = g.pose();
-        pose.pushMatrix();
-        pose.translate(W / 2.0f, H / 2.0f);
-        pose.scale(scale, scale);
-        pose.translate(-W / 2.0f, -H / 2.0f);
-
-        float cx = W / 2.0f, cy = H / 2.0f;
-        int mx = scale > 0.01f ? (int)((mouseX - cx) / scale + cx) : mouseX;
-        int my = scale > 0.01f ? (int)((mouseY - cy) / scale + cy) : mouseY;
-
-        hoveredTooltip = null;
-
-
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xF0101020);
-        Render2DUtility.drawBorder(g, panelX, panelY, panelW, panelH, 1, 0xFF2A1A4A);
-
-
-        int headerH = 28;
-        g.fill(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF160E30);
-        g.fill(panelX, panelY + headerH - 1, panelX + panelW, panelY + headerH, ColorUtility.getActiveColor());
-        FontRenderUtility.drawString(g, "✦ Inventory Cleaner", panelX + 10, panelY + 6, ColorUtility.getActiveColor(), true);
-        FontRenderUtility.drawString(g, ravex.utility.misc.LanguageUtility.t("ic_back"), panelX + panelW - 72, panelY + 8, 0xFF606080, false);
-
-
-        int leftW  = (panelW / 2) - 6;
-        int rightW = panelW - leftW - 18;
-        int leftX  = panelX + 6;
-        int rightX = panelX + leftW + 12;
-        int contentY = panelY + headerH + 6;
-        int contentH = panelH - headerH - 50;
-
-
-        g.fill(leftX, contentY, leftX + leftW, contentY + contentH, 0xFF0C0920);
-        Render2DUtility.drawBorder(g, leftX, contentY, leftW, contentH, 1, 0xFF281844);
-
-
-        int colHeaderH = 18;
-        g.fill(leftX, contentY, leftX + leftW, contentY + colHeaderH, 0xFF180E38);
-        FontRenderUtility.drawString(g, "§7All Items §8(" + filteredItems.size() + ")", leftX + 5, contentY + 3, 0xFFAAAAAA, false);
-
-
-        int searchY = contentY + colHeaderH + 2;
-        int searchH = 14;
-        int searchW = leftW - 8;
-        boolean searchHov = mx >= leftX + 4 && mx <= leftX + 4 + searchW && my >= searchY && my <= searchY + searchH;
-        g.fill(leftX + 4, searchY, leftX + 4 + searchW, searchY + searchH, searchFocus ? 0xFF1A1040 : 0xFF120B30);
-        Render2DUtility.drawBorder(g, leftX + 4, searchY, searchW, searchH, 1,
-            searchFocus ? ColorUtility.getActiveColor() : 0xFF2A1850);
-        String searchDisplay = searchQuery.isEmpty() && !searchFocus ? "§8Search..." : searchQuery + (searchFocus ? "§8|" : "");
-        FontRenderUtility.drawString(g, searchDisplay, leftX + 7, searchY + 2, 0xFFCCCCCC, false);
-
-
-        int gridY = searchY + searchH + 3;
-        int gridH = contentH - colHeaderH - searchH - 8;
-        int gridX = leftX + 4;
-
-
-        int startIdx = currentPage * PAGE_SIZE;
-        int endIdx   = Math.min(startIdx + PAGE_SIZE, filteredItems.size());
-
-        Render2DUtility.pushScissor(g, leftX, gridY, leftW, gridH);
-
-        for (int i = startIdx; i < endIdx; i++) {
-            int localIdx = i - startIdx;
-            int col = localIdx % COLS;
-            int row = localIdx / COLS;
-            int ix = gridX + col * ITEM_SIZE;
-            int iy = gridY + row * ITEM_SIZE;
-
-            Item item = filteredItems.get(i);
-            ItemStack stack = new ItemStack(item);
-            Identifier rl = BuiltInRegistries.ITEM.getKey(item);
-            String itemId = rl != null ? rl.toString() : "";
-
-            boolean sel = InvCleanData.INSTANCE.isSelected(itemId);
-            boolean hov = mx >= ix && mx <= ix + ITEM_SIZE - 1 && my >= iy && my <= iy + ITEM_SIZE - 1;
-
-
-            if (hov) {
-                g.fill(ix, iy, ix + ITEM_SIZE, iy + ITEM_SIZE, 0xFF2A2040);
-                hoveredTooltip = new ItemStack(item).getHoverName().getString() + "\n§8" + itemId;
-                tooltipX = mx; tooltipY = my;
-            } else if (sel) {
-                g.fill(ix, iy, ix + ITEM_SIZE, iy + ITEM_SIZE, 0x44DA70D6);
-            }
-
-
-            g.renderItem(stack, ix + 2, iy + 2);
-
-
-            if (sel) {
-                FontRenderUtility.drawString(g, "§a✔", ix + ITEM_SIZE - 7, iy, 0xFF44FF88, false);
-            }
+        int tabX = px + 10, tabY = py + 34;
+        for (int ti = 0; ti < 2; ti++) {
+            int tix = tabX + ti * (TAB_W + 4);
+            boolean ta = tab == (ti == 0 ? Tab.ALL : Tab.SELECTED);
+            boolean th = !ta && mouseX >= tix && mouseX <= tix + TAB_W && mouseY >= tabY && mouseY <= tabY + TAB_H;
+            Render2DUtility.drawRound(g, tix, tabY, TAB_W, TAB_H, 4,
+                ta ? 0x20FFFFFF : (th ? 0x15151515 : 0x05000000));
+            if (ta) Render2DUtility.drawRoundBorder(g, tix, tabY, TAB_W, TAB_H, 4, 1, ColorUtility.withAlpha(ac, 220));
+            String label = LanguageUtility.t(ti == 0 ? "ic_all_items" : "ic_selected");
+            int lw = FontRenderUtility.getStringWidth(label);
+            FontRenderUtility.drawString(g, label, tix + (TAB_W - lw) / 2, tabY + 3,
+                ta ? 0xFFFFFFFF : (th ? 0xFFB0B0B0 : 0xFF707070), true);
         }
 
-        Render2DUtility.popScissor(g);
-
-
-        int pageY = gridY + gridH + 2;
-        int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
-        String pageStr = ravex.utility.misc.LanguageUtility.t("ic_page", currentPage + 1, maxPage + 1);
-
-        prevHovered = mx >= leftX + 4 && mx <= leftX + 26 && my >= pageY && my <= pageY + 12;
-        nextHovered = mx >= leftX + leftW - 26 && mx <= leftX + leftW - 4 && my >= pageY && my <= pageY + 12;
-
-
-        g.fill(leftX + 4, pageY, leftX + 26, pageY + 12, prevHovered ? 0xFF2A2050 : 0xFF180E38);
-        FontRenderUtility.drawString(g, "◀", leftX + 10, pageY + 1, currentPage > 0 ? 0xFFCCCCCC : 0xFF444466, false);
-
-
-        int ptw = FontRenderUtility.getStringWidth(pageStr);
-        FontRenderUtility.drawString(g, pageStr, leftX + leftW / 2 - ptw / 2, pageY + 1, 0xFF9090B0, false);
-
-
-        g.fill(leftX + leftW - 26, pageY, leftX + leftW - 4, pageY + 12, nextHovered ? 0xFF2A2050 : 0xFF180E38);
-        FontRenderUtility.drawString(g, "▶", leftX + leftW - 22, pageY + 1, currentPage < maxPage ? 0xFFCCCCCC : 0xFF444466, false);
-
-
-        g.fill(rightX, contentY, rightX + rightW, contentY + contentH, 0xFF0C0920);
-        Render2DUtility.drawBorder(g, rightX, contentY, rightW, contentH, 1, 0xFF281844);
-
-
-        g.fill(rightX, contentY, rightX + rightW, contentY + colHeaderH, 0xFF180E38);
-        int selCount = InvCleanData.INSTANCE.getSelectedItems().size();
-        FontRenderUtility.drawString(g, "§dSelected §7(" + selCount + ")", rightX + 5, contentY + 3,
-            selCount > 0 ? ColorUtility.getActiveColor() : 0xFF777777, false);
-
-
-        int selContentY = contentY + colHeaderH + 3;
-        int selContentH = contentH - colHeaderH - 6;
-        Render2DUtility.pushScissor(g, rightX, selContentY, rightW, selContentH);
-
-        var selectedSet = InvCleanData.INSTANCE.getSelectedItems();
-        String[] selectedArr = selectedSet.toArray(new String[0]);
-        int maxSelScroll = Math.max(0, selectedArr.length * 18 - selContentH);
-        selectedScroll = Math.max(0, Math.min(maxSelScroll, selectedScroll));
-
-        int sy = selContentY + 3 - (int)selectedScroll;
-        for (String itemId : selectedArr) {
-            Identifier rlId = Identifier.tryParse(itemId);
-            if (rlId == null) continue;
-            Item item = null;
-            for (Item candidate : BuiltInRegistries.ITEM) {
-                Identifier key = BuiltInRegistries.ITEM.getKey(candidate);
-                if (rlId.equals(key)) { item = candidate; break; }
-            }
-            if (item == null || item == Items.AIR) continue;
-
-            ItemStack stack = new ItemStack(item);
-            boolean rowHov = mx >= rightX + 3 && mx <= rightX + rightW - 3 && my >= sy && my <= sy + 16;
-            if (rowHov) {
-                g.fill(rightX + 3, sy, rightX + rightW - 3, sy + 16, 0xFF2A2040);
-                hoveredTooltip = "§c✕ Remove: §f" + new ItemStack(item).getHoverName().getString();
-                tooltipX = mx; tooltipY = my;
-            }
-
-            g.renderItem(stack, rightX + 4, sy);
-            FontRenderUtility.drawString(g, new ItemStack(item).getHoverName().getString(), rightX + 22, sy + 3, 0xFFDDDDDD, false);
-
-
-            FontRenderUtility.drawString(g, "§c✕", rightX + rightW - 12, sy + 3, 0xFFFF4455, false);
-
-            sy += 18;
+        int sx = tabX + 2 * (TAB_W + 4) + 8;
+        int sw = px + pw - 12 - sx;
+        Render2DUtility.drawRound(g, sx, tabY, sw, TAB_H, 4, 0x14FFFFFF);
+        if (searchFocused) Render2DUtility.drawRoundBorder(g, sx, tabY, sw, TAB_H, 4, 1, ColorUtility.withAlpha(ac, 200));
+        if (searchQuery.isEmpty() && !searchFocused) {
+            FontRenderUtility.drawString(g, "Search...", sx + 5, tabY + 3, 0xFF606070, false);
+        } else {
+            String shown = searchQuery + (((System.currentTimeMillis() / 500) % 2 == 0 && searchFocused) ? "|" : "");
+            FontRenderUtility.drawString(g, shown, sx + 5, tabY + 3, 0xFFD0D0E0, false);
         }
 
-        Render2DUtility.popScissor(g);
+        int gx = gridX(), gy = gridY(), gw = gridW(), gh = gridH();
+        Render2DUtility.drawRound(g, gx - 6, gy - 6, gw + 12, gh + 12, 6, 0xFF06060A);
 
+        hovered = null;
+        if (page > maxPage()) page = maxPage();
+        int start = page * pageSize();
+        for (int i = 0; i < pageSize(); i++) {
+            int idx = start + i;
+            if (idx >= filtered.size()) break;
+            InvEntry e = filtered.get(idx);
+            int tx = gx + (i % cols()) * CELL;
+            int ty = gy + (i / cols()) * CELL;
+            boolean hov = mouseX >= tx && mouseX <= tx + CELL && mouseY >= ty && mouseY <= ty + CELL;
+            boolean sel = InvCleanData.INSTANCE.isSelected(e.idStr);
+            // cells skip their own fill, the panel behind is dark
+            if (sel || hov) {
+                int cellBg = sel ? ColorUtility.withAlpha(ac, hov ? 60 : 30) : 0xFF1A1A1E;
+                Render2DUtility.drawRound(g, tx + 1, ty + 1, CELL - 2, CELL - 2, 6, cellBg);
+                if (sel) Render2DUtility.drawRoundBorder(g, tx + 1, ty + 1, CELL - 2, CELL - 2, 6, 1, ColorUtility.withAlpha(ac, 220));
+            }
+            g.renderItem(e.stack, tx + 6, ty + 6);
+            if (hov) hovered = e;
+        }
 
-        int btnY   = panelY + panelH - 36;
-        int btnH   = 18;
-        int cleanW = 100;
-        int quitW  = 60;
-        int cleanX = panelX + (panelW / 2) - cleanW - 6;
-        int quitX  = panelX + (panelW / 2) + 6;
+        int bw = 110, bh = 18, by = py + ph - 28;
+        String cleanLabel = LanguageUtility.t("ic_clean_now");
+        boolean cleanHov = mouseX >= px + 10 && mouseX <= px + 10 + bw && mouseY >= by && mouseY <= by + bh;
+        Render2DUtility.drawRound(g, px + 10, by, bw, bh, 5, cleanHov ? ColorUtility.withAlpha(ac, 90) : 0x18FFFFFF);
+        Render2DUtility.drawRoundBorder(g, px + 10, by, bw, bh, 5, 1, ColorUtility.withAlpha(ac, 180));
+        int clw = FontRenderUtility.getStringWidth(cleanLabel);
+        FontRenderUtility.drawString(g, cleanLabel, px + 10 + (bw - clw) / 2, by + 4, 0xFFFFFFFF, false);
 
+        String quitLabel = LanguageUtility.t("ic_quit");
+        int qw = 80, qx = px + pw - 10 - qw;
+        boolean quitHov = mouseX >= qx && mouseX <= qx + qw && mouseY >= by && mouseY <= by + bh;
+        Render2DUtility.drawRound(g, qx, by, qw, bh, 5, quitHov ? 0x18FFFFFF : 0x10FFFFFF);
+        int qlw = FontRenderUtility.getStringWidth(quitLabel);
+        FontRenderUtility.drawString(g, quitLabel, qx + (qw - qlw) / 2, by + 4, 0xFFD0D0E0, false);
 
-        cleanHovered = mx >= cleanX && mx <= cleanX + cleanW && my >= btnY && my <= btnY + btnH;
-        boolean cleanFlash = (cleanClickTime > 0 && now - cleanClickTime < 300);
-        int cleanBg = cleanFlash ? 0xFF44AA55 : cleanHovered ? 0xFF2A1850 : 0xFF1A0E38;
-        g.fill(cleanX, btnY, cleanX + cleanW, btnY + btnH, cleanBg);
-        Render2DUtility.drawBorder(g, cleanX, btnY, cleanW, btnH, 1,
-            cleanHovered ? ColorUtility.getActiveColor() : 0xFF3A2060);
-        int ctw = FontRenderUtility.getStringWidth("🗑 Clean Now");
-        FontRenderUtility.drawString(g, "🗑 Clean Now", cleanX + cleanW / 2 - ctw / 2, btnY + 4, 0xFFFFFFFF, true);
+        int pgw = 64;
+        int pgx = px + (pw - pgw) / 2;
+        boolean prevHov = mouseX >= pgx - 22 && mouseX <= pgx - 6 && mouseY >= by && mouseY <= by + bh;
+        boolean nextHov = mouseX >= pgx + pgw + 6 && mouseX <= pgx + pgw + 22 && mouseY >= by && mouseY <= by + bh;
+        Render2DUtility.drawRound(g, pgx - 22, by, 16, bh, 4, prevHov ? 0x22FFFFFF : 0x12FFFFFF);
+        Render2DUtility.drawRound(g, pgx + pgw + 6, by, 16, bh, 4, nextHov ? 0x22FFFFFF : 0x12FFFFFF);
+        FontRenderUtility.drawString(g, "<", pgx - 16, by + 4, 0xFFC0C0C0, false);
+        FontRenderUtility.drawString(g, ">", pgx + pgw + 12, by + 4, 0xFFC0C0C0, false);
+        String pageLabel = (page + 1) + "/" + (maxPage() + 1);
+        int plw = FontRenderUtility.getStringWidth(pageLabel);
+        FontRenderUtility.drawString(g, pageLabel, pgx + (pgw - plw) / 2, by + 4, 0xFF909090, false);
 
-
-        quitHovered = mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH;
-        g.fill(quitX, btnY, quitX + quitW, btnY + btnH, quitHovered ? 0xFF3A1010 : 0xFF1A0E38);
-        Render2DUtility.drawBorder(g, quitX, btnY, quitW, btnH, 1, quitHovered ? 0xFFFF4455 : 0xFF3A2060);
-        String qtv = ravex.utility.misc.LanguageUtility.t("ic_quit");
-        int qtw = FontRenderUtility.getStringWidth(qtv);
-        FontRenderUtility.drawString(g, qtv, quitX + quitW / 2 - qtw / 2, btnY + 4, quitHovered ? 0xFFFF8888 : 0xFFCCCCCC, false);
-
-        pose.popMatrix();
-
-
-        if (hoveredTooltip != null && scale > 0.8f) {
-            renderTooltip(g, hoveredTooltip, mouseX, mouseY);
+        // name tag follows the cursor, flips at screen edges
+        if (hovered != null) {
+            String name = hovered.name();
+            int nw = FontRenderUtility.getStringWidth(name);
+            int boxW = nw + 16, boxH = 17;
+            int tx = mouseX + 12, ty = mouseY - boxH - 8;
+            if (tx + boxW > this.width - 2) tx = mouseX - boxW - 12;
+            if (ty < 2) ty = mouseY + 14;
+            if (tx < 2) tx = 2;
+            if (ty + boxH > this.height - 2) ty = this.height - boxH - 2;
+            Render2DUtility.drawRound(g, tx, ty, boxW, boxH, 4, 0xE6080A10);
+            Render2DUtility.drawRoundBorder(g, tx, ty, boxW, boxH, 4, 1, ColorUtility.withAlpha(ac, 120));
+            FontRenderUtility.drawString(g, name, tx + (boxW - nw) / 2, ty + 4, 0xFFCCCCCC, false);
         }
 
         super.render(g, mouseX, mouseY, pt);
-    }
-
-    private void renderTooltip(GuiGraphics g, String text, int mx, int my) {
-        String[] lines = text.split("\n");
-        int maxW = 0;
-        for (String line : lines) {
-            int lw = FontRenderUtility.getStringWidth(line);
-            if (lw > maxW) maxW = lw;
-        }
-        int tw = maxW + 10;
-        int th = lines.length * 10 + 6;
-        int tx = mx + 8;
-        int ty = my - th - 4;
-        if (tx + tw > this.width) tx = this.width - tw - 4;
-        if (ty < 2) ty = my + 12;
-
-        g.fill(tx - 1, ty - 1, tx + tw + 1, ty + th + 1, 0xCC1A0E30);
-        g.fill(tx, ty, tx + tw, ty + th, 0xEE0E0920);
-        Render2DUtility.drawBorder(g, tx, ty, tw, th, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 160));
-
-        int ly = ty + 3;
-        for (String line : lines) {
-            FontRenderUtility.drawString(g, line, tx + 5, ly, 0xFFEEEEEE, false);
-            ly += 10;
-        }
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         int mx = (int) event.x();
         int my = (int) event.y();
-        int btn = event.button();
+        int px = panelX(), py = panelY(), pw = panelW(), ph = panelH();
 
-        int W = this.width, H = this.height;
-        int panelW = Math.max(300, Math.min(680, W - 40));
-        int panelH = Math.max(250, Math.min(420, H - 40));
-        int panelX = (W - panelW) / 2;
-        int panelY = (H - panelH) / 2;
-
-        int headerH  = 28;
-        int contentY = panelY + headerH + 6;
-        int contentH = panelH - headerH - 50;
-        int leftW    = (panelW / 2) - 6;
-        int rightW   = panelW - leftW - 18;
-        int leftX    = panelX + 6;
-        int rightX   = panelX + leftW + 12;
-        int colHeaderH = 18;
-
-
-        int btnY  = panelY + panelH - 36;
-        int btnH  = 18;
-        int quitW = 60;
-        int quitX = panelX + (panelW / 2) + 6;
-        if (mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH && btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            onClose();
-            return true;
-        }
-
-
-        int cleanW = 100;
-        int cleanX = panelX + (panelW / 2) - cleanW - 6;
-        if (mx >= cleanX && mx <= cleanX + cleanW && my >= btnY && my <= btnY + btnH && btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            cleanClickTime = System.currentTimeMillis();
-            InvClean.cleanInventory(ravex.mcwrapper.MinecraftWrapper.getWrapper());
-            return true;
-        }
-
-
-        int searchY = contentY + colHeaderH + 2;
-        int searchH = 14;
-        if (mx >= leftX + 4 && mx <= leftX + leftW - 4 && my >= searchY && my <= searchY + searchH) {
-            searchFocus = true;
-            return true;
-        } else if (btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            searchFocus = false;
-        }
-
-
-        int gridY = searchY + searchH + 3;
-        int gridH = contentH - colHeaderH - searchH - 8;
-        int pageY = gridY + gridH + 2;
-        if (my >= pageY && my <= pageY + 12) {
-            if (mx >= leftX + 4 && mx <= leftX + 26 && currentPage > 0) {
-                currentPage--;
-                return true;
-            }
-            int maxPage = Math.max(0, (filteredItems.size() - 1) / PAGE_SIZE);
-            if (mx >= leftX + leftW - 26 && mx <= leftX + leftW - 4 && currentPage < maxPage) {
-                currentPage++;
-                return true;
-            }
-        }
-
-
-        int gridX = leftX + 4;
-        if (mx >= leftX && mx <= leftX + leftW && my >= gridY && my <= gridY + gridH) {
-            int col = (mx - gridX) / ITEM_SIZE;
-            int row = (my - gridY) / ITEM_SIZE;
-            int idx = currentPage * PAGE_SIZE + row * COLS + col;
-            if (col >= 0 && col < COLS && row >= 0 && row < ROWS && idx < filteredItems.size()) {
-                Item item = filteredItems.get(idx);
-                Identifier rl = BuiltInRegistries.ITEM.getKey(item);
-                if (rl != null) InvCleanData.INSTANCE.toggle(rl.toString());
-                return true;
-            }
-        }
-
-
-        int selContentY = contentY + colHeaderH + 3;
-        int selContentH = contentH - colHeaderH - 6;
-        if (mx >= rightX && mx <= rightX + rightW && my >= selContentY && my <= selContentY + selContentH) {
-            var selectedArr = InvCleanData.INSTANCE.getSelectedItems().toArray(new String[0]);
-            int sy = selContentY + 3 - (int)selectedScroll;
-            for (String itemId : selectedArr) {
-                if (my >= sy && my <= sy + 16) {
-                    InvCleanData.INSTANCE.deselect(itemId);
-                    return true;
+        int tabX = px + 10, tabY = py + 34;
+        for (int ti = 0; ti < 2; ti++) {
+            int tix = tabX + ti * (TAB_W + 4);
+            if (mx >= tix && mx <= tix + TAB_W && my >= tabY && my <= tabY + TAB_H) {
+                Tab nt = ti == 0 ? Tab.ALL : Tab.SELECTED;
+                if (tab != nt) {
+                    tab = nt;
+                    page = 0;
+                    refilter();
                 }
-                sy += 18;
+                return true;
             }
         }
 
-        return super.mouseClicked(event, handled);
+        int sx = tabX + 2 * (TAB_W + 4) + 8;
+        int sw = px + pw - 12 - sx;
+        if (mx >= sx && mx <= sx + sw && my >= tabY && my <= tabY + TAB_H) {
+            searchFocused = true;
+            return true;
+        }
+        searchFocused = false;
+
+        int gx = gridX(), gy = gridY(), gw = gridW(), gh = gridH();
+        if (mx >= gx && mx <= gx + gw && my >= gy && my <= gy + gh) {
+            int col = (mx - gx) / CELL;
+            int row = (my - gy) / CELL;
+            int idx = page * pageSize() + row * cols() + col;
+            if (row >= 0 && row < rows() && col >= 0 && col < cols() && idx >= 0 && idx < filtered.size()) {
+                InvEntry e = filtered.get(idx);
+                InvCleanData.INSTANCE.toggle(e.idStr);
+                if (tab == Tab.SELECTED) {
+                    page = 0;
+                    refilter();
+                }
+            }
+            return true;
+        }
+
+        int bh = 18, by = py + ph - 28;
+        int pgw = 64;
+        int pgx = px + (pw - pgw) / 2;
+        if (mx >= pgx - 22 && mx <= pgx - 6 && my >= by && my <= by + bh) {
+            if (page > 0) page--;
+            return true;
+        }
+        if (mx >= pgx + pgw + 6 && mx <= pgx + pgw + 22 && my >= by && my <= by + bh) {
+            if (page < maxPage()) page++;
+            return true;
+        }
+
+        int bw = 110;
+        if (mx >= px + 10 && mx <= px + 10 + bw && my >= by && my <= by + bh) {
+            var mc = MinecraftWrapper.getWrapper();
+            if (mc.getPlayer() != null) InvClean.cleanInventory(mc);
+            return true;
+        }
+        int qw = 80, qx = px + pw - 10 - qw;
+        if (mx >= qx && mx <= qx + qw && my >= by && my <= by + bh) {
+            if (this.minecraft != null) this.minecraft.setScreen(parent);
+            return true;
+        }
+
+        return true;
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double hAmt, double vAmt) {
-        int W = this.width, H = this.height;
-        int panelW = Math.max(300, Math.min(680, W - 40));
-        int panelH = Math.max(250, Math.min(420, H - 40));
-        int panelX = (W - panelW) / 2;
-        int panelY = (H - panelH) / 2;
-        int headerH  = 28;
-        int contentY = panelY + headerH + 6;
-        int contentH = panelH - headerH - 50;
-        int leftW    = (panelW / 2) - 6;
-        int rightW   = panelW - leftW - 18;
-        int rightX   = panelX + leftW + 12;
-        int colHeaderH = 18;
-        int selContentY = contentY + colHeaderH + 3;
-        int selContentH = contentH - colHeaderH - 6;
-
-
-        if (mouseX >= rightX && mouseX <= rightX + rightW && mouseY >= selContentY && mouseY <= selContentY + selContentH) {
-            int selCount = InvCleanData.INSTANCE.getSelectedItems().size();
-            int maxSelScroll = Math.max(0, selCount * 18 - selContentH);
-            selectedScroll = (float) Math.max(0, Math.min(maxSelScroll, selectedScroll - vAmt * 12));
-            return true;
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
+        if (scrollY > 0) {
+            if (page > 0) page--;
+        } else if (scrollY < 0) {
+            if (page < maxPage()) page++;
         }
-
-        return super.mouseScrolled(mouseX, mouseY, hAmt, vAmt);
+        return true;
     }
 
     @Override
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
-            onClose();
+        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) {
+            if (this.minecraft != null) this.minecraft.setScreen(parent);
             return true;
         }
-        if (searchFocus) {
-            if (key == GLFW.GLFW_KEY_BACKSPACE && !searchQuery.isEmpty()) {
-                searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
-                currentPage = 0;
-                rebuildFiltered();
-                return true;
-            }
-            if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_ESCAPE) {
-                searchFocus = false;
-                return true;
-            }
+        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE && !searchQuery.isEmpty()) {
+            searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
+            page = 0;
+            refilter();
+            return true;
+        }
+        if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) {
+            searchFocused = false;
+            return true;
         }
         return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(CharacterEvent event) {
-        if (searchFocus) {
-            int codepoint = event.codepoint();
-            if (codepoint >= 32 && codepoint < 127) {
-                searchQuery += (char)codepoint;
-                currentPage = 0;
-                rebuildFiltered();
-                return true;
-            }
+    public boolean charTyped(net.minecraft.client.input.CharacterEvent event) {
+        String text = event.codepointAsString();
+        if (text.isEmpty()) return true;
+        char c = text.charAt(0);
+        if (c < 32 || c > 126) return true;
+        if (searchQuery.length() < 32) {
+            searchQuery += text;
+            page = 0;
+            refilter();
         }
-        return super.charTyped(event);
+        return true;
     }
 
     @Override
     public void onClose() {
+        ravex.gui.browser.SearchBrowserScreen.restoreAtlasFilter();
+        if (this.minecraft != null) this.minecraft.setScreen(parent);
+    }
 
-        if (ModuleManager.isEnabled(InvClean.class)) {
-            Modules.setEnabled(InvClean.class, false);
-        }
-        MinecraftWrapper.getWrapper().setScreen(parent);
+    @Override
+    public void removed() {
+        ravex.gui.browser.SearchBrowserScreen.restoreAtlasFilter();
     }
 }

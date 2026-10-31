@@ -66,9 +66,31 @@ public class MixinBlockState {
 
     @Inject(method = "getRenderShape", at = @At("HEAD"), cancellable = true)
     private void onGetRenderShape(CallbackInfoReturnable<net.minecraft.world.level.block.RenderShape> cir) {
-        if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).tripwire) {
+        if (Modules.enabled(NoRender.class)) {
+            NoRender nr = Modules.get(NoRender.class);
             BlockBehaviour.BlockStateBase self = (BlockBehaviour.BlockStateBase)(Object)this;
-            if (self.getBlock() instanceof net.minecraft.world.level.block.TripWireBlock) {
+            if (nr.tripwire && self.getBlock() instanceof net.minecraft.world.level.block.TripWireBlock) {
+                cir.setReturnValue(net.minecraft.world.level.block.RenderShape.INVISIBLE);
+                return;
+            }
+            net.minecraft.world.level.block.Block block = self.getBlock();
+            if (nr.vines && (block instanceof net.minecraft.world.level.block.VineBlock
+                    || block instanceof net.minecraft.world.level.block.WeepingVinesBlock
+                    || block instanceof net.minecraft.world.level.block.WeepingVinesPlantBlock
+                    || block instanceof net.minecraft.world.level.block.TwistingVinesBlock
+                    || block instanceof net.minecraft.world.level.block.TwistingVinesPlantBlock
+                    || block instanceof net.minecraft.world.level.block.CaveVinesBlock
+                    || block instanceof net.minecraft.world.level.block.CaveVinesPlantBlock)) {
+                cir.setReturnValue(net.minecraft.world.level.block.RenderShape.INVISIBLE);
+                return;
+            }
+            if (nr.cobwebs && block instanceof net.minecraft.world.level.block.WebBlock) {
+                cir.setReturnValue(net.minecraft.world.level.block.RenderShape.INVISIBLE);
+                return;
+            }
+            if (nr.flowers && (block instanceof net.minecraft.world.level.block.FlowerBlock
+                    || block instanceof net.minecraft.world.level.block.TallFlowerBlock
+                    || block instanceof net.minecraft.world.level.block.FlowerBedBlock)) {
                 cir.setReturnValue(net.minecraft.world.level.block.RenderShape.INVISIBLE);
             }
         }

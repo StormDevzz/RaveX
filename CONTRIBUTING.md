@@ -70,6 +70,27 @@ src/
 - Used for scripting and addons
 - Located in relevant script directories
 
+### Localization
+
+Base strings live in `LanguageUtility.java` (English, Russian). Extra languages are
+data-driven and require no code changes:
+
+- **Shipped with the mod:** create `src/main/resources/assets/ravex/lang/<name>.json`
+  and add the file name to `index.json` next to it.
+- **Runtime (no rebuild):** drop `<name>.json` into `<game dir>/RaveX/lang/`.
+
+File format (UTF-8):
+
+```json
+{
+  "name": "Deutsch",
+  "strings": { "gui_title": "RaveX KlickGUI", "enabled": "An", "disabled": "Aus" }
+}
+```
+
+`name` is shown in Settings → Language. Missing keys fall back to English. The
+language dropdown is populated automatically from every discovered file.
+
 ## Making Changes
 
 ### Branching

@@ -365,6 +365,14 @@ public abstract class MixinTitleScreen extends Screen {
         int buildCenterY = buildY + FontRenderUtility.getFontHeight() / 2;
         ravex$draw3DText(graphics, ravex.RaveX.version, textX + buildLabelW + 3, buildCenterY, 12);
 
+        // update date in the corner
+        ravex.manager.ChangelogManager.Entry latestHistory = ravex.manager.ChangelogManager.INSTANCE.getLatest();
+        if (latestHistory != null && latestHistory.date != null && !latestHistory.date.isEmpty()) {
+            String updateLabel = ravex.utility.misc.LanguageUtility.t("last_update", latestHistory.date);
+            int updateW = FontRenderUtility.getStringWidth(updateLabel);
+            FontRenderUtility.drawString(graphics, updateLabel, width - updateW - 8, height - 36, 0xFF9AA4B8, true);
+        }
+
         String quoteLine1 = "§7\"The ultimate utility client\"";
         String quoteLine2 = "§fRaveX Client | Premium Edition";
 

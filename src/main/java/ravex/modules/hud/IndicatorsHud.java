@@ -101,42 +101,36 @@ public class IndicatorsHud extends ravex.modules.Module {
         }
 
         int lineH = 11;
-        int dotR = 3;
-        int barW = 50;
-        int labelMax = 0, valueMax = 0;
+        int padX = 6;
+        int padTop = 5;
+        int gap = 8;
+        int[] colW = new int[5];
+        int pw = padX * 2;
         for (int i = 0; i < 5; i++) {
-            int lw = FontRenderUtility.getStringWidth(data[i][0]);
-            int vw = FontRenderUtility.getStringWidth(data[i][1]);
-            if (lw > labelMax) labelMax = lw;
-            if (vw > valueMax) valueMax = vw;
+            int wv = FontRenderUtility.getStringWidth(data[i][1]);
+            int wl = FontRenderUtility.getStringWidth(data[i][0]);
+            colW[i] = Math.max(wv, wl);
+            pw += colW[i] + (i < 4 ? gap : 0);
         }
-        int pw = 4 + 9 + labelMax + 4 + valueMax + 4 + barW + 4 + IS + 4;
-        int ph = 6 + 5 * lineH;
+        int barY = padTop + 10;
+        int labelY = barY + 6;
+        int ph = labelY + 8 + padTop;
         setWidth(pw);
         setHeight(ph);
         int bx = getX(), by = getY();
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
-        HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ColorUtility.getActiveColor());
-        int cx = bx + 4;
-        int cy = by + 4;
+        int cx = bx + padX;
         for (int i = 0; i < 5; i++) {
             int col = getGaugeColor(i);
-            int dotX = cx + dotR;
-            int dotY = cy + lineH / 2;
-            Render2DUtility.fillCircle(graphics, dotX, dotY, dotR, col);
-            FontRenderUtility.drawString(graphics, data[i][0], cx + dotR * 2 + 3, cy, 0xFF8080A0, false);
-            int vx = cx + dotR * 2 + 3 + labelMax + 4;
-            FontRenderUtility.drawString(graphics, data[i][1], vx, cy, col, shadow);
-            int barX = vx + valueMax + 4;
-            int barY = cy + 3;
-            int barH = lineH - 6;
-            int availW = (bx + pw - 4 - IS - 4) - barX;
-            if (availW < 0) availW = 0;
-            int fillW = Math.min(barW, availW);
-            Render2DUtility.drawRect(graphics, barX, barY, fillW, barH, 0x22FFFFFF);
-            int fillPct = (int) (values[i] * fillW);
-            if (fillPct > 0) Render2DUtility.drawRect(graphics, barX, barY, fillPct, barH, col);
-            cy += lineH;
+            String value = data[i][1];
+            int vw = FontRenderUtility.getStringWidth(value);
+            FontRenderUtility.drawString(graphics, value, cx + (colW[i] - vw) / 2, by + padTop, 0xFFF2F2F7, shadow);
+            Render2DUtility.drawRound(graphics, cx, by + barY, colW[i], 3, 1, 0x22FFFFFF);
+            int fill = (int) (values[i] * colW[i]);
+            if (fill > 0) Render2DUtility.drawRound(graphics, cx, by + barY, fill, 3, 1, col);
+            int lw = FontRenderUtility.getStringWidth(data[i][0]);
+            FontRenderUtility.drawString(graphics, data[i][0], cx + (colW[i] - lw) / 2, by + labelY, 0xFF6E6E85, false);
+            cx += colW[i] + gap;
         }
     }
 

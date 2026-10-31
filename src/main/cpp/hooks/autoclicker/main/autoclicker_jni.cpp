@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "autoclicker.hpp"
 
 extern "C" {
@@ -12,6 +13,7 @@ Java_ravex_modules_combat_AutoClicker_nativeCalculateDelay(
     JNIEnv* env, jclass cls,
     jdouble minCps, jdouble maxCps, jboolean randomize)
 {
+    if (ravex::jni::checkAndClearException(env)) return 0;
     return static_cast<jlong>(ravex::calculateClickDelay(minCps, maxCps, randomize == JNI_TRUE));
 }
 

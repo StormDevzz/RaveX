@@ -1,5 +1,6 @@
 #include "antipearl_jni.hpp"
 #include "antipearl.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_combat_AntiPearl_nativePredictLanding(
     JNIEnv* env, jclass cls,
@@ -12,12 +13,15 @@ JNIEXPORT void JNICALL Java_ravex_modules_combat_AntiPearl_nativePredictLanding(
 
     ravex::Vec3 landing = ravex::predictPearlLanding(pos, vel);
 
-    jdouble* elements = env->GetDoubleArrayElements(out, nullptr);
+    JniDoubleElements guard(env, out);
+    if (ravex::jni::checkAndClearException(env)) return;
+    if (!guard) return;
+
+    jdouble* elements = guard.get();
     elements[0] = landing.x;
     elements[1] = landing.y;
     elements[2] = landing.z;
     elements[3] = 0.0;
     elements[4] = 0.0;
     elements[5] = 0.0;
-    env->ReleaseDoubleArrayElements(out, elements, 0);
 }

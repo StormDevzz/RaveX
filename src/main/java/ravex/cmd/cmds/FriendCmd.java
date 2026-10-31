@@ -6,9 +6,18 @@ import ravex.modules.client.Commands;
 import java.util.Locale;
 import java.util.Set;
 import ravex.manager.ModuleManager;
+import java.util.List;
 public class FriendCmd extends Cmd {
     public FriendCmd() {
         super("friend", "Manage friends", "f");
+    }
+
+    @Override
+    public List<String> getSubcommandSuggestions(String[] args) {
+        if (args.length == 2) {
+            return List.of("add", "remove", "list");
+        }
+        return List.of();
     }
     @Override
     public void execute(String[] args) {

@@ -91,18 +91,21 @@ CrystalPlacement AutoCrystalMath::findBestPlacement(
     bool                      excludePos,
     const Vec3&               posToExclude)
 {
-    CrystalPlacement best;
+    CrystalPlacement best{};
     best.valid = false;
     best.score = -std::numeric_limits<double>::infinity();
-
 
     Vec3 predictedTargetPos = EntityTracker::predictPosition(
         targetPos, targetStats.motionX, targetStats.motionY, targetStats.motionZ, config.predictTicks
     );
 
-
     bool playerInHole = ConditionValidator::isInHole(playerPos, blocks);
 
+    if (config.antiSuicide &&
+        !(config.antiSuicideIgnoreWithTotem && playerStats.totemCount > 0.0) &&
+        playerHealth + playerAbsorption <= config.antiSuicideMinHealth) {
+        return best;
+    }
 
     if (ConditionValidator::isTargetInvulnerable(targetStats)) {
         return best;
@@ -258,6 +261,12 @@ bool AutoCrystalMath::findBestBreak(
         return false;
     }
 
+    if (config.antiSuicide && config.antiSuicideCheckBreaking &&
+        !(config.antiSuicideIgnoreWithTotem && playerStats.totemCount > 0.0) &&
+        playerHealth + playerAbsorption <= config.antiSuicideMinHealth) {
+        return false;
+    }
+
     double targetEffHp = EntityTracker::getEffectiveHealth(targetHealth, targetAbsorption);
 
     BlockSet blockSet(blocks.begin(), blocks.end());
@@ -271,7 +280,6 @@ bool AutoCrystalMath::findBestBreak(
 
         double targetDmg = calcExplosionDamage(crystal.pos, predictedTargetPos, targetHealth, targetAbsorption, targetStats, blocks);
         double selfDmg   = calcExplosionDamage(crystal.pos, playerPos, playerHealth, playerAbsorption, playerStats, blocks);
-
 
         if (!ConditionValidator::isPlacementSafe(playerHealth, playerAbsorption, selfDmg, playerStats, config, playerInHole, true)) {
             continue;
@@ -321,7 +329,7 @@ AutoCrystalResult AutoCrystalMath::tick(
     const std::vector<CrystalEntity>& activeCrystals,
     const AutoCrystalConfig&      config)
 {
-    AutoCrystalResult result;
+    AutoCrystalResult result{};
     result.shouldPlace = false;
     result.shouldPlace2 = false;
     result.shouldBreak = false;
@@ -329,7 +337,6 @@ AutoCrystalResult AutoCrystalMath::tick(
     result.breakDamage = 0.0;
 
     std::ostringstream dbg;
-
 
     CrystalPlacement placement = findBestPlacement(
         playerPos, playerHealth, playerAbsorption, playerStats,
@@ -347,7 +354,6 @@ AutoCrystalResult AutoCrystalMath::tick(
                 << "tDmg=" << placement.targetDamage
                 << " sDmg=" << placement.selfDamage
                 << " score=" << placement.score << "; ";
-
 
             if (config.placeMultiPlace) {
                 CrystalPlacement placement2 = findBestPlacement(
@@ -372,7 +378,6 @@ AutoCrystalResult AutoCrystalMath::tick(
     } else {
         dbg << "NO placement; ";
     }
-
 
     int    breakId  = -1;
     Vec3   breakPos;

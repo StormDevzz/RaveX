@@ -6,9 +6,18 @@ import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Commands;
 import java.util.Locale;
+import java.util.List;
 public class BindCmd extends Cmd {
     public BindCmd() {
         super("bind", "Bind a key to a module");
+    }
+
+    @Override
+    public List<String> getSubcommandSuggestions(String[] args) {
+        if (args.length == 2) {
+            return List.of("list", "clear");
+        }
+        return List.of();
     }
     @Override
     public void execute(String[] args) {

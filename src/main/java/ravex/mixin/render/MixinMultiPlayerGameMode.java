@@ -23,6 +23,7 @@ import ravex.modules.misc.BlockMixer;
 import ravex.modules.player.ItemSaver;
 import ravex.modules.player.PacketMine;
 import ravex.modules.render.FreeCam;
+import ravex.modules.world.nuker.Nuker;
 import ravex.modules.Modules;
 
 @Mixin(MultiPlayerGameMode.class)
@@ -67,6 +68,11 @@ public class MixinMultiPlayerGameMode {
     @Inject(method = "startDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onStartDestroyBlock(net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face, CallbackInfoReturnable<Boolean> cir) {
         var mc = MinecraftWrapper.getWrapper();
+        // nuker owns this block, keep vanilla off it
+        if (Nuker.blocksVanillaMining(pos)) {
+            cir.setReturnValue(false);
+            return;
+        }
         if (mc.getPlayer() != null && Modules.get(ItemSaver.class).shouldSave(InventoryUtility.getMainHand(mc.getPlayer()))) {
             cir.setReturnValue(false);
         }
@@ -86,11 +92,23 @@ public class MixinMultiPlayerGameMode {
     @Inject(method = "continueDestroyBlock", at = @At("HEAD"), cancellable = true)
     private void onContinueDestroyBlock(net.minecraft.core.BlockPos pos, net.minecraft.core.Direction face, CallbackInfoReturnable<Boolean> cir) {
         var mc = MinecraftWrapper.getWrapper();
+        if (Nuker.blocksVanillaMining(pos)) {
+            cir.setReturnValue(false);
+            return;
+        }
         if (mc.getPlayer() != null && Modules.get(ItemSaver.class).shouldSave(InventoryUtility.getMainHand(mc.getPlayer()))) {
             cir.setReturnValue(false);
         }
         if (Modules.enabled(FreeCam.class) && !Modules.get(FreeCam.class).blockInteract) {
             cir.setReturnValue(false);
+        }
+    }
+
+    // vanilla calls this each tick the attack key is up
+    @Inject(method = "stopDestroyBlock", at = @At("HEAD"), cancellable = true)
+    private void onStopDestroyBlock(CallbackInfo ci) {
+        if (Nuker.ownsMining()) {
+            ci.cancel();
         }
     }
 

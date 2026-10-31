@@ -12,7 +12,7 @@ public class MobOwner {
     @Parameter(name = "Background")
     public boolean background = false;
     @Parameter(name = "TextColor", color = true)
-    public int textColor = 0xFFFFAA00;
+    public int textColor = 0xFF40A9F8;
 
     public static String getOwnerName(net.minecraft.world.entity.LivingEntity entity) {
         return EntityUtility.getOwnerName(entity, Modules.get(MobOwner.class).displayUUID);

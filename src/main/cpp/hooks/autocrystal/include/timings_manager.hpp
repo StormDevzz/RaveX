@@ -1,5 +1,4 @@
 #pragma once
-/* Header for timings_manager */
 namespace ravex {
 namespace timings {
     class TimingsManager {

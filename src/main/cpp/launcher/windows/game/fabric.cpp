@@ -118,7 +118,6 @@ bool ensureFabric(const std::string& mcVersion, const std::string& loaderVersion
         for(char &c: groupPath) if(c=='.') c='/';
         url = "https://maven.fabricmc.net/" + groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar";
         std::wstring dest = joinPath(joinPath(minecraftDir(), L"libraries"), fromUtf8(groupPath + "/" + artifact + "/" + ver + "/" + artifact + "-" + ver + ".jar"));
-        // handle windows path separators: groupPath already has /, joinPath will handle
         if (fileExists(dest)) return true;
         createDirs(dest.substr(0, dest.find_last_of(L"\\/")));
         std::string err2;

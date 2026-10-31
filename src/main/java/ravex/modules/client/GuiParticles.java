@@ -6,7 +6,7 @@ public class GuiParticles {
     @Parameter(name = "Type", modes = {"Star", "Bone", "Fire", "Sun", "Thunder", "Wave"})
     public String type = "Star";
     @Parameter(name = "Color", color = true)
-    public int color = 0xFFFFFFFF;
+    public int color = 0xFF40A9F8;
     @Parameter(name = "Amount", min = 10, max = 150, step = 5)
     public double amount = 55;
     @Parameter(name = "Size", min = 1, max = 15, step = 0.5)

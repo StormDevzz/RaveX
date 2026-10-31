@@ -24,6 +24,7 @@ public class MacroScreen extends Screen {
 
     private boolean creatingNew;
     private String newName = "";
+    private boolean nameFocused;
     private boolean bindingKey;
     private int bindingForIndex = -1;
 
@@ -51,13 +52,29 @@ public class MacroScreen extends Screen {
         macros = new ArrayList<>(MacroManager.INSTANCE.getMacros());
     }
 
+    private float openT = 0f;
+    private long openLast = System.nanoTime();
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         SubScreenStyle.background(graphics, this.width, this.height);
+        boolean openAnimate = ravex.modules.render.Animations.tabAnimation();
+        long openNow = System.nanoTime();
+        float openDt = Math.min(50f, (openNow - openLast) / 1_000_000f);
+        openLast = openNow;
+        if (openAnimate && openT < 1f) openT = Math.min(1f, openT + openDt / 160f);
+        float openP = openAnimate ? ravex.utility.render.animate.AnimationUtility.Easing.CUBIC_OUT.apply(openT) : 1f;
+        graphics.pose().pushMatrix();
+        if (openP < 0.999f) {
+            float s = 0.95f + 0.05f * openP;
+            graphics.pose().translate(this.width / 2f, this.height / 2f);
+            graphics.pose().scale(s, s);
+            graphics.pose().translate(-this.width / 2f, -this.height / 2f);
+        }
 
         int activeColor = ColorUtility.getActiveColor();
 
-        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("macro_title"), ravex.utility.misc.LanguageUtility.t("macro_subtitle"), activeColor);
+        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("macro_title"), ravex.utility.misc.LanguageUtility.t("macro_subtitle"), activeColor, ravex.utility.render.ScreenIcons.MACROS);
 
         if (statusTimer > 0 && !statusMessage.isEmpty()) {
             SubScreenStyle.statusPill(graphics, this.width, statusMessage, activeColor);
@@ -99,6 +116,7 @@ public class MacroScreen extends Screen {
         }
 
         super.render(graphics, mouseX, mouseY, partialTicks);
+        graphics.pose().popMatrix();
     }
 
     private void renderCreateDialog(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -121,6 +139,10 @@ public class MacroScreen extends Screen {
         int inputH = 16;
         SubScreenStyle.input(graphics, inputX, inputY, inputW, inputH, activeColor);
         FontRenderUtility.drawString(graphics, newName.isEmpty() ? "MyMacro" : newName, inputX + 4, inputY + 3, newName.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
+        if (nameFocused && (System.currentTimeMillis() / 500) % 2 == 0) {
+            int shownW = FontRenderUtility.getStringWidth(newName.isEmpty() ? "MyMacro" : newName);
+            graphics.fill(inputX + 4 + shownW + 1, inputY + 3, inputX + 4 + shownW + 2, inputY + 13, 0xFFE8E8F2);
+        }
 
         int btnY = dlgY + 70;
         int btnW = 70;
@@ -318,6 +340,7 @@ public class MacroScreen extends Screen {
             macros.add(m);
             MacroManager.INSTANCE.addMacro(m);
             creatingNew = false;
+            nameFocused = false;
             selectedIndex = macros.size() - 1;
             statusMessage = ravex.utility.misc.LanguageUtility.t("macro_created", name);
             statusTimer = 60;
@@ -326,6 +349,7 @@ public class MacroScreen extends Screen {
 
         if (mx >= dlgX + dlgW - 20 - btnW && mx <= dlgX + dlgW - 20 && my >= btnY && my <= btnY + btnH) {
             creatingNew = false;
+            nameFocused = false;
             return true;
         }
 
@@ -334,9 +358,11 @@ public class MacroScreen extends Screen {
         int inputW = dlgW - 20;
         int inputH = 16;
         if (mx >= inputX && mx <= inputX + inputW && my >= inputY && my <= inputY + inputH) {
+            nameFocused = true;
             return true;
         }
 
+        nameFocused = false;
         return true;
     }
 
@@ -447,6 +473,7 @@ public class MacroScreen extends Screen {
         if (c < 32 || c > 126) return true;
 
         if (creatingNew) {
+            if (!nameFocused) nameFocused = true;
             if (newName.length() < 24) newName += text;
             return true;
         }

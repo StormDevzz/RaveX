@@ -280,6 +280,40 @@ public class Render3DUtility {
         BlockRendererUtility.renderFilledBoxQuads(buf, matrix, size, r, g, b, a);
     }
 
+    public static void batchBox(Matrix4f matrix, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float r, float g, float b, float a, boolean throughWalls) {
+        BufferBuilder buf;
+        if (throughWalls && fillNoDepthBuilder != null) {
+            buf = fillNoDepthBuilder;
+            fillNoDepthUsed = true;
+        } else {
+            buf = fillBuilder;
+            fillUsed = true;
+        }
+        if (buf == null) return;
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        int ia = (int)(a * 255);
+        BlockRendererUtility.renderSolidBox(buf, matrix, minX, minY, minZ, maxX, maxY, maxZ, ir, ig, ib, ia);
+    }
+
+    public static void batchBoxWireframe(Matrix4f matrix, float minX, float minY, float minZ, float maxX, float maxY, float maxZ, float r, float g, float b, float a, float lineWidth, boolean throughWalls) {
+        BufferBuilder buf;
+        if (throughWalls && lineNoDepthBuilder != null) {
+            buf = lineNoDepthBuilder;
+            lineNoDepthUsed = true;
+        } else {
+            buf = lineBuilder;
+            lineUsed = true;
+        }
+        if (buf == null) return;
+        int ir = (int)(r * 255);
+        int ig = (int)(g * 255);
+        int ib = (int)(b * 255);
+        int ia = (int)(a * 255);
+        BlockRendererUtility.renderBoxWireframe(buf, matrix, minX, minY, minZ, maxX, maxY, maxZ, ir, ig, ib, ia, lineWidth);
+    }
+
     public static void batchFlatBandQuad(Matrix4f matrix,
             float x1, float y1, float z1, float x2, float y2, float z2,
             float x3, float y3, float z3, float x4, float y4, float z4,

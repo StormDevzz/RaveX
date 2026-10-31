@@ -160,6 +160,12 @@ public class AnimationUtility {
 
         public float getValue() { return value; }
         public boolean isSettled() { return Math.abs(value - target) < threshold && Math.abs(velocity) < threshold; }
+
+        // re-seeds the spring when a drag starts
+        public void setValue(float v) {
+            this.value = v;
+            this.velocity = 0;
+        }
     }
 
     public static class SmoothValue {

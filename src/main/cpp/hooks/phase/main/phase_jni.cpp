@@ -1,7 +1,8 @@
 #include "phase_jni.hpp"
 #include "phase.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
-JNIEXPORT void JNICALL Java_ravex_modules_exploit_Phase_nativeCalculateOffset(
+extern "C" JNIEXPORT void JNICALL Java_ravex_modules_movement_Phase_nativeCalculateOffset(
     JNIEnv* env, jclass cls,
     jdouble yaw,
     jdouble pitch,
@@ -13,4 +14,5 @@ JNIEXPORT void JNICALL Java_ravex_modules_exploit_Phase_nativeCalculateOffset(
 
     jdouble temp[3] = { offset[0], offset[1], offset[2] };
     env->SetDoubleArrayRegion(outOffset, 0, 3, temp);
+    if (ravex::jni::checkAndClearException(env)) return;
 }

@@ -22,7 +22,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
 
     jdouble placeRange, jdouble placeWallRange,
     jdouble breakRange, jdouble breakWallRange,
-    jdouble minTargetDmg, jdouble maxSelfDmg,
+    jdouble minTargetDmg, jdouble maxSelfDmg, jdouble antiSuicideMinHp,
     jdouble selfDmgWeight, jboolean antiSuicide,
     jboolean antiSuicideCheckBreaking, jboolean antiSuicideIgnoreWithTotem,
     jboolean armorBreaker, jdouble armorPercent,

@@ -1,5 +1,6 @@
 #include "pearltarget_jni.hpp"
 #include "pearltarget.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_combat_PearlTarget_nativePredictPearl(
     JNIEnv* env, jclass cls,
@@ -11,7 +12,11 @@ JNIEXPORT void JNICALL Java_ravex_modules_combat_PearlTarget_nativePredictPearl(
     ravex::Vec3 vel(mx, my, mz);
     ravex::PearlPrediction result = ravex::predictPearl(pos, vel, maxTicks);
 
-    jdouble* elements = env->GetDoubleArrayElements(out, nullptr);
+    JniDoubleElements guard(env, out);
+    if (ravex::jni::checkAndClearException(env)) return;
+    if (!guard) return;
+
+    jdouble* elements = guard.get();
     elements[0] = result.landingPos.x;
     elements[1] = result.landingPos.y;
     elements[2] = result.landingPos.z;
@@ -19,7 +24,6 @@ JNIEXPORT void JNICALL Java_ravex_modules_combat_PearlTarget_nativePredictPearl(
     elements[4] = result.maxHeight;
     elements[5] = result.willHitGround ? 1.0 : 0.0;
     elements[6] = result.totalDistance;
-    env->ReleaseDoubleArrayElements(out, elements, 0);
 }
 
 JNIEXPORT void JNICALL Java_ravex_modules_combat_PearlTarget_nativeCalcIntercept(
@@ -33,12 +37,15 @@ JNIEXPORT void JNICALL Java_ravex_modules_combat_PearlTarget_nativeCalcIntercept
     ravex::Vec3 to(toX, toY, toZ);
     ravex::InterceptResult result = ravex::calcIntercept(from, to, maxSpeed, maxTicks);
 
-    jdouble* elements = env->GetDoubleArrayElements(out, nullptr);
+    JniDoubleElements guard(env, out);
+    if (ravex::jni::checkAndClearException(env)) return;
+    if (!guard) return;
+
+    jdouble* elements = guard.get();
     elements[0] = result.velocity.x;
     elements[1] = result.velocity.y;
     elements[2] = result.velocity.z;
     elements[3] = result.requiredSpeed;
     elements[4] = (jdouble)result.estimatedTicks;
     elements[5] = result.reachable ? 1.0 : 0.0;
-    env->ReleaseDoubleArrayElements(out, elements, 0);
 }

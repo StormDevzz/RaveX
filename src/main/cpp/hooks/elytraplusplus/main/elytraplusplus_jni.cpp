@@ -1,5 +1,6 @@
 #include "elytraplusplus_jni.hpp"
 #include "elytraplusplus.hpp"
+#include "../../../common/include/jni_raii.hpp"
 #include <string>
 
 JNIEXPORT void JNICALL
@@ -11,9 +12,10 @@ Java_ravex_modules_movement_ElytraFly_nativeCalculateVelocity(
     jboolean jump, jboolean sneak,
     jdoubleArray outVel
 ) {
-    const char* str = env->GetStringUTFChars(mode, nullptr);
-    std::string modeStr(str);
-    env->ReleaseStringUTFChars(mode, str);
+    JniStringUtfChars modeGuard(env, mode);
+    if (!modeGuard) return;
+    if (ravex::jni::checkAndClearException(env)) return;
+    std::string modeStr(modeGuard.get());
 
     double velocity[3];
     calculateElytraVelocity(
@@ -26,6 +28,7 @@ Java_ravex_modules_movement_ElytraFly_nativeCalculateVelocity(
 
     jdouble temp[3] = { velocity[0], velocity[1], velocity[2] };
     env->SetDoubleArrayRegion(outVel, 0, 3, temp);
+    if (ravex::jni::checkAndClearException(env)) return;
 }
 
 JNIEXPORT void JNICALL
@@ -37,15 +40,19 @@ Java_ravex_modules_movement_ElytraFly_nativeApplyBypass(
     jboolean jump, jboolean sneak, jboolean onGround,
     jdoubleArray outMotion
 ) {
-    const char* str = env->GetStringUTFChars(mode, nullptr);
-    std::string modeStr(str);
-    env->ReleaseStringUTFChars(mode, str);
+    JniStringUtfChars modeGuard(env, mode);
+    if (!modeGuard) return;
+    if (ravex::jni::checkAndClearException(env)) return;
+    std::string modeStr(modeGuard.get());
 
-    jdouble* motionData = env->GetDoubleArrayElements(motion, nullptr);
+    JniDoubleElements motionGuard(env, motion);
+    if (ravex::jni::checkAndClearException(env)) return;
+    if (!motionGuard) return;
+
+    const jdouble* motionData = motionGuard.get();
     double mx = motionData[0];
     double my = motionData[1];
     double mz = motionData[2];
-    env->ReleaseDoubleArrayElements(motion, motionData, JNI_ABORT);
 
     double result[3];
     applyElytraBypass(
@@ -58,4 +65,5 @@ Java_ravex_modules_movement_ElytraFly_nativeApplyBypass(
 
     jdouble temp[3] = { result[0], result[1], result[2] };
     env->SetDoubleArrayRegion(outMotion, 0, 3, temp);
+    if (ravex::jni::checkAndClearException(env)) return;
 }

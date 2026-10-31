@@ -1,6 +1,7 @@
 #include "mediaquery.hpp"
 #include <jni.h>
 #include <cstring>
+#include "../../../common/include/jni_raii.hpp"
 
 #ifdef __linux__
 #include <dbus/dbus.h>
@@ -12,22 +13,28 @@ JNIEXPORT jstring JNICALL
 Java_ravex_modules_hud_NowPlayingHud_nativeGetNowPlaying(JNIEnv* env, jclass) {
     auto info = ravex::queryNowPlaying();
     if (!info.valid) {
+        if (ravex::jni::checkAndClearException(env)) return nullptr;
         return env->NewStringUTF("");
     }
     std::string result = info.status + "|" + info.title + "|" + info.artist + "|" + info.artUrl;
-    return env->NewStringUTF(result.c_str());
+    jstring out = env->NewStringUTF(result.c_str());
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    return out;
 }
 
 JNIEXPORT jbyteArray JNICALL
 Java_ravex_modules_hud_NowPlayingHud_nativeDownloadArt(JNIEnv* env, jclass, jstring url) {
     if (!url) return nullptr;
-    const char* urlStr = env->GetStringUTFChars(url, nullptr);
-    auto data = ravex::downloadArt(std::string(urlStr));
-    env->ReleaseStringUTFChars(url, urlStr);
+    JniStringUtfChars urlGuard(env, url);
+    if (!urlGuard) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    auto data = ravex::downloadArt(std::string(urlGuard.get()));
     if (data.empty()) return nullptr;
     jbyteArray result = env->NewByteArray(static_cast<jsize>(data.size()));
     if (!result) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     env->SetByteArrayRegion(result, 0, static_cast<jsize>(data.size()), reinterpret_cast<const jbyte*>(data.data()));
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return result;
 }
 

@@ -1,13 +1,12 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
-import net.minecraft.world.level.block.Block;
 
 import ravex.parameter.ActionParameter;
-import ravex.utility.misc.OreUtility;
+import ravex.utility.misc.block.BlockUtility;
 import java.util.HashSet;
 import java.util.Set;
 import ravex.mcwrapper.MinecraftWrapper;
-@Module(name = "Xray", category = "Player")
+@Module(name = "Xray", category = "Misc")
 public class Xray {
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         MinecraftWrapper.getWrapper().setScreen(ravex.gui.browser.BlockBrowserScreen.forXray(MinecraftWrapper.getWrapper().getCurrentScreen()));
@@ -16,13 +15,13 @@ public class Xray {
 
     private Xray() {
         
-        selectedBlocks.addAll(OreUtility.getDefaultXrayBlocks());
+        selectedBlocks.addAll(BlockUtility.getDefaultXrayBlocks());
     }
-    public boolean isBlockSelected(Block block) {
-        return selectedBlocks.contains(OreUtility.getIdentifier(block));
+    public boolean isBlockSelected(net.minecraft.world.level.block.Block block) {
+        return selectedBlocks.contains(BlockUtility.getIdentifier(block));
     }
-    public void setBlockSelected(Block block, boolean selected) {
-        var id = OreUtility.getIdentifier(block);
+    public void setBlockSelected(net.minecraft.world.level.block.Block block, boolean selected) {
+        var id = BlockUtility.getIdentifier(block);
         if (selected) selectedBlocks.add(id);
         else selectedBlocks.remove(id);
     }

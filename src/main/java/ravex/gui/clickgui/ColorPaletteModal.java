@@ -48,7 +48,17 @@ public class ColorPaletteModal {
     public boolean isClosing() { return closing; }
 
     private final int modalWidth = 220;
-    private final int modalHeight = 305;
+    private final int modalHeight;
+
+    // theme presets state, the section only shows up for the theme colour itself
+    private int themeHoverIndex = -1;
+    private boolean themePreviewActive = false;
+    private int themeBaseAccent = 0;
+    private String themeBaseMode = "Static";
+    private float themeBaseHue = 0f;
+    private float themeBaseSat = 1f;
+    private float themeBaseVal = 1f;
+    private float themeBaseAlpha = 1f;
 
     private final int svSize = 120;
     private final int sliderHeight = 10;
@@ -57,6 +67,8 @@ public class ColorPaletteModal {
 
     public ColorPaletteModal(ColorParameter parameter) {
         this.parameter = parameter;
+        // the theme colour gets an extra section with the preset palettes
+        this.modalHeight = isThemeColor() ? 356 : 305;
         setFromArgb(parameter.getStoredValue());
     }
 
@@ -94,11 +106,56 @@ public class ColorPaletteModal {
         parameter.setThemeSync(false);
         parameter.setRainbow(false);
         parameter.setValue(argb);
+        // a manual pick wins over a running theme preview
+        themePreviewActive = false;
+        themeHoverIndex = -1;
         if (isThemeColor()) {
             ClickGui cfg = clickGui();
-            if (cfg != null) cfg.colorMode = "Positive";
+            if (cfg != null) cfg.colorMode = "Static";
         }
         ColorUtility.invalidateColorCache();
+    }
+
+        // hovering a chip previews the whole palette
+    private void updateThemePreview(int hoveredChip) {
+        if (hoveredChip == themeHoverIndex) return;
+        if (hoveredChip >= 0) {
+            if (!themePreviewActive) {
+                ClickGui cfg = clickGui();
+                themeBaseAccent = cfg != null ? cfg.color1 : 0xFF40A9F8;
+                themeBaseMode = cfg != null ? cfg.colorMode : "Static";
+                themeBaseHue = hue;
+                themeBaseSat = saturation;
+                themeBaseVal = value;
+                themeBaseAlpha = alpha;
+                themePreviewActive = true;
+            }
+            int accent = ravex.utility.render.ThemeUtility.PRESETS[hoveredChip];
+            setFromArgb(accent);
+            ravex.utility.render.ThemeUtility.apply(accent);
+        } else if (themePreviewActive) {
+            restoreThemeBase();
+        }
+        themeHoverIndex = hoveredChip;
+    }
+
+    private void restoreThemeBase() {
+        if (!themePreviewActive) return;
+        ClickGui cfg = clickGui();
+        if (cfg != null) {
+            cfg.color1 = themeBaseAccent;
+            cfg.colorMode = themeBaseMode;
+        }
+        ravex.modules.client.Settings settings = ravex.manager.ModuleManager.get(ravex.modules.client.Settings.class);
+        if (settings != null) settings.menuColor = themeBaseAccent;
+        ravex.modules.client.Notifications notifications = ravex.manager.ModuleManager.get(ravex.modules.client.Notifications.class);
+        if (notifications != null) notifications.messageColor = themeBaseAccent;
+        hue = themeBaseHue;
+        saturation = themeBaseSat;
+        value = themeBaseVal;
+        alpha = themeBaseAlpha;
+        ColorUtility.invalidateColorCache();
+        themePreviewActive = false;
     }
 
     private static int hsbToRgb(float hue, float saturation, float brightness) {
@@ -301,6 +358,30 @@ public class ColorPaletteModal {
             Render2DUtility.drawBorder(graphics, px - 1, py - 1, swatchSize + 2, swatchSize + 2, 1, borderColor);
         }
 
+        // theme presets for the accent colour
+        if (isThemeColor()) {
+            int themeLabelY = my + 282;
+            FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("pal_themes"), sectionX, themeLabelY, 0xFF75758A, false);
+
+            int[] accents = ravex.utility.render.ThemeUtility.PRESETS;
+            int chipsY = themeLabelY + 12;
+            int hoveredChip = -1;
+            for (int i = 0; i < accents.length; i++) {
+                int col = i % 8;
+                int row = i / 8;
+                int px = sectionX + (col * (swatchSize + swatchGap));
+                int py = chipsY + (row * (swatchSize + swatchGap));
+                boolean hovered = mouseX >= px && mouseX <= px + swatchSize && mouseY >= py && mouseY <= py + swatchSize;
+                if (hovered) hoveredChip = i;
+                graphics.fill(px, py, px + swatchSize, py + swatchSize, accents[i]);
+                int borderColor = 0xFF2A2A3A;
+                if (hovered) borderColor = 0xFFFFFFFF;
+                else if (ravex.utility.render.ThemeUtility.isCurrent(accents[i])) borderColor = ColorUtility.getActiveColor();
+                Render2DUtility.drawBorder(graphics, px - 1, py - 1, swatchSize + 2, swatchSize + 2, 1, borderColor);
+            }
+            updateThemePreview(hoveredChip);
+        }
+
 
         int iconSize = 16;
         int btnY = my + modalHeight - 24;
@@ -401,6 +482,8 @@ public class ColorPaletteModal {
         graphics.pose().translate(rKnobX, rSwY + 1f);
         graphics.blit(RenderPipelines.GUI_TEXTURED, knobTex, 0, 0, 0f, 0f, (int) knobSize, (int) knobSize, (int) knobSize, (int) knobSize, 0xFFFFFFFF);
         graphics.pose().popMatrix();
+
+        graphics.pose().popMatrix();
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button) {
@@ -485,7 +568,7 @@ public class ColorPaletteModal {
         if (mx >= rSwX && mx <= rSwX + rSwW && my >= rSwY - 14 && my <= rSwY + rSwH + 4) {
             if (isThemeColor()) {
                 ClickGui cfg = clickGui();
-                if (cfg != null) cfg.colorMode = "Rainbow".equals(cfg.colorMode) ? "Positive" : "Rainbow";
+                if (cfg != null) cfg.colorMode = "Rainbow".equals(cfg.colorMode) ? "Static" : "Rainbow";
                 ColorUtility.invalidateColorCache();
             } else {
                 parameter.setRainbow(!parameter.isRainbow());
@@ -539,10 +622,39 @@ public class ColorPaletteModal {
         int cancelX = mxLeft + 15;
         int applyX = mxLeft + modalWidth - iconSize - 15;
 
+        // theme preset chips
+        if (isThemeColor()) {
+            int themeLabelY = myTop + 282;
+            int chipsY = themeLabelY + 12;
+            int[] accents = ravex.utility.render.ThemeUtility.PRESETS;
+            for (int i = 0; i < accents.length; i++) {
+                int col = i % 8;
+                int row = i / 8;
+                int px = sectionX + (col * (swatchSize + swatchGap));
+                int py = chipsY + (row * (swatchSize + swatchGap));
+                if (mx >= px && mx <= px + swatchSize && my >= py && my <= py + swatchSize) {
+                    int accent = accents[i];
+                    // the hover preview is dropped after the click
+                    themePreviewActive = false;
+                    themeHoverIndex = i;
+                    themeBaseAccent = accent;
+                    themeBaseMode = "Static";
+                    setFromArgb(accent);
+                    commitColor(accent);
+                    ravex.utility.render.ThemeUtility.apply(accent);
+                    addRecentColor(accent);
+                    editingHex = false;
+                    playClickSound();
+                    return true;
+                }
+            }
+        }
+
 
         if (mx >= cancelX - 2 && mx <= cancelX + iconSize + 2 && my >= btnY - 2 && my <= btnY + iconSize + 2) {
             parameter.setValue(parameter.getValue());
             editingHex = false;
+            restoreThemeBase();
             requestClose();
             playClickSound();
             return true;
@@ -616,6 +728,8 @@ public class ColorPaletteModal {
 
     private void close() {
         open = false;
+        // a live theme preview must not survive the modal
+        restoreThemeBase();
         ClickGUI.activeColorParameter = null;
         ClickGUI.activeColorPalette = null;
         if (onClose != null) onClose.run();

@@ -11,8 +11,10 @@ Java_ravex_modules_hud_MediaHud_nativeGetNowPlaying(JNIEnv* env, jclass cls) {
     MediaInfo* info = mediaquery_query();
     if (!info || !info->valid) {
         mediaquery_free(info);
+        if ((*env)->ExceptionCheck(env)) return NULL;
         return (*env)->NewStringUTF(env, "");
     }
+    if ((*env)->ExceptionCheck(env)) { mediaquery_free(info); return NULL; }
     char result[16384];
     int n = snprintf(result, sizeof(result), "%s|%s|%s|%s|%s|%" PRId64 "|%" PRId64,
         info->status ? info->status : "",
@@ -23,7 +25,9 @@ Java_ravex_modules_hud_MediaHud_nativeGetNowPlaying(JNIEnv* env, jclass cls) {
         info->position,
         info->length);
     mediaquery_free(info);
-    return (*env)->NewStringUTF(env, result);
+    jstring out = (*env)->NewStringUTF(env, result);
+    if ((*env)->ExceptionCheck(env)) return NULL;
+    return out;
 }
 
 JNIEXPORT jbyteArray JNICALL
@@ -31,24 +35,28 @@ Java_ravex_modules_hud_MediaHud_nativeDownloadArt(JNIEnv* env, jclass cls, jstri
     (void)cls;
     if (!url) return NULL;
     const char* url_str = (*env)->GetStringUTFChars(env, url, NULL);
+    if ((*env)->ExceptionCheck(env)) return NULL;
     if (!url_str) return NULL;
     size_t len;
     uint8_t* data = mediaquery_download_art(url_str, &len);
     (*env)->ReleaseStringUTFChars(env, url, url_str);
     if (!data || len == 0) { free(data); return NULL; }
     jbyteArray result = (*env)->NewByteArray(env, (jsize)len);
+    if ((*env)->ExceptionCheck(env)) { free(data); return NULL; }
     if (!result) { free(data); return NULL; }
     (*env)->SetByteArrayRegion(env, result, 0, (jsize)len, (const jbyte*)data);
+    if ((*env)->ExceptionCheck(env)) { free(data); return NULL; }
     free(data);
     return result;
 }
 
 JNIEXPORT jboolean JNICALL
 Java_ravex_modules_hud_MediaHud_nativeIsAvailable(JNIEnv* env, jclass cls) {
-    (void)env; (void)cls;
+    (void)cls;
     MediaInfo* info = mediaquery_query();
     bool avail = (info != NULL && info->valid);
     mediaquery_free(info);
+    if ((*env)->ExceptionCheck(env)) return JNI_FALSE;
     return avail ? JNI_TRUE : JNI_FALSE;
 }
 
@@ -61,8 +69,10 @@ Java_ravex_modules_hud_MediaHud_nativeExtractAppIcon(JNIEnv* env, jclass cls) {
     uint8_t* data = mediaquery_extract_icon(info->playerName, &len);
     if (!data || len == 0) { free(data); mediaquery_free(info); return NULL; }
     jbyteArray result = (*env)->NewByteArray(env, (jsize)len);
+    if ((*env)->ExceptionCheck(env)) { free(data); mediaquery_free(info); return NULL; }
     if (!result) { free(data); mediaquery_free(info); return NULL; }
     (*env)->SetByteArrayRegion(env, result, 0, (jsize)len, (const jbyte*)data);
+    if ((*env)->ExceptionCheck(env)) { free(data); mediaquery_free(info); return NULL; }
     free(data);
     mediaquery_free(info);
     return result;
@@ -73,14 +83,17 @@ Java_ravex_modules_hud_MediaHud_nativeExtractAppIconForPlayer(JNIEnv* env, jclas
     (void)cls;
     if (!playerName) return NULL;
     const char* name = (*env)->GetStringUTFChars(env, playerName, NULL);
+    if ((*env)->ExceptionCheck(env)) return NULL;
     if (!name) return NULL;
     size_t len;
     uint8_t* data = mediaquery_extract_icon(name, &len);
     (*env)->ReleaseStringUTFChars(env, playerName, name);
     if (!data || len == 0) { free(data); return NULL; }
     jbyteArray result = (*env)->NewByteArray(env, (jsize)len);
+    if ((*env)->ExceptionCheck(env)) { free(data); return NULL; }
     if (!result) { free(data); return NULL; }
     (*env)->SetByteArrayRegion(env, result, 0, (jsize)len, (const jbyte*)data);
+    if ((*env)->ExceptionCheck(env)) { free(data); return NULL; }
     free(data);
     return result;
 }
@@ -92,6 +105,7 @@ Java_ravex_modules_hud_MediaHud_nativeGetCover(JNIEnv* env, jclass cls, jstring 
 
     if (artUrl) {
         const char* url = (*env)->GetStringUTFChars(env, artUrl, NULL);
+        if ((*env)->ExceptionCheck(env)) return NULL;
         if (url) {
             rawData = mediaquery_download_art(url, &rawLen);
             (*env)->ReleaseStringUTFChars(env, artUrl, url);
@@ -100,6 +114,7 @@ Java_ravex_modules_hud_MediaHud_nativeGetCover(JNIEnv* env, jclass cls, jstring 
 
     if (!rawData && playerName) {
         const char* name = (*env)->GetStringUTFChars(env, playerName, NULL);
+        if ((*env)->ExceptionCheck(env)) { free(rawData); return NULL; }
         if (name) {
             rawData = mediaquery_extract_icon(name, &rawLen);
             (*env)->ReleaseStringUTFChars(env, playerName, name);
@@ -124,8 +139,10 @@ Java_ravex_modules_hud_MediaHud_nativeGetCover(JNIEnv* env, jclass cls, jstring 
 
     size_t outLen = (size_t)targetSize * targetSize * 4;
     jbyteArray result = (*env)->NewByteArray(env, (jsize)outLen);
+    if ((*env)->ExceptionCheck(env)) { free(rgba); return NULL; }
     if (!result) { free(rgba); return NULL; }
     (*env)->SetByteArrayRegion(env, result, 0, (jsize)outLen, (const jbyte*)rgba);
+    if ((*env)->ExceptionCheck(env)) { free(rgba); return NULL; }
     free(rgba);
     return result;
 }

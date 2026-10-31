@@ -2,6 +2,7 @@ package ravex.modules.client;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.ModeParameter;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "Settings", category = "Client", enabled = true)
 public class Settings {
@@ -12,7 +13,10 @@ public class Settings {
     @Parameter(name = "Language", modes = {"English", "Russian"})
     public String ModeParameter = "English";
     private String prevLanguage = "English";
+    private boolean languageModesSynced = false;
+
     public void onTick() {
+        syncLanguageModes();
         String lang = ModeParameter;
         if (!lang.equals(prevLanguage)) {
             prevLanguage = lang;
@@ -20,7 +24,18 @@ public class Settings {
         }
     }
 
-
+    // the dropdown lists every discovered language
+    private void syncLanguageModes() {
+        if (languageModesSynced) return;
+        for (ravex.parameter.Parameter<?> p : ravex.manager.ModuleManager.delegate(Settings.class).getParameters()) {
+            if (p instanceof ModeParameter mp && p.getName().equals("Language")) {
+                mp.setModes(ravex.utility.misc.LanguageUtility.getLanguages());
+                languageModesSynced = true;
+                return;
+            }
+        }
+        languageModesSynced = true;
+    }
 
 
 

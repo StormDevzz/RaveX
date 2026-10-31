@@ -70,6 +70,21 @@ public class MoveUtility {
         return null;
     }
 
+    public static Vec3 targetFromHit(Object hitResult, double blockOffset, double entityOffset) {
+        if (hitResult instanceof net.minecraft.world.phys.BlockHitResult bhr) {
+            return centerOf(bhr.getBlockPos()).add(0, blockOffset, 0);
+        }
+        if (hitResult instanceof net.minecraft.world.phys.EntityHitResult ehr) {
+            return ehr.getEntity().position().add(0, entityOffset, 0);
+        }
+        return null;
+    }
+
+    public static void moveSelf(Vec3 offset) {
+        var p = MinecraftWrapper.getWrapper().getPlayer();
+        if (p != null) p.move(net.minecraft.world.entity.MoverType.SELF, offset);
+    }
+
     public static Vec3 getMotion() {
         var p = MinecraftWrapper.getWrapper().getPlayer();
         return p != null ? p.getDeltaMovement() : Vec3.ZERO;

@@ -1,84 +1,58 @@
 package ravex.modules.world;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.player.InventoryUtility;
-import net.minecraft.world.entity.projectile.FishingHook;
-import net.minecraft.world.phys.AABB;
-import ravex.mcwrapper.MinecraftWrapper;
-import org.jetbrains.annotations.Nullable;
-
-
-
+import ravex.utility.misc.FishUtility;
 
 @Module(name = "AutoFish", category = "World")
 public class AutoFish {
-    @Parameter(name = "CastDelay", min = 200, max = 2000, step = 100)
-    public double castDelay = 600;
-    @Parameter(name = "SilentSwap")
-    public boolean silent = true;
     @Parameter(name = "AutoCast")
     public boolean autoCast = true;
-    private long lastActionTime = 0;
-    private boolean wasIdle = false;
-    private double prevY = 0;
+    @Parameter(name = "CastDelay", min = 200, max = 3000, step = 100)
+    public double castDelay = 800;
+    @Parameter(name = "ReelDelay", min = 0, max = 1500, step = 50)
+    public double reelDelay = 200;
+    @Parameter(name = "Timeout", min = 5, max = 90, step = 5)
+    public double timeout = 30;
+    @Parameter(name = "AntiBreak")
+    public boolean antiBreak = true;
+    @Parameter(name = "SilentSwap")
+    public boolean silent = true;
+
+    private long biteTime = 0;
+    private long nextCastTime = 0;
+
+    public void onEnable() {
+        biteTime = 0;
+        nextCastTime = System.currentTimeMillis();
+        FishUtility.reset();
+    }
+
+    public void onDisable() {
+        biteTime = 0;
+        FishUtility.reset();
+    }
+
     public void onTick() {
-        var mc = MinecraftWrapper.getWrapper();
-        net.minecraft.client.player.LocalPlayer player = mc.getPlayer();
-        if (player == null || mc.getLevel() == null) return;
+        if (MinecraftWrapper.getWrapper().getPlayer() == null) return;
         long now = System.currentTimeMillis();
-        if (now - lastActionTime < 200) return;
-        FishingHook hook = findBobber(mc, player);
-        if (hook != null) {
-            double dy = hook.getY() - prevY;
-            boolean moving = Math.abs(dy) > 0.02;
-            if (wasIdle && moving) {
-                reelIn(mc, player);
-                lastActionTime = now + (long) castDelay;
-                wasIdle = false;
-                return;
+
+        if (FishUtility.hasHook()) {
+            if (FishUtility.isBiting() && biteTime == 0) biteTime = now;
+            boolean reelNow = biteTime != 0 && now - biteTime >= reelDelay;
+            boolean stuck = biteTime == 0 && FishUtility.hookAgeMs() >= (long) (timeout * 1000L);
+            if (reelNow || stuck) {
+                FishUtility.useRod(antiBreak, silent);
+                biteTime = 0;
+                FishUtility.reset();
+                nextCastTime = now + (long) castDelay;
             }
-            wasIdle = !moving;
-            prevY = hook.getY();
             return;
         }
-        wasIdle = false;
-        prevY = 0;
-        if (autoCast) {
-            int rodSlot = findRodSlot(player);
-            if (rodSlot != -1) {
-                int prev = InventoryUtility.getSelectedSlot(player);
-                InventoryUtility.selectSlot(player, rodSlot);
-                useRod(mc, player);
-                if (silent) {
-                    InventoryUtility.selectSlot(player, prev);
-                }
-                lastActionTime = now;
-            }
-        }
-    }
-    @Nullable
-    private FishingHook findBobber(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
-        for (var e : mc.getLevel().getEntities(player, AABB.ofSize(player.position(), 32, 32, 32))) {
-            if (e instanceof FishingHook hook && hook.getOwner() == player) {
-                return hook;
-            }
-        }
-        return null;
-    }
-    private int findRodSlot(net.minecraft.client.player.LocalPlayer player) {
-        for (int i = 0; i < 9; i++) {
-            if (InventoryUtility.isItemInSlot(player, i, "fishing_rod")) return i;
-        }
-        return -1;
-    }
-    private void useRod(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
-        mc.getGameMode().useItem(player, net.minecraft.world.InteractionHand.MAIN_HAND);
-        ravex.utility.player.SwingUtility.swingMainHand(player);
-    }
-    private void reelIn(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
-        useRod(mc, player);
-    }
 
-
-
+        FishUtility.reset();
+        biteTime = 0;
+        if (!autoCast || now < nextCastTime) return;
+        if (FishUtility.useRod(antiBreak, silent)) nextCastTime = now + (long) castDelay;
+    }
 }

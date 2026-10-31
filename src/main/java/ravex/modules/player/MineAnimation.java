@@ -1,12 +1,11 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ServerboundSwingPacket;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.network.NetworkUtility;
 
 @Module(name = "MineAnimation", category = "Player")
 public class MineAnimation {
@@ -15,8 +14,7 @@ public class MineAnimation {
     @Subscribe
     public void onPacket(PacketEvent event) {
         if (!Modules.enabled(MineAnimation.class) || !event.isSend()) return;
-        Packet<?> packet = event.getPacket();
-        if (packet instanceof ServerboundSwingPacket && hideSwing) {
+        if (NetworkUtility.isSwingPacket(event.getPacket()) && hideSwing) {
             var mc = MinecraftWrapper.getWrapper();
             if (mc.getGameMode() != null && mc.getGameMode().isDestroying()) {
                 event.setCancelled(true);

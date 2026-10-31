@@ -1,5 +1,4 @@
 #pragma once
-/* Header for motion_tracker */
 namespace ravex {
 namespace tracker {
     class MotionTracker {

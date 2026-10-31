@@ -32,6 +32,8 @@ public class Notifications {
     public String itemCollection = "Off";
     @Parameter(name = "Tracker", modes = {"Off", "Toast", "Text"})
     public String tracker = "Off";
+    @Parameter(name = "PopCounter", modes = {"Off", "Toast", "Text"})
+    public String popCounter = "Toast";
     @Parameter(name = "MessageColor", color = true)
     public int messageColor = 0xFF0066FF;
     @Parameter(name = "ToastOpacity", min = 0.25, max = 1.0, step = 0.05)
@@ -50,6 +52,7 @@ public class Notifications {
     private final List<String> knownPlayers = new ArrayList<>();
     private final Map<Integer, ItemEntry> trackedItems = new HashMap<>();
     private final Map<String, PlayerState> playerStates = new HashMap<>();
+    private final Map<String, Integer> popCounts = new HashMap<>();
 
     private record ItemEntry(double x, double y, double z, ItemStack stack) {}
     private static class PlayerState {
@@ -71,6 +74,20 @@ public class Notifications {
         knownPlayers.clear();
         trackedItems.clear();
         playerStates.clear();
+        popCounts.clear();
+    }
+
+    @ravex.event.Subscribe
+    public void onTotemPop(ravex.event.combat.TotemPopEvent event) {
+        if ("Off".equals(popCounter)) return;
+        var popped = event.getPlayer();
+        if (popped == null) return;
+        var self = MinecraftWrapper.getWrapper().getPlayer();
+        if (popped == self) return;
+        String name = popped.getName().getString();
+        int count = popCounts.getOrDefault(name, 1);
+        popCounts.put(name, count + 1);
+        notifyOpt(popCounter, ravex.utility.misc.LanguageUtility.t("pop_count", name, count), 0xFFFFAA00);
     }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();

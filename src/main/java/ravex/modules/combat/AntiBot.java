@@ -55,26 +55,12 @@ public class AntiBot {
 
     public static boolean isBotCheck(net.minecraft.world.entity.Entity entity) {
         if (entity == null) return false;
+        // antiBot off, so nothing counts as a bot
+        if (!Modules.enabled(AntiBot.class)) return false;
+        AntiBot ab = Modules.get(AntiBot.class);
+        if (ab == null || !ab.shouldProtectTarget()) return false;
         if (ravex.modules.world.FakePlayer.isFake(entity)) return true;
-        if (Modules.enabled(AntiBot.class)) {
-            AntiBot ab = Modules.get(AntiBot.class);
-            if (ab != null && ab.isBot(entity)) return true;
-        }
-        if (entity instanceof net.minecraft.world.entity.player.Player p) {
-            var mc = MinecraftWrapper.getWrapper();
-            if (mc.getPlayer() != null) {
-                try {
-                    var conn = mc.getConnection();
-                    if (conn != null && conn.getPlayerInfo(p.getUUID()) == null) {
-                        return true;
-                    }
-                } catch (Throwable ignored) {}
-                if (p.tickCount < 25 && p.distanceTo(mc.getPlayer()) < 6.0 && p.getY() > mc.getPlayer().getY() + 0.8) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return ab.isBot(entity);
     }
 
     public boolean shouldProtectTarget() {

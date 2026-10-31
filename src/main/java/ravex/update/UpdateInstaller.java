@@ -11,11 +11,8 @@ import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Swaps the mod jar after the game has closed - a loaded jar cannot be overwritten in place.
- * Uses only {@code java.*} so it can run straight from the downloaded jar.
- * Args: sourceJar targetJar relaunch gamePid joinedArgs
- */
+// swaps the mod jar after the game closed
+// args: sourceJar targetJar relaunch gamePid joinedArgs
 public final class UpdateInstaller {
     private static final char ARG_SEPARATOR = '\u001F';
     private static final int PROCESS_WAIT_TIMEOUT_MS = 10 * 60 * 1000;

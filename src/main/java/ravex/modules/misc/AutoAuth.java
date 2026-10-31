@@ -8,27 +8,17 @@ import ravex.mcwrapper.MinecraftWrapper;
 public class AutoAuth {
     @Parameter(name = "Password")
     public String password = "r1v2x";
-    @Parameter(name = "Delay", min = 0.0, max = 20.0, step = 1.0)
-    public double delay = 3.0;
-    private int tickCounter = 0;
-    private boolean hasRegistered = false;
-    public void onEnable() { tickCounter = 0; hasRegistered = false; }
-    public void onDisable() { hasRegistered = false; }
+    private boolean sent = false;
+    public void onEnable() { sent = false; }
+    public void onDisable() { sent = false; }
     public void onTick() {
+        if (sent) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getPlayer().connection == null) return;
-        if (hasRegistered) return;
-        tickCounter++;
-        if (tickCounter >= (int) delay * 20) {
-            String pw = password;
-            if (pw.isEmpty()) pw = "r1v2x";
-            NetworkUtility.sendCommand("register " + pw + " " + pw);
-            NetworkUtility.sendCommand("login " + pw);
-            hasRegistered = true;
-        }
+        String pw = password;
+        if (pw == null || pw.isEmpty()) pw = "r1v2x";
+        NetworkUtility.sendCommand("register " + pw + " " + pw);
+        NetworkUtility.sendCommand("login " + pw);
+        sent = true;
     }
-
-
-
-
 }

@@ -6,6 +6,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import ravex.event.EventBusHolder;
 import ravex.event.client.ScreenEvent;
 import ravex.manager.NotificationManager;
@@ -75,18 +76,6 @@ public class MixinScreen {
                 drag.setDisplayX(dx);
                 drag.setDisplayY(dy);
                 drag.setHudPositionCustomized(true);
-            }
-            int activeColor = ravex.utility.render.ColorUtility.getActiveColor();
-            for (var hm : ravex.manager.ModuleManager.INSTANCE.getHudModules()) {
-                if (!hm.getEnabled()) continue;
-                int x1 = hm.getX(), y1 = hm.getY();
-                int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
-                int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
-                boolean hov = mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2;
-                if (hov || hm == drag) {
-                    guiGraphics.fill(x1 - 1, y1 - 1, x2 + 1, y2 + 1, ravex.utility.render.ColorUtility.withAlpha(activeColor, 35));
-                    ravex.utility.render.Render2DUtility.drawRoundBorder(guiGraphics, x1 - 1, y1 - 1, x2 - x1 + 2, y2 - y1 + 2, 2, 1, activeColor);
-                }
             }
         }
     }

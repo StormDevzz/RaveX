@@ -10,27 +10,29 @@ import java.util.List;
 
 public class ShulkerTooltipComponent implements ClientTooltipComponent {
     private final List<ItemStack> items;
+    private final int tintColor;
 
-    public ShulkerTooltipComponent(List<ItemStack> items) {
+    public ShulkerTooltipComponent(List<ItemStack> items, int tintColor) {
         this.items = items;
+        this.tintColor = tintColor;
     }
 
     @Override
     public int getHeight(Font font) {
-
-
         return 54;
     }
 
     @Override
     public int getWidth(Font font) {
-
-
         return 162;
     }
 
     @Override
     public void renderImage(Font font, int x, int y, int width, int height, GuiGraphics guiGraphics) {
+        int panel = (tintColor & 0x00FFFFFF) | 0x90000000;
+        int border = (tintColor & 0x00FFFFFF) | 0xC8000000;
+        Render2DUtility.drawRound(guiGraphics, x - 3, y - 3, 168, 60, 5, panel);
+        Render2DUtility.drawRoundBorder(guiGraphics, x - 3, y - 3, 168, 60, 5, 1, border);
         for (int row = 0; row < 3; row++) {
             for (int col = 0; col < 9; col++) {
                 int index = row * 9 + col;

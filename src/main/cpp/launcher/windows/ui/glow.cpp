@@ -1,7 +1,53 @@
 #include "ui/include/glow.hpp"
 #include <cmath>
 namespace ravex::ui {
+namespace {
+// keep the glow inside its parent window instead of spilling over the desktop
+void applyGlowClip(GlowData* data, int x, int y, int sz) {
+    if (!data->hGlow) return;
+    RECT pr{};
+    if (!data->parent || !GetWindowRect(data->parent, &pr)) {
+        if (data->clipped) {
+            HRGN rgn = CreateEllipticRgn(3, 3, sz - 3, sz - 3);
+            SetWindowRgn(data->hGlow, rgn, TRUE);
+            data->clipped = false;
+        }
+        return;
+    }
+    RECT gr = { x, y, x + sz, y + sz };
+    RECT ir{};
+    if (!IntersectRect(&ir, &gr, &pr)) {
+        if (data->active) { ShowWindow(data->hGlow, SW_HIDE); data->active = false; }
+        return;
+    }
+    if (ir.left <= gr.left && ir.top <= gr.top && ir.right >= gr.right && ir.bottom >= gr.bottom) {
+        if (data->clipped) {
+            HRGN rgn = CreateEllipticRgn(3, 3, sz - 3, sz - 3);
+            SetWindowRgn(data->hGlow, rgn, TRUE);
+            data->clipped = false;
+        }
+        return;
+    }
+    int l = ir.left - x, t = ir.top - y, r = ir.right - x, b = ir.bottom - y;
+    if (l < 3) l = 3;
+    if (t < 3) t = 3;
+    if (r > sz - 3) r = sz - 3;
+    if (b > sz - 3) b = sz - 3;
+    if (r <= l || b <= t) {
+        if (data->active) { ShowWindow(data->hGlow, SW_HIDE); data->active = false; }
+        return;
+    }
+    HRGN rgn = CreateEllipticRgn(3, 3, sz - 3, sz - 3);
+    HRGN box = CreateRectRgn(l, t, r, b);
+    CombineRgn(rgn, rgn, box, RGN_AND);
+    DeleteObject(box);
+    SetWindowRgn(data->hGlow, rgn, TRUE);
+    data->clipped = true;
+}
+}
 void glowCreate(HWND parent, GlowData* data) {
+    data->parent = parent;
+    data->clipped = false;
     if (data->bmp) DeleteObject(data->bmp);
     const int sz = 220;
     const int cx = sz / 2;
@@ -39,9 +85,7 @@ void glowCreate(HWND parent, GlowData* data) {
         }
     }
     if (!data->hGlow) {
-        // the glow is a global top-most layered popup. Create it only for the main
-        // launcher window, so secondary windows (settings, instance editor, dialogs)
-        // never show a light that floats over them.
+        // glow is a top-most layered popup; only the main window gets one
         wchar_t cls[64] = {};
         if (parent) GetClassNameW(parent, cls, 64);
         if (wcscmp(cls, L"RavexLauncherMain") == 0) {
@@ -127,8 +171,7 @@ void glowUpdateAnywhere(HWND parent, GlowData* data) {
     RECT rc;
     GetWindowRect(parent, &rc);
     bool over = PtInRect(&rc, pt);
-    // only when the top-level window actually under the cursor IS the main window:
-    // with a modal dialog open (settings, instance editor) the glow must not show.
+    // cursor must be over the main window, not over a modal dialog
     if (over) {
         HWND hit = WindowFromPoint(pt);
         HWND root = hit ? GetAncestor(hit, GA_ROOT) : nullptr;

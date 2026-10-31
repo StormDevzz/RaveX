@@ -3,21 +3,16 @@ package ravex.modules.render;
 import org.lwjgl.glfw.GLFW;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.annotations.Module;
-import ravex.modules.annotations.Parameter;
 import ravex.parameter.KeybindParameter;
 
 @Module(name = "Zoom", category = "Render")
 public class Zoom {
     public ravex.parameter.Parameter<Integer> bind = new KeybindParameter("Bind", GLFW.GLFW_KEY_UNKNOWN);
 
-    @Parameter(name = "Speed", min = 5, max = 50, step = 1)
-    public double speed = 18;
-
-    @Parameter(name = "Fov", min = 5, max = 90, step = 1)
-    public double fov = 30;
-
-    @Parameter(name = "ScrollStep", min = 1, max = 20, step = 1)
-    public double scrollStep = 5;
+    // fixed profile, only the keybind is configurable
+    private double fov = 30;
+    private static final double ZOOM_SPEED = 18;
+    private static final double SCROLL_STEP = 5;
 
     private double currentFov;
     private long lastMs;
@@ -63,7 +58,7 @@ public class Zoom {
             return original;
         }
         double target = held ? fov : original;
-        double alpha = 1.0 - Math.exp(-dt * speed);
+        double alpha = 1.0 - Math.exp(-dt * ZOOM_SPEED);
         currentFov += (target - currentFov) * alpha;
         if (Math.abs(target - currentFov) < 0.05) currentFov = target;
         if (!held && Math.abs(currentFov - original) < 0.05) {
@@ -76,9 +71,9 @@ public class Zoom {
 
     public void adjustScroll(double yOffset) {
         if (yOffset > 0) {
-            fov = Math.max(5, fov - scrollStep);
+            fov = Math.max(5, fov - SCROLL_STEP);
         } else if (yOffset < 0) {
-            fov = Math.min(90, fov + scrollStep);
+            fov = Math.min(90, fov + SCROLL_STEP);
         }
     }
 }

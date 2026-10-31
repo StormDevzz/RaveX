@@ -1,5 +1,4 @@
 #include "shield_damage.hpp"
-/* Source implementation for shield_damage */
 namespace ravex {
 namespace damage {
     ShieldDamage::ShieldDamage() {}

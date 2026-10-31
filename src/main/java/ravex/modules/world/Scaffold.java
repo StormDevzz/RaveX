@@ -1,19 +1,5 @@
 package ravex.modules.world;
 
-import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
-import net.minecraft.world.item.BlockItem;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.BlockHitResult;
-import net.minecraft.world.phys.Vec3;
-import net.minecraft.world.phys.shapes.CollisionContext;
 import org.jetbrains.annotations.Nullable;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.annotations.Module;
@@ -27,10 +13,12 @@ import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 
-@Module(name = "Scaffold", category = "World")
+@Module(name = "Scaffold", category = "Movement")
 public class Scaffold {
     @Parameter(name = "Mode", modes = {"Vanilla", "Grim", "Verus", "Strict"})
     public String mode = "Grim";
+    @Parameter(name = "HeldFirst")
+    public boolean heldFirst = false;
     @Parameter(name = "Expand")
     public boolean expand = false;
     @Parameter(name = "ExpandMode", modes = {"Forward", "Around"}, visible = "expand")
@@ -49,21 +37,25 @@ public class Scaffold {
     public boolean tower = true;
     @Parameter(name = "TowerMode", modes = {"Normal", "Fast", "Strict"}, visible = "tower")
     public String towerMode = "Normal";
-    @Parameter(name = "Eagle", visible = "mode!=Strict")
-    public boolean eagle = true;
+    // edge sneak only while building, never towering
+    @Parameter(name = "SafeWalk")
+    public boolean safeWalk = true;
     @Parameter(name = "KeepY")
     public boolean keepY = false;
-    @Parameter(name = "NoRotate")
-    public boolean noRotate = false;
+    // who sees the scaffold rotations
+    // normal - client and server
+    // silent - server only, camera stays still
+    @Parameter(name = "Rotation", modes = {"Normal", "Silent", "None"})
+    public String rotation = "Normal";
     @Parameter(name = "Render")
     public boolean render = true;
     @Parameter(name = "Animate")
     public boolean animate = true;
     @Parameter(name = "Color", color = true, visible = "render")
-    public int highlightColor = 0xFFFF33CC;
+    public int highlightColor = 0xFF40A9F8;
     @Parameter(name = "Debug")
     public boolean debug = false;
-    public static Vec3 highlightPos = null;
+    public static net.minecraft.world.phys.Vec3 highlightPos = null;
     public static float renderAlpha = 0.0f;
     public static double renderSize = 0.0;
     public static float renderR = 1.0f;
@@ -72,6 +64,12 @@ public class Scaffold {
     public static final SilentRotationUtility silentRotation = new SilentRotationUtility();
     public static float viewYaw = 0f;
     public static float viewPitch = 0f;
+    // silent and none keep the camera still
+    public static boolean noRotateView() {
+        var s = ravex.modules.Modules.get(Scaffold.class);
+        return s != null && !"Normal".equals(s.rotation);
+    }
+
     public static boolean capturingView = false;
     private int currX, currY, currZ;
     private boolean hasCurr;
@@ -91,7 +89,7 @@ public class Scaffold {
     private long lastPlaceMs;
     private int lastExpandLen = 3;
 
-    public BlockPos getCurrentPos() {
+    public net.minecraft.core.BlockPos getCurrentPos() {
         if (!hasCurr) return null;
         if (System.currentTimeMillis() - lastTargetMs > 800) {
             hasCurr = false;
@@ -124,11 +122,11 @@ public class Scaffold {
         hasCurr = false;
         var mc = MinecraftWrapper.getWrapper();
         var p = mc.getPlayer();
-        if (p != null && noRotate && wasPlacing) {
+        if (p != null && noRotateView() && wasPlacing) {
             p.setYRot(viewYaw);
             p.setXRot(viewPitch);
         }
-        if (eagleActive() && mc.getOptions() != null) {
+        if (mc.getOptions() != null) {
             mc.getOptions().keyShift.setDown(physicalSneak(mc));
         }
         wasPlacing = false;
@@ -159,13 +157,14 @@ public class Scaffold {
         boolean towerMoving = mc.getOptions().keyUp.isDown() || mc.getOptions().keyDown.isDown()
             || mc.getOptions().keyLeft.isDown() || mc.getOptions().keyRight.isDown();
         if (towerJump && !towerMoving) {
+            var motion = MoveUtility.getMotion();
             if ("Strict".equals(towerMode)) {
                 if (onGround) {
-                    MoveUtility.setMotion(p.getDeltaMovement().x, 0.42, p.getDeltaMovement().z);
+                    MoveUtility.setMotion(motion.x, 0.42, motion.z);
                 }
             } else {
                 double boost = "Fast".equals(towerMode) ? 0.6 : 0.42;
-                MoveUtility.setMotion(p.getDeltaMovement().x, boost, p.getDeltaMovement().z);
+                MoveUtility.setMotion(motion.x, boost, motion.z);
             }
         }
         if (!onGround && !towerJump) {
@@ -207,7 +206,7 @@ public class Scaffold {
         var face = target.face;
         var faceVec = SwingUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ());
         boolean aimReady = !strictMode() || (hasPrevAim && aimHitsBlock(p, nb, prevAimYaw, prevAimPitch));
-        if (noRotate) {
+        if (noRotateView()) {
             if (!wasPlacing) {
                 viewYaw = p.getYRot();
                 viewPitch = p.getXRot();
@@ -236,7 +235,7 @@ public class Scaffold {
             hasPrevAim = true;
         }
         if (!aimReady) {
-            applyEagle(mc, p, target);
+            applySafeWalk(mc, p, target);
             debug("wait aim");
             return;
         }
@@ -244,12 +243,12 @@ public class Scaffold {
         boolean dup = target.pos.getX() == lastPlaceX && target.pos.getY() == lastPlaceY
             && target.pos.getZ() == lastPlaceZ && nowPlace - lastPlaceMs < 600;
         if (dup) {
-            applyEagle(mc, p, target);
+            applySafeWalk(mc, p, target);
             debug("wait sync");
             return;
         }
         if (buildSpeed < 20 && nowPlace - lastPlaceMs < 1000L / buildSpeed) {
-            applyEagle(mc, p, target);
+            applySafeWalk(mc, p, target);
             debug("wait rate");
             return;
         }
@@ -259,11 +258,11 @@ public class Scaffold {
             debug("err " + t);
             return;
         }
-        applyEagle(mc, p, target);
+        applySafeWalk(mc, p, target);
     }
 
     @Nullable
-    private TargetResult pickTarget(MinecraftWrapper mc, LocalPlayer p, boolean towerJump,
+    private TargetResult pickTarget(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, boolean towerJump,
                                     int bx, int ry, int bz, int[] dir) {
         boolean grim = strictMode() || "Grim".equals(mode);
         if (towerJump && !p.onGround()) {
@@ -293,7 +292,7 @@ public class Scaffold {
     }
 
     @Nullable
-    private TargetResult expandTargetAround(MinecraftWrapper mc, LocalPlayer p, boolean grim,
+    private TargetResult expandTargetAround(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, boolean grim,
                                             int bx, int ry, int bz, int radius) {
         for (int ring = 1; ring <= radius; ring++) {
             for (int dx = -ring; dx <= ring; dx++) {
@@ -319,7 +318,7 @@ public class Scaffold {
     }
 
     @Nullable
-    private TargetResult expandTarget(MinecraftWrapper mc, LocalPlayer p, boolean grim,
+    private TargetResult expandTarget(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, boolean grim,
                                       int bx, int ry, int bz, int sx, int sz, int len) {
         boolean diagonal = sx != 0 && sz != 0;
         for (int i = 1; i <= len; i++) {
@@ -346,20 +345,20 @@ public class Scaffold {
     }
 
     @Nullable
-    private TargetResult checkCandidate(MinecraftWrapper mc, LocalPlayer p, boolean grim,
+    private TargetResult checkCandidate(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, boolean grim,
                                         int x, int y, int z, boolean overVoid) {
         if (!isAir(x, y, z)) return null;
         if (overVoid && !isAir(x, y - 1, z)) return null;
         var pos = BlockUtility.pos(x, y, z);
-        if (p.getBoundingBox().intersects(new AABB(pos))) return null;
+        if (p.getBoundingBox().intersects(new net.minecraft.world.phys.AABB(pos))) return null;
         var neighbor = findNeighbor(x, y, z, grim);
         if (neighbor == null && grim) neighbor = findNeighbor(x, y, z, false);
         if (neighbor == null) return null;
         return new TargetResult(pos, neighbor.neighbor, neighbor.face);
     }
 
-    private void place(MinecraftWrapper mc, LocalPlayer p, int slot,
-                       BlockPos nb, Direction face) {
+    private void place(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, int slot,
+                       net.minecraft.core.BlockPos nb, net.minecraft.core.Direction face) {
         var hit = hitFor(nb, face);
         var faceVec = SwingUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ());
         var aim = hit.getLocation().subtract(faceVec.scale(0.05));
@@ -391,44 +390,39 @@ public class Scaffold {
         }
     }
 
-    private String diagnose(MinecraftWrapper mc, LocalPlayer p, int slot,
-                            BlockPos nb, Direction face,
-                            BlockHitResult hit, InteractionResult res) {
+    private String diagnose(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, int slot,
+                            net.minecraft.core.BlockPos nb, net.minecraft.core.Direction face,
+                            net.minecraft.world.phys.BlockHitResult hit, net.minecraft.world.InteractionResult res) {
         var level = mc.getLevel();
         var target = nb.relative(face);
         var stack = InventoryUtility.getItem(p, slot);
         var item = stack.getItem();
         var sb = new StringBuilder("fail res=").append(res);
-        sb.append(" h=").append(BuiltInRegistries.ITEM.getKey(item));
+        sb.append(" h=").append(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(item));
         sb.append(" t=").append(target.toShortString());
-        sb.append(" tst=").append(BuiltInRegistries.BLOCK.getKey(level.getBlockState(target).getBlock()));
-        sb.append(" nb=").append(BuiltInRegistries.BLOCK.getKey(level.getBlockState(nb).getBlock()));
+        sb.append(" tst=").append(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(level.getBlockState(target).getBlock()));
+        sb.append(" nb=").append(net.minecraft.core.registries.BuiltInRegistries.BLOCK.getKey(level.getBlockState(nb).getBlock()));
         sb.append(" f=").append(face.getName());
-        sb.append(" ov=").append(p.getBoundingBox().intersects(new AABB(target)));
+        sb.append(" ov=").append(p.getBoundingBox().intersects(new net.minecraft.world.phys.AABB(target)));
         sb.append(" sec=").append(p.isSecondaryUseActive());
-        if (item instanceof BlockItem bi) {
-            var ctx = new BlockPlaceContext(p, InteractionHand.MAIN_HAND, stack, hit);
+        if (item instanceof net.minecraft.world.item.BlockItem bi) {
+            var ctx = new net.minecraft.world.item.context.BlockPlaceContext(p, net.minecraft.world.InteractionHand.MAIN_HAND, stack, hit);
             var st = bi.getBlock().getStateForPlacement(ctx);
             sb.append(" pst=").append(st);
             if (st != null) {
                 sb.append(" surv=").append(st.canSurvive(level, target));
                 sb.append(" obst=").append(level.isUnobstructed(st, target,
-                    CollisionContext.placementContext(p)));
+                    net.minecraft.world.phys.shapes.CollisionContext.placementContext(p)));
             }
         }
         sb.append(" y=").append(p.getY());
         return sb.toString();
     }
 
-    private void bail(MinecraftWrapper mc, LocalPlayer p, String msg) {
+    private void bail(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, String msg) {
         releaseView(p);
-        if (eagleActive() && mc.getOptions() != null) {
-            boolean want = false;
-            if (p.onGround() && currDir != null && (currDir[0] != 0 || currDir[1] != 0)) {
-                int fx = (int) Math.floor(p.getX()) + currDir[0];
-                int fz = (int) Math.floor(p.getZ()) + currDir[1];
-                want = isAir(fx, (int) Math.floor(p.getY()) - 1, fz);
-            }
+        if (mc.getOptions() != null) {
+            boolean want = safeWalk && mc.getCurrentScreen() == null && atEdge(mc, p);
             mc.getOptions().keyShift.setDown(physicalSneak(mc) || want);
         }
         debug(msg);
@@ -438,18 +432,51 @@ public class Scaffold {
         return "Strict".equals(mode);
     }
 
-    private boolean eagleActive() {
-        return strictMode() || eagle;
+    // true when the toes hang over the edge
+    private boolean atEdge(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
+        if (!p.onGround()) return false;
+        double fwd = 0;
+        double side = 0;
+        if (mc.getOptions() != null) {
+            if (mc.getOptions().keyUp.isDown()) fwd += 1;
+            if (mc.getOptions().keyDown.isDown()) fwd -= 1;
+            if (mc.getOptions().keyLeft.isDown()) side += 1;
+            if (mc.getOptions().keyRight.isDown()) side -= 1;
+        }
+        if (fwd == 0 && side == 0) return false;
+        double yaw = Math.toRadians(p.getYRot());
+        double dx = -Math.sin(yaw) * fwd + Math.cos(yaw) * side;
+        double dz = Math.cos(yaw) * fwd + Math.sin(yaw) * side;
+        double len = Math.sqrt(dx * dx + dz * dz);
+        if (len < 1.0e-4) return false;
+        dx /= len;
+        dz /= len;
+        int fx = (int) Math.floor(p.getX() + dx * 0.4);
+        int fz = (int) Math.floor(p.getZ() + dz * 0.4);
+        return isAir(fx, (int) Math.floor(p.getY() - 1.0), fz);
     }
 
-    private void applyEagle(MinecraftWrapper mc, LocalPlayer p, TargetResult target) {
-        if (!eagleActive() || mc.getOptions() == null) return;
-        int aboveY = target.pos.getY() + 1;
-        boolean wantSneak = p.onGround() && isAir(target.pos.getX(), aboveY, target.pos.getZ());
+    private void applySafeWalk(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, TargetResult target) {
+        if (mc.getOptions() == null) return;
+        // never sneak while a screen is open
+        if (!safeWalk || mc.getCurrentScreen() != null) {
+            mc.getOptions().keyShift.setDown(physicalSneak(mc));
+            return;
+        }
+        boolean placingUp = target != null && target.pos.getY() >= p.getBlockY() + 1;
+        boolean wantSneak = false;
+        if (p.onGround() && !placingUp) {
+            if (strictMode()) {
+                // strict mirrors the check above the placed block
+                wantSneak = isAir(target.pos.getX(), target.pos.getY() + 1, target.pos.getZ());
+            } else {
+                wantSneak = atEdge(mc, p);
+            }
+        }
         mc.getOptions().keyShift.setDown(physicalSneak(mc) || wantSneak);
     }
 
-    private static boolean aimHitsBlock(LocalPlayer p, BlockPos nb, float yaw, float pitch) {
+    private static boolean aimHitsBlock(net.minecraft.client.player.LocalPlayer p, net.minecraft.core.BlockPos nb, float yaw, float pitch) {
         double yr = Math.toRadians(yaw);
         double pr = Math.toRadians(pitch);
         double[] dir = {
@@ -483,8 +510,8 @@ public class Scaffold {
         return true;
     }
 
-    private void releaseView(LocalPlayer p) {
-        if (noRotate && wasPlacing) {
+    private void releaseView(net.minecraft.client.player.LocalPlayer p) {
+        if (noRotateView() && wasPlacing) {
             wasPlacing = false;
             capturingView = false;
             hasPrevAim = false;
@@ -513,7 +540,7 @@ public class Scaffold {
     }
 
     @Nullable
-    private int[] inputDir(MinecraftWrapper mc, LocalPlayer p) {
+    private int[] inputDir(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
         var opts = mc.getOptions();
         float fwd = 0f;
         float str = 0f;
@@ -522,7 +549,7 @@ public class Scaffold {
         if (opts.keyRight.isDown()) str += 1f;
         if (opts.keyLeft.isDown()) str -= 1f;
         if (fwd == 0f && str == 0f) return lastDir;
-        float yaw = (noRotate && capturingView) ? viewYaw : p.getYRot();
+        float yaw = (noRotateView() && capturingView) ? viewYaw : p.getYRot();
         double rad = Math.toRadians(yaw);
         double wx = -Math.sin(rad) * fwd - Math.cos(rad) * str;
         double wz = Math.cos(rad) * fwd - Math.sin(rad) * str;
@@ -534,11 +561,11 @@ public class Scaffold {
     private NeighborResult findNeighbor(int tx, int ty, int tz, boolean grim) {
         var player = MinecraftWrapper.getWrapper().getPlayer();
         var eye = player != null ? player.getEyePosition() : null;
-        var bestNeighbor = (BlockPos) null;
-        var bestFace = Direction.UP;
+        var bestNeighbor = (net.minecraft.core.BlockPos) null;
+        var bestFace = net.minecraft.core.Direction.UP;
         double bestDist = Double.MAX_VALUE;
 
-        for (var face : Direction.values()) {
+        for (var face : net.minecraft.core.Direction.values()) {
             int sx = tx + face.getStepX(), sy = ty + face.getStepY(), sz = tz + face.getStepZ();
             if (isAir(sx, sy, sz)) continue;
             var candidate = BlockUtility.pos(sx, sy, sz);
@@ -575,14 +602,22 @@ public class Scaffold {
         return state.isAir() || BlockUtility.isBlock(state, "snow") || !state.getFluidState().isEmpty();
     }
 
-    private static BlockHitResult hitFor(BlockPos nb, Direction face) {
+    private static net.minecraft.world.phys.BlockHitResult hitFor(net.minecraft.core.BlockPos nb, net.minecraft.core.Direction face) {
         var faceVec = SwingUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ());
         var hitVec = SwingUtility.centerOf(nb).add(faceVec.scale(0.5));
         return SwingUtility.hitResult(hitVec, face, nb);
     }
 
-    private int findPlaceableSlot(MinecraftWrapper mc, LocalPlayer p, TargetResult target) {
+    private int findPlaceableSlot(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, TargetResult target) {
         int fallback = -1;
+        if (heldFirst) {
+            int held = InventoryUtility.getSelectedSlot(p);
+            var heldStack = InventoryUtility.getItem(p, held);
+            if (!heldStack.isEmpty() && InventoryUtility.isBlockItem(heldStack)
+                    && canPlaceAt(p, mc.getLevel(), heldStack, target)) {
+                return held;
+            }
+        }
         for (int i = 0; i < 9; i++) {
             var stack = InventoryUtility.getItem(p, i);
             if (stack.isEmpty() || !InventoryUtility.isBlockItem(stack)) continue;
@@ -610,18 +645,18 @@ public class Scaffold {
         return fallback;
     }
 
-    private static boolean canPlaceAt(LocalPlayer p, ClientLevel level, ItemStack stack,
-                                      TargetResult target) {
-        if (!(stack.getItem() instanceof BlockItem bi)) return false;
+    private static boolean canPlaceAt(net.minecraft.client.player.LocalPlayer p, net.minecraft.client.multiplayer.ClientLevel level,
+                                      net.minecraft.world.item.ItemStack stack, TargetResult target) {
+        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem bi)) return false;
         var hit = hitFor(target.neighbor, target.face);
-        var ctx = new BlockPlaceContext(p, InteractionHand.MAIN_HAND, stack, hit);
+        var ctx = new net.minecraft.world.item.context.BlockPlaceContext(p, net.minecraft.world.InteractionHand.MAIN_HAND, stack, hit);
         var state = bi.getBlock().getStateForPlacement(ctx);
         if (state == null) return false;
         if (!state.canSurvive(level, target.pos)) return false;
-        return level.isUnobstructed(state, target.pos, CollisionContext.placementContext(p));
+        return level.isUnobstructed(state, target.pos, net.minecraft.world.phys.shapes.CollisionContext.placementContext(p));
     }
 
-    private record TargetResult(BlockPos pos, BlockPos neighbor, Direction face) {}
+    private record TargetResult(net.minecraft.core.BlockPos pos, net.minecraft.core.BlockPos neighbor, net.minecraft.core.Direction face) {}
 
-    private record NeighborResult(BlockPos neighbor, Direction face) {}
+    private record NeighborResult(net.minecraft.core.BlockPos neighbor, net.minecraft.core.Direction face) {}
 }

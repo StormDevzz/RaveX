@@ -20,10 +20,10 @@ public class AntiAfk {
     public double sneakDelay = 12000;
     @Parameter(name = "LookAround")
     public boolean lookAround = true;
+    @Parameter(name = "LookRange", min = 10.0, max = 180.0, step = 5.0, visible = "lookAround")
+    public double rotationRange = 45.0;
     @Parameter(name = "LookDelay", min = 1000, max = 60000, step = 500, visible = "lookAround")
     public double lookDelay = 12000;
-    @Parameter(name = "Rotation", min = 10.0, max = 180.0, step = 5.0, visible = "lookAround")
-    public double rotationRange = 45.0;
     private long lastSpinAt = 0;
     private long nextJumpAt = 0;
     private long nextSneakAt = 0;

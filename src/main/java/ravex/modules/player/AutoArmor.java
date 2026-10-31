@@ -1,23 +1,23 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.misc.PotionUtility;
+import ravex.utility.misc.ScreenUtility;
 import ravex.utility.player.ArmorUtility;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.gui.screens.inventory.InventoryScreen;
-import net.minecraft.world.entity.EquipmentSlot;
 import ravex.mcwrapper.MinecraftWrapper;
-
-
-
 
 @Module(name = "AutoArmor", category = "Player")
 public class AutoArmor {
-    @Parameter(name = "Mode", modes = {"Normal", "Legit", "Custom"})
-    public String mode = "Normal";
+    // legit: opens the inventory and equips there
+    @Parameter(name = "OpenInventory")
+    public boolean openInventory = false;
     @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
     public double delay = 150.0;
     @Parameter(name = "OnlyBetter")
     public boolean onlyBetter = true;
+    @Parameter(name = "IgnoreEnchants")
+    public boolean ignoreEnchants = false;
     @Parameter(name = "Helmet")
     public boolean helmet = true;
     @Parameter(name = "Chestplate")
@@ -26,121 +26,124 @@ public class AutoArmor {
     public boolean leggings = true;
     @Parameter(name = "Boots")
     public boolean boots = true;
-    @Parameter(name = "CustomDelay", min = 0.0, max = 500.0, step = 10.0, visible = "mode=Custom")
-    public double customDelay = 50.0;
-    @Parameter(name = "OpenInventory", visible = "mode=Custom")
-    public boolean openInventory = true;
-    @Parameter(name = "IgnoreEnchants", visible = "mode=Custom")
-    public boolean ignoreEnchants = false;
+
     private long lastEquipTime = 0;
+    private boolean openedByModule = false;
+
+    public void onDisable() {
+        openedByModule = false;
+    }
+
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         net.minecraft.client.player.LocalPlayer p = mc.getPlayer();
         if (p == null || mc.getLevel() == null) return;
-        String currentMode = mode;
-        if ("Custom".equals(currentMode)) {
-            tickCustom(mc, p);
-        } else {
-            tickNormal(mc, p, currentMode);
+        var screen = mc.getCurrentScreen();
+
+        if (openInventory) {
+            if (screen == null || ScreenUtility.isCreativeInventoryScreen(mc)) {
+                openedByModule = false;
+                if (findUpgrade(p) != null) {
+                    ensurePlayerMenu(p);
+                    InventoryUtility.openInventoryScreen(p);
+                    openedByModule = true;
+                }
+                return;
+            }
+            if (!ScreenUtility.isPlayerInventoryScreen(mc)) return;
+            if (findUpgrade(p) == null) {
+                if (openedByModule) {
+                    ScreenUtility.closeScreen(mc);
+                    openedByModule = false;
+                }
+                return;
+            }
+            ensurePlayerMenu(p);
+            equipNext(mc, p);
+            return;
         }
+
+        if (screen != null && !ScreenUtility.isPlayerInventoryScreen(mc)) return;
+        if (findUpgrade(p) == null) return;
+        ensurePlayerMenu(p);
+        equipNext(mc, p);
+    }
+
+    // a stale creative menu swallows the clicks
+    private void ensurePlayerMenu(net.minecraft.client.player.LocalPlayer p) {
+        if (p.containerMenu != p.inventoryMenu && p.containerMenu.containerId == 0) {
+            p.containerMenu = p.inventoryMenu;
+        }
+    }
+
+    private void equipNext(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
+        if (System.currentTimeMillis() - lastEquipTime < delay) return;
+        int[] up = findUpgrade(p);
+        if (up == null) return;
+        equipArmor(mc, p, up[1], ArmorUtility.getEquipmentSlotForIndex(up[0]));
+        lastEquipTime = System.currentTimeMillis();
+    }
+
+    // {armorIndex, inventorySlot} or null when none
+    private int[] findUpgrade(net.minecraft.client.player.LocalPlayer p) {
+        for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
+            if (!isSlotEnabled(armorIndex)) continue;
+            var equipSlot = ArmorUtility.getEquipmentSlotForIndex(armorIndex);
+            var currentArmor = p.getItemBySlot(equipSlot);
+            int bestSlot = ArmorUtility.findBestArmorSlot(p, armorIndex);
+            if (bestSlot == -1) continue;
+            var bestStack = InventoryUtility.getItem(p, bestSlot);
+            if (!ArmorUtility.isArmorItem(bestStack) || !ArmorUtility.slotMatches(bestStack, equipSlot)) continue;
+            if (onlyBetter && !currentArmor.isEmpty() && !isBetter(bestStack, currentArmor, equipSlot)) continue;
+            return new int[]{armorIndex, bestSlot};
+        }
+        return null;
+    }
+
+    private boolean isBetter(net.minecraft.world.item.ItemStack candidate, net.minecraft.world.item.ItemStack worn,
+                             net.minecraft.world.entity.EquipmentSlot slot) {
+        if (ignoreEnchants) {
+            int candidateDef = PotionUtility.getArmorDefense(candidate, slot);
+            int wornDef = PotionUtility.getArmorDefense(worn, slot);
+            return candidateDef > wornDef;
+        }
+        return ArmorUtility.isBetterArmor(candidate, worn, slot);
     }
 
     private boolean isSlotEnabled(int armorIndex) {
         return switch (armorIndex) {
-            case 0 -> helmet;
-            case 1 -> chestplate;
-            case 2 -> leggings;
-            case 3 -> boots;
+            // index order: 0 feet, 1 legs, 2 chest, 3 head
+            case 0 -> boots;
+            case 1 -> leggings;
+            case 2 -> chestplate;
+            case 3 -> helmet;
             default -> true;
         };
     }
 
-    private void tickNormal(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, String currentMode) {
-        if (mc.getCurrentScreen() != null && !(mc.getCurrentScreen() instanceof InventoryScreen)) return;
-        if (System.currentTimeMillis() - lastEquipTime < delay) return;
-        for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
-            if (!isSlotEnabled(armorIndex)) continue;
-            EquipmentSlot equipSlot = ArmorUtility.getEquipmentSlotForIndex(armorIndex);
-            var currentArmor = p.getItemBySlot(equipSlot);
-            int bestSlot = ArmorUtility.findBestArmorSlot(p, armorIndex);
-            if (bestSlot == -1) continue;
-            var bestStack = InventoryUtility.getItem(p, bestSlot);
-            if (!ArmorUtility.isArmorItem(bestStack) || !ArmorUtility.slotMatches(bestStack, equipSlot)) continue;
-            if (onlyBetter && !currentArmor.isEmpty()
-                && !ArmorUtility.isBetterArmor(bestStack, currentArmor, equipSlot)) continue;
-            if ("Legit".equals(currentMode)) {
-                int hotbarSlot = InventoryUtility.findEmptyHotbarSlot(p);
-                if (hotbarSlot == -1) hotbarSlot = getBestHotbarSlot(p);
-                if (hotbarSlot == -1 || hotbarSlot > 8) continue;
-                InventoryUtility.quickMoveStack(mc, p, bestSlot);
-                int prevSlot = InventoryUtility.getSelectedSlot(p);
-                InventoryUtility.selectSlot(p, hotbarSlot);
-                mc.getGameMode().useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
-                if (prevSlot != hotbarSlot) InventoryUtility.selectSlot(p, prevSlot);
-            } else {
-                InventoryUtility.quickMoveStack(mc, p, bestSlot);
-            }
-            lastEquipTime = System.currentTimeMillis();
-            break;
-        }
+    private int armorContainerSlot(net.minecraft.world.entity.EquipmentSlot slot) {
+        return switch (slot) {
+            case HEAD -> 5;
+            case CHEST -> 6;
+            case LEGS -> 7;
+            case FEET -> 8;
+            default -> -1;
+        };
     }
 
-    private void tickCustom(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p) {
-        if (openInventory && !(mc.getCurrentScreen() instanceof InventoryScreen)) {
-            return;
-        }
-        if (System.currentTimeMillis() - lastEquipTime < customDelay) return;
-        for (int armorIndex = 0; armorIndex < 4; armorIndex++) {
-            if (!isSlotEnabled(armorIndex)) continue;
-            EquipmentSlot equipSlot = ArmorUtility.getEquipmentSlotForIndex(armorIndex);
-            var currentArmor = p.getItemBySlot(equipSlot);
-            int bestSlot = ArmorUtility.findBestArmorSlot(p, armorIndex);
-            if (bestSlot == -1) continue;
-            var bestStack = InventoryUtility.getItem(p, bestSlot);
-            if (!ArmorUtility.isArmorItem(bestStack) || !ArmorUtility.slotMatches(bestStack, equipSlot)) continue;
-            if (onlyBetter && !currentArmor.isEmpty()
-                && !isBetterArmorIgnoreEnchants(bestStack, currentArmor, equipSlot)) continue;
-            InventoryUtility.quickMoveStack(mc, p, bestSlot);
-            lastEquipTime = System.currentTimeMillis();
-            break;
-        }
+    // quick move will not replace worn armor, three click swap
+    private void equipArmor(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, int invSlot,
+                            net.minecraft.world.entity.EquipmentSlot equipSlot) {
+        int armorSlot = armorContainerSlot(equipSlot);
+        if (armorSlot == -1) return;
+        int from = InventoryUtility.inventorySlotToContainerSlot(invSlot);
+        if (from == -1) return;
+        int menuId = p.containerMenu.containerId;
+        var gm = mc.getGameMode();
+        if (gm == null) return;
+        // works for an empty slot too
+        gm.handleInventoryMouseClick(menuId, armorSlot, 0, InventoryUtility.PICKUP, p);
+        gm.handleInventoryMouseClick(menuId, from, 0, InventoryUtility.PICKUP, p);
+        gm.handleInventoryMouseClick(menuId, armorSlot, 0, InventoryUtility.PICKUP, p);
     }
-
-    private boolean isBetterArmorIgnoreEnchants(net.minecraft.world.item.ItemStack a,
-            net.minecraft.world.item.ItemStack b, EquipmentSlot slot) {
-        if (!ArmorUtility.isArmorItem(a)) return false;
-        if (!ArmorUtility.isArmorItem(b)) return true;
-        if (ignoreEnchants) {
-            return ArmorUtility.getArmorScore(a, slot) > ArmorUtility.getArmorScore(b, slot);
-        }
-        return ArmorUtility.isBetterArmor(a, b, slot);
-    }
-
-    private int getBestHotbarSlot(net.minecraft.client.player.LocalPlayer p) {
-        int bestSlot = -1;
-        double bestScore = Double.MIN_VALUE;
-        for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(p, i);
-            double score;
-            if (stack.isEmpty()) {
-                score = 100;
-            } else if (ArmorUtility.isArmorItem(stack)) {
-                EquipmentSlot slot = InventoryUtility.getEquippableSlot(stack);
-                score = ArmorUtility.getArmorScore(stack, slot);
-            } else {
-                score = 0;
-            }
-            if (score > bestScore) {
-                bestScore = score;
-                bestSlot = i;
-            }
-        }
-        return bestSlot;
-    }
-
-
-
-
-
-
 }

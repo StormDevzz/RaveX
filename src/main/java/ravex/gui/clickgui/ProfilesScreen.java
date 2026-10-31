@@ -22,6 +22,7 @@ public class ProfilesScreen extends Screen {
 
     private boolean creatingNew;
     private String newName = "";
+    private boolean nameFocused;
 
     private String statusMessage = "";
     private int statusTimer;
@@ -40,13 +41,29 @@ public class ProfilesScreen extends Screen {
         profiles = new ArrayList<>(ProfileManager.INSTANCE.getProfiles());
     }
 
+    private float openT = 0f;
+    private long openLast = System.nanoTime();
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
         SubScreenStyle.background(graphics, this.width, this.height);
+        boolean openAnimate = ravex.modules.render.Animations.tabAnimation();
+        long openNow = System.nanoTime();
+        float openDt = Math.min(50f, (openNow - openLast) / 1_000_000f);
+        openLast = openNow;
+        if (openAnimate && openT < 1f) openT = Math.min(1f, openT + openDt / 160f);
+        float openP = openAnimate ? ravex.utility.render.animate.AnimationUtility.Easing.CUBIC_OUT.apply(openT) : 1f;
+        graphics.pose().pushMatrix();
+        if (openP < 0.999f) {
+            float s = 0.95f + 0.05f * openP;
+            graphics.pose().translate(this.width / 2f, this.height / 2f);
+            graphics.pose().scale(s, s);
+            graphics.pose().translate(-this.width / 2f, -this.height / 2f);
+        }
 
         int activeColor = ColorUtility.getActiveColor();
 
-        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("prof_title"), ravex.utility.misc.LanguageUtility.t("prof_subtitle"), activeColor);
+        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("prof_title"), ravex.utility.misc.LanguageUtility.t("prof_subtitle"), activeColor, ravex.utility.render.ScreenIcons.PROFILES);
 
         if (statusTimer > 0 && !statusMessage.isEmpty()) {
             SubScreenStyle.statusPill(graphics, this.width, statusMessage, activeColor);
@@ -75,7 +92,23 @@ public class ProfilesScreen extends Screen {
             y += itemH;
         }
         if (profiles.isEmpty()) {
-            FontRenderUtility.drawString(graphics, "No profiles yet. Capture current config to create one.", listX + 10, listY + 8, 0xFF505060, false);
+            String hint = ravex.utility.misc.LanguageUtility.t("prof_empty");
+            int maxW = listW - 20;
+            StringBuilder line = new StringBuilder();
+            int ly = listY + 8;
+            for (String word : hint.split(" ")) {
+                String test = line.isEmpty() ? word : line + " " + word;
+                if (FontRenderUtility.getStringWidth(test) > maxW && !line.isEmpty()) {
+                    FontRenderUtility.drawString(graphics, line.toString(), listX + 10, ly, 0xFF505060, false);
+                    ly += 10;
+                    line = new StringBuilder(word);
+                } else {
+                    line = new StringBuilder(test);
+                }
+            }
+            if (!line.isEmpty()) {
+                FontRenderUtility.drawString(graphics, line.toString(), listX + 10, ly, 0xFF505060, false);
+            }
         }
 
         if (creatingNew) {
@@ -85,6 +118,7 @@ public class ProfilesScreen extends Screen {
         }
 
         super.render(graphics, mouseX, mouseY, partialTicks);
+        graphics.pose().popMatrix();
     }
 
     private void renderCreateDialog(GuiGraphics graphics, int mouseX, int mouseY, int activeColor) {
@@ -106,6 +140,10 @@ public class ProfilesScreen extends Screen {
         SubScreenStyle.input(graphics, inputX, inputY, inputW, inputH, activeColor);
             String display = newName.isEmpty() ? ravex.utility.misc.LanguageUtility.t("prof_name_hint") : newName;
         FontRenderUtility.drawString(graphics, display, inputX + 4, inputY + 3, newName.isEmpty() ? 0xFF505060 : 0xFFD0D0E0, false);
+        if (nameFocused && (System.currentTimeMillis() / 500) % 2 == 0) {
+            int shownW = FontRenderUtility.getStringWidth(display);
+            graphics.fill(inputX + 4 + shownW + 1, inputY + 3, inputX + 4 + shownW + 2, inputY + 13, 0xFFE8E8F2);
+        }
 
         int btnY = dlgY + 60;
         int btnW = 80;
@@ -248,6 +286,7 @@ public class ProfilesScreen extends Screen {
             ProfileManager.INSTANCE.saveProfile(p);
             profiles.add(p);
             creatingNew = false;
+            nameFocused = false;
             selectedIndex = profiles.size() - 1;
             statusMessage = ravex.utility.misc.LanguageUtility.t("prof_saved", name);
             statusTimer = 60;
@@ -256,9 +295,20 @@ public class ProfilesScreen extends Screen {
 
         if (mx >= dlgX + dlgW - 15 - btnW && mx <= dlgX + dlgW - 15 && my >= btnY && my <= btnY + btnH) {
             creatingNew = false;
+            nameFocused = false;
             return true;
         }
 
+        int inputX = dlgX + 10;
+        int inputY = dlgY + 32;
+        int inputW = dlgW - 20;
+        int inputH = 16;
+        if (mx >= inputX && mx <= inputX + inputW && my >= inputY && my <= inputY + inputH) {
+            nameFocused = true;
+            return true;
+        }
+
+        nameFocused = false;
         return true;
     }
 
@@ -267,7 +317,7 @@ public class ProfilesScreen extends Screen {
         int key = event.key();
 
         if (creatingNew) {
-            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) { creatingNew = false; return true; }
+            if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE) { creatingNew = false; nameFocused = false; return true; }
             if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_BACKSPACE && !newName.isEmpty()) { newName = newName.substring(0, newName.length() - 1); return true; }
             if (key == org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER) {
                 String name = newName.isEmpty() ? "Profile_" + (profiles.size() + 1) : newName;
@@ -275,6 +325,7 @@ public class ProfilesScreen extends Screen {
                 ProfileManager.INSTANCE.saveProfile(p);
                 profiles.add(p);
                 creatingNew = false;
+                nameFocused = false;
                 selectedIndex = profiles.size() - 1;
                 statusMessage = ravex.utility.misc.LanguageUtility.t("prof_saved", name);
                 statusTimer = 60;
@@ -298,6 +349,7 @@ public class ProfilesScreen extends Screen {
         if (c < 32 || c > 126) return true;
 
         if (creatingNew) {
+            if (!nameFocused) nameFocused = true;
             if (newName.length() < 32) newName += text;
             return true;
         }

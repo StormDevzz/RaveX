@@ -5,6 +5,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.core.Direction;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
 import net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket;
 import net.minecraft.network.protocol.game.ServerboundClientCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
@@ -18,12 +19,18 @@ import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
 import net.minecraft.network.protocol.game.ServerboundChatPacket;
 import net.minecraft.network.protocol.game.ServerboundChatCommandPacket;
 import net.minecraft.network.protocol.game.ServerboundPlayerInputPacket;
+import net.minecraft.network.protocol.handshake.ClientIntentionPacket;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
+import ravex.mixin.network.AccessorClientIntentionPacket;
+import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
 
 public class NetworkUtility {
     private static MinecraftWrapper mc() { return MinecraftWrapper.getWrapper(); }
@@ -56,6 +63,12 @@ public class NetworkUtility {
         var c = mc().getConnection();
         if (c != null)
             c.send(new ServerboundSetCarriedItemPacket(slot));
+    }
+
+    @Nullable
+    public static net.minecraft.client.multiplayer.PlayerInfo getPlayerInfo(java.util.UUID uuid) {
+        var c = mc().getConnection();
+        return c != null ? c.getPlayerInfo(uuid) : null;
     }
 
     public static void sendTeleportConfirm(int teleportId) {
@@ -136,6 +149,13 @@ public class NetworkUtility {
             c.send(new ServerboundClientCommandPacket(ServerboundClientCommandPacket.Action.PERFORM_RESPAWN));
     }
 
+    // drop the connection right away, IllegalDisconnect Quit mode
+    public static void disconnect(String reason) {
+        var c = mc().getConnection();
+        if (c == null) return;
+        c.getConnection().disconnect(Component.literal(reason));
+    }
+
     public static void sendPlayerCommand(ServerboundPlayerCommandPacket.Action action) {
         var c = mc().getConnection();
         if (c != null)
@@ -179,6 +199,11 @@ public class NetworkUtility {
     public static boolean isUsePacket(Packet<?> packet) {
         return packet instanceof ServerboundUseItemPacket
             || packet instanceof ServerboundUseItemOnPacket;
+    }
+
+    @Contract(value = "null -> false", pure = true)
+    public static boolean isUseItemPacket(Packet<?> packet) {
+        return packet instanceof ServerboundUseItemPacket;
     }
 
     @Contract(value = "null -> false", pure = true)
@@ -257,5 +282,98 @@ public class NetworkUtility {
             }
         }
         return sb.toString();
+    }
+
+    @Nullable
+    public static InteractionHand useItemHand(Packet<?> packet) {
+        if (packet instanceof ServerboundUseItemPacket use) return use.getHand();
+        if (packet instanceof ServerboundUseItemOnPacket use) return use.getHand();
+        return null;
+    }
+
+    @Contract(value = "null -> false", pure = true)
+    public static boolean isPositionMove(Packet<?> packet) {
+        return packet instanceof ServerboundMovePlayerPacket move && move.hasPosition();
+    }
+
+    public static Packet<?> makeMovePos(double x, double y, double z, boolean onGround, boolean hCollision) {
+        return new ServerboundMovePlayerPacket.Pos(x, y, z, onGround, hCollision);
+    }
+
+    public static void setMoveOnGround(Packet<?> packet, boolean onGround) {
+        if (packet instanceof ServerboundMovePlayerPacket)
+            ((AccessorServerboundMovePlayerPacket) packet).setOnGround(onGround);
+    }
+
+    public static double movePacketY(Packet<?> packet) {
+        if (!(packet instanceof ServerboundMovePlayerPacket)) return Double.NaN;
+        return ((AccessorServerboundMovePlayerPacket) packet).getY();
+    }
+
+    public static void setMovePacketY(Packet<?> packet, double y) {
+        if (packet instanceof ServerboundMovePlayerPacket)
+            ((AccessorServerboundMovePlayerPacket) packet).setY(y);
+    }
+
+    @Contract(value = "null -> false", pure = true)
+    public static boolean isPlayerPositionPacket(Packet<?> packet) {
+        return packet instanceof ClientboundPlayerPositionPacket;
+    }
+
+    public static int playerPositionId(Packet<?> packet) {
+        return packet instanceof ClientboundPlayerPositionPacket pos ? pos.id() : -1;
+    }
+
+    @Nullable
+    public static Vec3 playerPosition(Packet<?> packet) {
+        return packet instanceof ClientboundPlayerPositionPacket pos ? pos.change().position() : null;
+    }
+
+    @Contract(value = "null -> false", pure = true)
+    public static boolean isSprintCommand(Packet<?> packet) {
+        if (!(packet instanceof ServerboundPlayerCommandPacket command)) return false;
+        var action = command.getAction();
+        return action == ServerboundPlayerCommandPacket.Action.START_SPRINTING
+            || action == ServerboundPlayerCommandPacket.Action.STOP_SPRINTING;
+    }
+
+    public static void sendStartFallFlying() {
+        sendPlayerCommand(ServerboundPlayerCommandPacket.Action.START_FALL_FLYING);
+    }
+
+    public static Component literal(String text) {
+        return Component.literal(text);
+    }
+
+    @Contract(value = "null -> false", pure = true)
+    public static boolean isHandshakePacket(Packet<?> packet) {
+        return packet instanceof ClientIntentionPacket;
+    }
+
+    @Nullable
+    public static String handshakeHost(Packet<?> packet) {
+        return packet instanceof ClientIntentionPacket p ? p.hostName() : null;
+    }
+
+    public static int handshakeProtocol(Packet<?> packet) {
+        return packet instanceof ClientIntentionPacket p ? p.protocolVersion() : -1;
+    }
+
+    public static void setHandshakeHost(Packet<?> packet, String host) {
+        if (packet instanceof ClientIntentionPacket p)
+            ((AccessorClientIntentionPacket) (Object) p).setHostName(host);
+    }
+
+    public static void setHandshakeProtocol(Packet<?> packet, int protocol) {
+        if (packet instanceof ClientIntentionPacket p)
+            ((AccessorClientIntentionPacket) (Object) p).setProtocolVersion(protocol);
+    }
+
+    // movement the server already knows about, used for shot inheritance
+    @NotNull
+    public static Vector3d knownMovement(@Nullable Object entity) {
+        if (!(entity instanceof Entity e)) return new Vector3d();
+        Vec3 motion = e.getKnownMovement();
+        return new Vector3d(motion.x, motion.y, motion.z);
     }
 }

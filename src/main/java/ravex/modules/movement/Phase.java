@@ -1,21 +1,19 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.core.BlockPos;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
-import net.minecraft.world.item.Items;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.movement.MoveUtility;
+import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.network.NetworkUtility;
+import ravex.utility.player.InventoryUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "Phase", category = "Movement")
 public class Phase {
-    @Parameter(name = "Mode", modes = {"Instant", "Steps", "Pearl", "NCP"})
-    public String mode = "Instant";
+    @Parameter(name = "Mode", modes = {"Vanilla", "Steps", "Pearl", "NCP"})
+    public String mode = "Vanilla";
     @Parameter(name = "Distance", min = 0.5, max = 4.0, step = 0.1)
     public double distance = 2.0;
     @Parameter(name = "NCPStep", min = 0.05, max = 0.5, step = 0.05, visible = "mode=NCP")
@@ -29,13 +27,14 @@ public class Phase {
     @Subscribe
     public void onPacket(PacketEvent event) {
         if (!Modules.enabled(Phase.class) || !event.isSend()) return;
-        Packet<?> packet = event.getPacket();
-        if (packet instanceof ServerboundUseItemPacket usePacket) {
+        var packet = event.getPacket();
+        if (NetworkUtility.isUseItemPacket(packet)) {
             var mc = MinecraftWrapper.getWrapper();
             var player = mc.getPlayer();
-            if (player != null && player.getItemInHand(usePacket.getHand()).is(Items.ENDER_PEARL)) {
+            var hand = NetworkUtility.useItemHand(packet);
+            if (player != null && hand != null && InventoryUtility.isItem(player.getItemInHand(hand), "ender_pearl")) {
                 String m = mode;
-                if ("Instant".equals(m) || "Steps".equals(m)) clip();
+                if ("Vanilla".equals(m) || "Steps".equals(m)) clip();
                 else if ("Pearl".equals(m)) clipPearl();
                 else if ("NCP".equals(m)) {
                     pearlThrowMs = System.currentTimeMillis();
@@ -70,14 +69,10 @@ public class Phase {
 
     private boolean isEmbedded(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
         var level = mc.getLevel();
-        BlockPos feet = player.blockPosition();
-        BlockPos eye = BlockPos.containing(player.getEyePosition());
-        return isSolid(level, feet) || isSolid(level, eye);
-    }
-
-    private boolean isSolid(net.minecraft.client.multiplayer.ClientLevel level, BlockPos pos) {
-        var state = level.getBlockState(pos);
-        return !state.isAir() && state.isSolid();
+        var eyePos = player.getEyePosition();
+        var feet = player.blockPosition();
+        var eye = BlockUtility.containing(eyePos.x, eyePos.y, eyePos.z);
+        return BlockUtility.isSolidBlock(level, feet) || BlockUtility.isSolidBlock(level, eye);
     }
 
     private void calculateOffset(float yaw, float pitch, double dist, double[] outOffset) {
@@ -101,7 +96,7 @@ public class Phase {
         double targetX = player.getX() + offset[0];
         double targetY = player.getY() + offset[1];
         double targetZ = player.getZ() + offset[2];
-        if ("Instant".equals(mode)) {
+        if ("Vanilla".equals(mode)) {
             MoveUtility.setPos(targetX, targetY, targetZ);
             NetworkUtility.sendMoveRelative(targetX, targetY, targetZ, false, player.horizontalCollision);
         } else {

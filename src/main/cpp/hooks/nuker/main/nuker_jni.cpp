@@ -1,8 +1,9 @@
 #include "nuker_jni.hpp"
 #include "nuker.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
 JNIEXPORT jintArray JNICALL
-Java_ravex_modules_world_Nuker_nativeFindBlocks(
+Java_ravex_modules_world_nuker_Nuker_nativeFindBlocks(
     JNIEnv* env, jclass cls,
     jdouble px, jdouble py, jdouble pz,
     jdouble range,
@@ -10,9 +11,15 @@ Java_ravex_modules_world_Nuker_nativeFindBlocks(
     jintArray jBx, jintArray jBy, jintArray jBz,
     jint blockCount
 ) {
-    jint* bx = env->GetIntArrayElements(jBx, nullptr);
-    jint* by = env->GetIntArrayElements(jBy, nullptr);
-    jint* bz = env->GetIntArrayElements(jBz, nullptr);
+    JniIntElements bxGuard(env, jBx);
+    JniIntElements byGuard(env, jBy);
+    JniIntElements bzGuard(env, jBz);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    if (!bxGuard || !byGuard || !bzGuard) return nullptr;
+
+    const jint* bx = bxGuard.get();
+    const jint* by = byGuard.get();
+    const jint* bz = bzGuard.get();
 
     std::vector<BlockPos3> candidates;
     candidates.reserve(blockCount);
@@ -20,15 +27,12 @@ Java_ravex_modules_world_Nuker_nativeFindBlocks(
         candidates.push_back({bx[i], by[i], bz[i]});
     }
 
-    env->ReleaseIntArrayElements(jBx, bx, JNI_ABORT);
-    env->ReleaseIntArrayElements(jBy, by, JNI_ABORT);
-    env->ReleaseIntArrayElements(jBz, bz, JNI_ABORT);
-
     Vec3d eyePos = {px, py, pz};
     auto targets = findNukerTargets(eyePos, range, (int)mode, candidates);
 
     jintArray jResult = env->NewIntArray(targets.size() * 3);
     if (jResult == nullptr) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     jsize idx = 0;
     for (const auto& t : targets) {
@@ -37,5 +41,6 @@ Java_ravex_modules_world_Nuker_nativeFindBlocks(
         idx++;
     }
 
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return jResult;
 }

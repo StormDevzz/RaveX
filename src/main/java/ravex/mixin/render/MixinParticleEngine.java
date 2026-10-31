@@ -46,7 +46,20 @@ public class MixinParticleEngine {
                 cir.setReturnValue(null);
             } else if (Modules.get(NoRender.class).explosions && (
                 options.getType() == ParticleTypes.EXPLOSION ||
-                options.getType() == ParticleTypes.EXPLOSION_EMITTER
+                options.getType() == ParticleTypes.EXPLOSION_EMITTER ||
+                options.getType() == ParticleTypes.SONIC_BOOM ||
+                options.getType() == ParticleTypes.POOF ||
+                options.getType() == ParticleTypes.SMOKE ||
+                options.getType() == ParticleTypes.LARGE_SMOKE ||
+                options.getType() == ParticleTypes.WHITE_SMOKE ||
+                options.getType() == ParticleTypes.FLAME ||
+                options.getType() == ParticleTypes.SMALL_FLAME ||
+                options.getType() == ParticleTypes.FLASH ||
+                options.getType() == ParticleTypes.FIREWORK ||
+                options.getType() == ParticleTypes.DRAGON_BREATH ||
+                options.getType() == ParticleTypes.GUST ||
+                options.getType() == ParticleTypes.GUST_EMITTER_LARGE ||
+                options.getType() == ParticleTypes.GUST_EMITTER_SMALL
             )) {
                 cir.setReturnValue(null);
             } else if (Modules.get(NoRender.class).sprint && options.getType() == ParticleTypes.CLOUD) {

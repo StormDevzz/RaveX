@@ -7,6 +7,7 @@ import ravex.modules.client.Hud;
 import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.HudRendererUtility;
+import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.animate.AnimationUtility;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,21 +15,24 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import ravex.modules.Modules;
+import ravex.mcwrapper.MinecraftWrapper;
 @HudModule("ArrayListHud")
 public class ArrayListHud extends ravex.modules.Module {
     @Parameter(name = "Shadow")
     public boolean shadow = true;
     @Parameter(name = "Case", modes = {"Normal", "Lowercase", "UPPERCASE"})
     public String _case = "Normal";
-    @Parameter(name = "AnimationSpeed", min = 0.0, max = 12.0, step = 0.5)
-    public double animationSpeed = 4.0;
+    @Parameter(name = "Sort", modes = {"Biggest", "Smallest", "A-Z", "Z-A", "Default"})
+    public String sort = "Biggest";
+    @Parameter(name = "Align", modes = {"Left", "Right", "Auto"})
+    public String align = "Left";
 
     private static class EntryAnim {
         final AnimationUtility.SpringAnimation spring;
         float opacity;
         EntryAnim() {
             this.spring = new AnimationUtility.SpringAnimation(0f);
-            this.spring.stiffness(120f).damping(10f).mass(1f);
+            this.spring.stiffness(120f).damping(2f * (float) Math.sqrt(120f)).mass(1f);
             this.spring.setTarget(0f);
             this.opacity = 0f;
         }
@@ -37,9 +41,10 @@ public class ArrayListHud extends ravex.modules.Module {
     private final Map<String, EntryAnim> entryAnims = new HashMap<>();
     private final AnimationUtility.SpringAnimation panelOpacity = new AnimationUtility.SpringAnimation(0f);
     private boolean hadEnabled = false;
+    private long lastFrameNanos = System.nanoTime();
 
     {
-        panelOpacity.stiffness(80f).damping(8f).mass(1f);
+        panelOpacity.stiffness(80f).damping(2f * (float) Math.sqrt(80f)).mass(1f);
     }
 
     protected void onEnable() {
@@ -54,12 +59,16 @@ public class ArrayListHud extends ravex.modules.Module {
         if (!Modules.enabled(Hud.class)) return;
         boolean shadow = this.shadow;
         String caseMode = this._case;
-        double animSpeed = this.animationSpeed;
+        String sortMode = this.sort;
         List<ravex.modules.Module> allModules = ravex.manager.ModuleManager.INSTANCE.getClickGuiModules();
 
-        float delta = Math.min(16f, AnimationUtility.deltaTime() * 50f);
-        float stiffness = (float) (60f + animSpeed * 12f);
-        float damping = (float) (8f + animSpeed * 0.5f);
+        // own frame clock, shared delta gets eaten
+        long now = System.nanoTime();
+        float delta = Math.min(50f, (now - lastFrameNanos) / 1_000_000f);
+        lastFrameNanos = now;
+        float stiffness = 340f;
+        // critically damped, fast and no bounce
+        float damping = (float) (2f * Math.sqrt(stiffness));
 
         java.util.Map<ravex.modules.Module, String> casedNames = new java.util.LinkedHashMap<>();
         for (ravex.modules.Module m : allModules) {
@@ -73,7 +82,19 @@ public class ArrayListHud extends ravex.modules.Module {
         }
 
         List<java.util.Map.Entry<ravex.modules.Module, String>> modList = new ArrayList<>(casedNames.entrySet());
-        modList.sort((a, b) -> Integer.compare(FontRenderUtility.getStringWidth(b.getValue()), FontRenderUtility.getStringWidth(a.getValue())));
+        switch (sortMode) {
+            case "Smallest" -> modList.sort((a, b) -> {
+                int byWidth = Integer.compare(FontRenderUtility.getStringWidth(a.getValue()), FontRenderUtility.getStringWidth(b.getValue()));
+                return byWidth != 0 ? byWidth : String.CASE_INSENSITIVE_ORDER.compare(a.getValue(), b.getValue());
+            });
+            case "A-Z" -> modList.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(a.getValue(), b.getValue()));
+            case "Z-A" -> modList.sort((a, b) -> String.CASE_INSENSITIVE_ORDER.compare(b.getValue(), a.getValue()));
+            case "Default" -> { }
+            default -> modList.sort((a, b) -> {
+                int byWidth = Integer.compare(FontRenderUtility.getStringWidth(b.getValue()), FontRenderUtility.getStringWidth(a.getValue()));
+                return byWidth != 0 ? byWidth : String.CASE_INSENSITIVE_ORDER.compare(a.getValue(), b.getValue());
+            });
+        }
 
         boolean anyEnabled = false;
         int idx = 0;
@@ -101,7 +122,7 @@ public class ArrayListHud extends ravex.modules.Module {
             return val < 0.005f && e.getValue().spring.isSettled() && !isModuleEnabled(e.getKey(), modList);
         });
 
-        panelOpacity.stiffness(40f).damping(6f);
+        panelOpacity.stiffness(40f).damping(2f * (float) Math.sqrt(40f));
         if (anyEnabled) {
             panelOpacity.setTarget(1f);
             hadEnabled = true;
@@ -111,7 +132,9 @@ public class ArrayListHud extends ravex.modules.Module {
         panelOpacity.update(delta);
 
         float panelAlpha = Math.max(0f, Math.min(1f, panelOpacity.getValue()));
-        if (panelAlpha < 0.01f && !anyEnabled) return;
+        var mcEditor = MinecraftWrapper.getWrapper();
+        boolean inEditor = mcEditor.getScreen() instanceof ravex.gui.hudeditor.HudEditorScreen;
+        if (panelAlpha < 0.01f && !anyEnabled && !inEditor) return;
 
         List<String> activeNames = new ArrayList<>();
         for (var entry : modList) {
@@ -122,11 +145,22 @@ public class ArrayListHud extends ravex.modules.Module {
             }
         }
 
-        if (activeNames.isEmpty()) return;
+        // editor needs a handle to drag when nothing is on
+        if (activeNames.isEmpty() && !inEditor) return;
 
         float panelProg = AnimationUtility.Easing.CUBIC_OUT.apply(Math.min(1f, panelAlpha * 2f));
         int bx = getX(), by = getY();
         int lh = 12;
+        if (activeNames.isEmpty()) {
+            int ph2 = 18;
+            setWidth(80);
+            setHeight(ph2);
+            boolean rightSide = isRightSide(graphics, bx, 80);
+            HudRendererUtility.drawBackground(graphics, bx, by, 80, ph2);
+            int labelW = FontRenderUtility.getStringWidth("ArrayList");
+            FontRenderUtility.drawString(graphics, "ArrayList", rightSide ? bx + 80 - 6 - labelW : bx + 6, by + 5, 0x88FFFFFF, shadow);
+            return;
+        }
         int maxTextW = 10;
         for (String n : activeNames) {
             int nw = FontRenderUtility.getStringWidth(n);
@@ -144,13 +178,19 @@ public class ArrayListHud extends ravex.modules.Module {
         setWidth(pw);
         setHeight(ph);
 
+        boolean rightSide = isRightSide(graphics, bx, pw);
+
         HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
 
-        int tx = bx + 3;
+        int tx = rightSide ? bx + pw - 3 : bx + 3;
         int cy = by + 3;
         idx = 0;
         long time = System.currentTimeMillis();
         float angleBase = (time % 4000) / 4000f * (float) Math.PI * 2;
+
+        // mirror mode: rows are anchored to the right edge and clipped to the panel
+        // so the reversed slide-in never pokes outside
+        Render2DUtility.pushScissor(graphics, bx, by, pw, ph);
         for (String n : activeNames) {
             EntryAnim anim = entryAnims.get(n);
             if (anim == null) continue;
@@ -161,7 +201,9 @@ public class ArrayListHud extends ravex.modules.Module {
             int itemAlpha = Math.round(255 * Math.min(1f, prog * 2f));
             int slideOffset = Math.round((1f - springVal) * 30);
 
-            int charX = tx + slideOffset;
+            int startX = rightSide ? tx - FontRenderUtility.getStringWidth(n) : tx;
+            // left: enters shifted right of its spot, right: enters shifted left of it
+            int charX = rightSide ? startX - slideOffset : startX + slideOffset;
             for (int ci = 0; ci < n.length(); ci++) {
                 String ch = String.valueOf(n.charAt(ci));
                 float angle = angleBase + (idx * 8f + ci) * 0.35f;
@@ -174,6 +216,14 @@ public class ArrayListHud extends ravex.modules.Module {
             cy += lh * springVal;
             idx++;
         }
+        Render2DUtility.popScissor(graphics);
+    }
+
+    // right aligns to the panel's right edge; Auto picks the side by screen half
+    private boolean isRightSide(GuiGraphics graphics, int bx, int pw) {
+        if ("Right".equals(align)) return true;
+        if ("Auto".equals(align)) return bx + pw / 2 > graphics.guiWidth() / 2;
+        return false;
     }
 
     private boolean isModuleEnabled(String name, List<java.util.Map.Entry<ravex.modules.Module, String>> modList) {

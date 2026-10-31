@@ -310,7 +310,6 @@ void msWorker(MsData* d) {
     postCode(userCode, d->verificationUri);
     postStatus(std::string(lang("scan_qr")) + verificationUri + std::string(lang("enter_code")) + userCode);
     std::wstring qrUrl = fromUtf8("https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + mshelper::urlEncode2(d->verificationUri));
-    // download QR png to temp
     std::wstring tmp = joinPath(joinPath(ravexDir(), L"cache"), L"qr.png");
     createDirs(joinPath(ravexDir(), L"cache"));
     std::string dlErr;
@@ -346,8 +345,6 @@ void msWorker(MsData* d) {
     if (d->cancelled) { d->error=std::string(lang("cancelled")); PostMessageW(d->hwnd, WM_MS_DONE, 0, 0); return; }
     postStatus(std::string(lang("auth_xbox")));
     extern bool exchangeXbox(const std::string&, ravex::Account*, std::string*, const std::function<void(const std::string&)>&);
-    // inline exchange to avoid extra file dependency: call loginMicrosoft helper via status
-    // do XBL/XSTS/MC here using same logic as accounts.cpp but simplified via net::httpPost
     std::string xblBody = "{\"RelyingParty\":\"http://auth.xboxlive.com\",\"TokenType\":\"JWT\",\"Properties\":{\"AuthMethod\":\"RPS\",\"SiteName\":\"user.auth.xboxlive.com\",\"RpsTicket\":\"d=" + accessToken + "\"}}";
     std::string xblResp = ravex::net::httpPost("https://user.auth.xboxlive.com/user/authenticate", xblBody, "application/json", &err);
     if (xblResp.empty()){ d->error=err.empty()?std::string(lang("auth_xbox_failed")):err; PostMessageW(d->hwnd, WM_MS_DONE, 0,0); return; }

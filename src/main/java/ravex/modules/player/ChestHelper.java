@@ -1,7 +1,6 @@
 package ravex.modules.player;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 
 import ravex.utility.player.ContainerUtility;
 import ravex.utility.player.InventoryUtility;
@@ -32,7 +31,7 @@ public class ChestHelper {
     private int moveCooldown = 0;
     private double moveDelay = 0.0;
 
-    public void onRenderButtons(AbstractContainerScreen<?> screen, net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY) {
+    public void onRenderButtons(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen, net.minecraft.client.gui.GuiGraphics graphics, int mouseX, int mouseY) {
         if (!Modules.enabled(ChestHelper.class) || !ContainerUtility.isChestLike(screen.getMenu())) return;
         int startX = ContainerUtility.getButtonStartX(screen), startY = ContainerUtility.getButtonStartY(screen);
         List<ButtonDef> btns = getButtons();
@@ -53,7 +52,7 @@ public class ChestHelper {
                 ContainerUtility.drawChestButton(graphics, btns.get(i).label(), bx, by, hovered);
         }
     }
-    public boolean onMouseClicked(AbstractContainerScreen<?> screen, int mouseX, int mouseY) {
+    public boolean onMouseClicked(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen, int mouseX, int mouseY) {
         if (!Modules.enabled(ChestHelper.class) || !ContainerUtility.isChestLike(screen.getMenu())) return false;
         int startX = ContainerUtility.getButtonStartX(screen), startY = ContainerUtility.getButtonStartY(screen);
         List<ButtonDef> btns = getButtons();
@@ -65,7 +64,7 @@ public class ChestHelper {
         }
         return false;
     }
-    private void handleAction(AbstractContainerScreen<?> screen, String action) {
+    private void handleAction(net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> screen, String action) {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null) return;
@@ -99,7 +98,7 @@ public class ChestHelper {
         var player = mc.getPlayer();
         if (player == null) { moveQueue.clear(); return; }
         var screen = mc.getCurrentScreen();
-        if (!(screen instanceof AbstractContainerScreen<?> containerScreen)) { moveQueue.clear(); return; }
+        if (!(screen instanceof net.minecraft.client.gui.screens.inventory.AbstractContainerScreen<?> containerScreen)) { moveQueue.clear(); return; }
         if (containerScreen.getMenu().containerId != moveContainerId) { moveQueue.clear(); return; }
         if (moveCooldown > 0) { moveCooldown--; return; }
         int slotIndex = moveQueue.remove(0);

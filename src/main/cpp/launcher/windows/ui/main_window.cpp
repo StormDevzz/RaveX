@@ -86,13 +86,11 @@ struct AccountDone {
     Account account;
 };
 
-// payload posted to the UI thread when a newer release exists.
-// exactly one of the two update kinds is offered at a time.
 struct UpdateOffer {
-    bool forLauncher = false;   // true: KickXSetup.exe self-update, false: RaveX jar update
+    bool forLauncher = false;   // true: KickXSetup.exe self-update, false: RaveX update
     std::string version;        // launcher version or release tag
-    std::string url;            // download url (launcher update only)
-    std::string sha256;         // expected SHA-256 (launcher update only)
+    std::string url;
+    std::string sha256;
 };
 
 struct GameExitInfo {
@@ -198,7 +196,6 @@ std::wstring iconPath(const std::wstring& name) {
     std::wstring s = buf;
     size_t p = s.find_last_of(L"\\/");
     if (p != std::wstring::npos) s = s.substr(0, p + 1);
-    // theme-specific icon set wins over the default one.
     if (!themeIconSubdir().empty()) {
         std::wstring themed = s + L"icons\\" + themeIconSubdir() + name + L".png";
         if (fileExists(themed)) return themed;
@@ -265,8 +262,7 @@ Gdiplus::Bitmap* loadIconBmp(const std::wstring& path, int target) {
     g.Clear(Gdiplus::Color(0,0,0,0));
     g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
     delete src;
-    // icons from a theme-specific set carry their own colors - tinting them
-    // would destroy the Windows 95 / Frutiger Aero look.
+    // themed icons keep their colors, tinting ruins win95/aero
     if (!isThemedIconPath(path)) {
         if (useDarkIcons()) tintBlack(dst); else tintWhite(dst);
     }
@@ -415,7 +411,6 @@ std::wstring findLatestCrashReport(const std::wstring& gameDir) {
     FILETIME latestTime{};
     do {
         std::wstring cur = joinPath(dir, fd.cFileName);
-        // check if modified within last 5 minutes
         if (CompareFileTime(&fd.ftLastWriteTime, &latestTime) > 0) {
             latestTime = fd.ftLastWriteTime;
             latest = cur;
@@ -423,13 +418,11 @@ std::wstring findLatestCrashReport(const std::wstring& gameDir) {
     } while (FindNextFileW(h, &fd));
     FindClose(h);
     if (latest.empty()) return L"";
-    // check if recent (within 5 min) else ignore old crashes
     FILETIME nowFt;
     GetSystemTimeAsFileTime(&nowFt);
     ULARGE_INTEGER now, file;
     now.LowPart = nowFt.dwLowDateTime; now.HighPart = nowFt.dwHighDateTime;
     file.LowPart = latestTime.dwLowDateTime; file.HighPart = latestTime.dwHighDateTime;
-    // 5 minutes = 5*60*1e7 = 3000000000 (100ns)
     if (now.QuadPart - file.QuadPart > 3000000000ULL * 5) return L"";
     return latest;
 }
@@ -444,13 +437,11 @@ std::string readCrashReason(const std::wstring& crashPath, int maxLines = 20) {
     while (pos < text.size() && lines < maxLines) {
         size_t nl = text.find('\n', pos);
         std::string line = (nl == std::string::npos) ? text.substr(pos) : text.substr(pos, nl - pos);
-        // trim \r
         if (!line.empty() && line.back() == '\r') line.pop_back();
         if (!line.empty()) {
             if (!out.empty()) out += "\n";
             out += line;
             lines++;
-            // stop after Description line and a few more
             if (line.find("Description:") != std::string::npos && lines > 5) break;
         }
         if (nl == std::string::npos) break;
@@ -751,18 +742,13 @@ void workerChangelog() {
     if (!IsWindow(g_main.hwnd) || !PostMessageW(g_main.hwnd, WM_APP_CHANGELOG_READY, 0, reinterpret_cast<LPARAM>(data))) delete data;
 }
 
-// runs once after the main window is shown: asks the newest GitHub release and -
-// only if something newer than what is installed exists - offers the user to
-// update. Declining is remembered in skipUpdateTag so the same release is never
-// offered twice. The whole check is optional and silently does nothing when
-// "check updates on start" is disabled or the network is unavailable.
+// after startup: offer a newer release; declines are remembered
 void workerStartupCheck() {
     try {
         if (!g_main.cfg.checkUpdatesOnStart) return;
         Sleep(1500);  // let the window paint before any dialog appears
         if (g_main.busy || g_main.gameRunning) return;
         std::string error;
-        // 1) launcher self-update (kickx-version.txt carries the version of the build)
         game::LauncherUpdate lu;
         if (game::fetchLauncherUpdate(&lu, &error) && game::versionGreater(lu.version, RAVEX_VERSION)) {
             if (g_main.cfg.skipUpdateTag != lu.version && !lu.setupUrl.empty()) {
@@ -770,17 +756,14 @@ void workerStartupCheck() {
                 if (PostMessageW(g_main.hwnd, WM_APP_UPDATE_OFFER, 0, reinterpret_cast<LPARAM>(offer))) return;
                 delete offer;
             }
-            return;  // a launcher update takes priority over a client update
+            return;  // launcher update wins over a client update
         }
-        // client updates are delivered silently by the splash (jar auto-install)
-        // and the main window button now shows the changelog instead.
     } catch (...) {
     }
 }
 
-// downloads the release installer, verifies it against SHA256SUMS.txt from the
-// very same release, runs it and closes the launcher so the running executable
-// can be replaced. On any failure the launcher keeps running and shows an error.
+// download KickXSetup.exe, verify its hash against SHA256SUMS.txt
+// then close so the exe can be replaced
 void workerLauncherInstall(const UpdateOffer& offer) {
     try {
         std::string error;
@@ -815,7 +798,6 @@ void workerLauncherInstall(const UpdateOffer& offer) {
             postJobDone(new JobDone{JobDone::Kind::Update, false, "Cannot start KickXSetup.exe", ""});
             return;
         }
-        // let the installer replace the running executable.
         PostMessageW(g_main.hwnd, WM_CLOSE, 0, 0);
     } catch (...) {
         postJobDone(new JobDone{JobDone::Kind::Update, false, "Update failed", ""});
@@ -1023,8 +1005,6 @@ void onLaunch() {
 void onUpdate() {
     if (g_main.busy) return;
     setBusy(true);
-    // the button no longer installs anything: it shows the changelog of the
-    // newest releases plus a link to the release page.
     std::thread(workerChangelog).detach();
 }
 
@@ -1329,13 +1309,12 @@ void onCreate(HWND hwnd) {
     doLayout();
     g_main.theme = getThemeForConfig(g_main.cfg.theme, g_main.cfg.customBg, g_main.cfg.customPanel, g_main.cfg.customText, g_main.cfg.customAccent, g_main.cfg.customButton, g_main.cfg.customAlpha, g_main.cfg.customGlow, g_main.cfg.glowEnabled);
     if (g_main.cfg.theme == "dark") {
-        // true-black canvas is a Dark-theme signature; other dark themes keep their palette.
+        // true black is signature of the Dark theme only
         g_main.theme.bg = RGB(0,0,0);
         g_main.theme.panel = RGB(15,15,15);
         g_main.theme.text = RGB(225,225,225);
     }
-    // brushes are ALWAYS rebuilt from the freshly loaded theme - recreating them
-    // only inside the Dark branch let the previous theme's background linger.
+    // rebuild brushes always, or the old theme background lingers
     if (g_main.bgBrush) DeleteObject(g_main.bgBrush);
     g_main.bgBrush = CreateSolidBrush(g_main.theme.bg);
     if (g_main.panelBrush) DeleteObject(g_main.panelBrush);
@@ -1473,7 +1452,7 @@ void setBtnIcon(HWND btn, const std::wstring& name) {
     }
 }
 
-// --- what's new dialog: read-only notes of the newest releases + link --------
+// what's new dialog: read-only notes + release link
 constexpr int IDC_CL_OPEN = 3201;
 constexpr int IDC_CL_CLOSE = 3202;
 
@@ -1547,7 +1526,7 @@ LRESULT CALLBACK ChangelogProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
                 FillRect(ds->hDC, &ds->rcItem, b);
                 DeleteObject(b);
                 SetBkMode(ds->hDC, TRANSPARENT);
-                SetTextColor(ds->hDC, RGB(245, 245, 245));
+                SetTextColor(ds->hDC, themeContrastText(bgc));
                 HFONT oldF = reinterpret_cast<HFONT>(SelectObject(ds->hDC, d->font));
                 wchar_t t[64]; GetWindowTextW(ds->hwndItem, t, 64);
                 DrawTextW(ds->hDC, t, -1, &ds->rcItem, DT_CENTER | DT_VCENTER | DT_SINGLELINE);
@@ -1623,15 +1602,13 @@ void showChangelogDialog(HWND parent, const game::ChangelogData& data) {
     SetForegroundWindow(parent);
 }
 
-// re-reads launcher.json and repaints the entire main window with the new
-// theme/language. Runs after the Settings dialog closes with Save and when the
-// dialog's "Apply theme" button posts WM_APP_THEME_APPLIED.
+// reloads launcher.json and repaints; runs after Settings saves
+// or posts WM_APP_THEME_APPLIED
 void reapplyThemeFromConfig() {
     g_main.cfg = loadLauncherConfig();
     setCurrentLanguage(g_main.cfg.language.c_str());
     g_main.theme = getThemeForConfig(g_main.cfg.theme, g_main.cfg.customBg, g_main.cfg.customPanel, g_main.cfg.customText, g_main.cfg.customAccent, g_main.cfg.customButton, g_main.cfg.customAlpha, g_main.cfg.customGlow, g_main.cfg.glowEnabled);
-    // force a true-black canvas only for the built-in Dark theme - other dark
-    // themes (Windows Vista / 7 Aero, Midnight, Ocean, ...) keep their palette.
+    // true black only for Dark theme, others keep their palette
     if (g_main.cfg.theme == "dark") {
         g_main.theme.bg = RGB(0,0,0);
         g_main.theme.panel = RGB(15,15,15);
@@ -1679,9 +1656,7 @@ void reapplyThemeFromConfig() {
     SendMessageW(g_main.hProgress, PBM_SETBARCOLOR, 0, g_main.theme.accent);
     SetWindowPos(g_main.hwnd, nullptr, 0,0,0,0, SWP_NOMOVE|SWP_NOSIZE|SWP_NOZORDER|SWP_FRAMECHANGED);
     RedrawWindow(g_main.hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN | RDW_UPDATENOW | RDW_FRAME);
-    // second full pass: every child (static labels, lists, combos) must repaint
-    // its own opaque background with the NEW brushes - otherwise patches of the
-    // previous theme survive a Light -> Dark switch.
+    // second pass so children repaint with the new brushes
     InvalidateRect(g_main.hwnd, nullptr, TRUE);
     UpdateWindow(g_main.hwnd);
     RedrawWindow(g_main.hwnd, nullptr, nullptr, RDW_ALLCHILDREN | RDW_UPDATENOW);
@@ -1784,9 +1759,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     onDeleteInstance();
                     break;
                 case IDC_SETTINGS:
-                    // always resync with launcher.json afterwards: "Apply theme"
-                    // may have been used (and Cancel must never leave a stale
-                    // background from a previously applied theme).
+                    // resync after Settings; even cancel may have applied a theme
                     showSettingsDialog(g_main.hwnd);
                     reapplyThemeFromConfig();
                     break;
@@ -1838,9 +1811,9 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 bool isDark = g_main.theme.isDark;
                 COLORREF bg = g_main.theme.panel;
                 COLORREF fg = isDark ? RGB(255,255,255) : g_main.theme.text;
-                if(isDisabled){ bg=isDark?RGB(20,20,20):RGB(200,200,200); fg=isDark?RGB(100,100,100):RGB(120,120,120); }
-                else if(isPressed){ bg=isDark?RGB(28,28,28):RGB(0,100,180); fg=RGB(255,255,255); }
-                else if(isHover){ bg=isDark?RGB(18,18,18):g_main.theme.accent; fg=RGB(255,255,255); }
+                if(isDisabled){ bg=isDark?RGB(20,20,20):blendThemeColor(g_main.theme.panel, g_main.theme.bg, 50); fg=isDark?RGB(100,100,100):themeMutedText(g_main.theme.text, bg); }
+                else if(isPressed){ bg=isDark?RGB(28,28,28):RGB(0,100,180); fg=themeContrastText(bg); }
+                else if(isHover){ bg=isDark?RGB(18,18,18):g_main.theme.accent; fg=themeContrastText(bg); }
                 else if(id==IDC_LAUNCH && !isDisabled && !g_main.busy && !g_main.gameRunning && !g_main.theme.classic){
                     float pulse = (sinf(g_main.launchPulsePhase) + 1.0f) * 0.5f;
                     BYTE aR = GetRValue(g_main.theme.accent), aG = GetGValue(g_main.theme.accent), aB = GetBValue(g_main.theme.accent);
@@ -1849,12 +1822,12 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     BYTE bB = isDark ? 0 : GetBValue(g_main.theme.panel);
                     float mix = 0.15f + pulse * 0.35f;
                     bg = RGB((BYTE)(bR + (aR - bR) * mix), (BYTE)(bG + (aG - bG) * mix), (BYTE)(bB + (aB - bB) * mix));
-                    fg = RGB(255, 255, 255);
+                    fg = themeContrastText(bg);
                 }
                 int bw = rc.right - rc.left; int bh = rc.bottom - rc.top;
                 if (bw <= 0 || bh <= 0) return TRUE;
                 if (g_main.theme.classic && !isDisabled) {
-                    // windows 95 pressed state: same silver face, just sunken.
+                    // win95 pressed: same silver face, just sunken
                     if (isPressed) { bg = g_main.theme.panel; fg = g_main.theme.text; }
                 }
                 RECT prc = rc;
@@ -1870,7 +1843,6 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 g.TranslateTransform((Gdiplus::REAL)-rc.left, (Gdiplus::REAL)-rc.top);
                 Gdiplus::GraphicsPath path; path.AddArc(prc.left,prc.top,8,8,180,90); path.AddArc(prc.right-8,prc.top,8,8,270,90); path.AddArc(prc.right-8,prc.bottom-8,8,8,0,90); path.AddArc(prc.left,prc.bottom-8,8,8,90,90); path.CloseFigure();
                 if (g_main.theme.classic) {
-                    // square face + raised/sunken 3D bevel (Windows 95).
                     paintThemedBox(g, Gdiplus::RectF((Gdiplus::REAL)prc.left, (Gdiplus::REAL)prc.top,
                                    (Gdiplus::REAL)(prc.right - prc.left), (Gdiplus::REAL)(prc.bottom - prc.top)),
                                    bg, true, isPressed);
@@ -1879,7 +1851,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
                     g.FillPath(&br,&path);
                     if (g_main.theme.gloss) {
-                        // frutiger Aero glass sheen: white gradient across the top half.
+                        // aero glass sheen, white gradient over the top half
                         Gdiplus::GraphicsState gs = g.Save();
                         g.SetClip(Gdiplus::RectF((Gdiplus::REAL)prc.left, (Gdiplus::REAL)prc.top,
                                                  (Gdiplus::REAL)(prc.right - prc.left),
@@ -1991,8 +1963,8 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 bool isDark = g_main.theme.isDark;
                 COLORREF bg = g_main.theme.panel;
                 COLORREF fg = isDark ? RGB(255,255,255) : g_main.theme.text;
-                if(isDisabled){ bg=isDark?RGB(20,20,20):RGB(200,200,200); fg=isDark?RGB(100,100,100):RGB(120,120,120); }
-                else if(isPressed || isHover){ fg=RGB(255,255,255); }
+                if(isDisabled){ bg=isDark?RGB(20,20,20):blendThemeColor(g_main.theme.panel, g_main.theme.bg, 50); fg=isDark?RGB(100,100,100):themeMutedText(g_main.theme.text, bg); }
+                else if(isPressed || isHover){ bg=g_main.theme.accent; fg=themeContrastText(bg); }
                 int bw = rc.right - rc.left; int bh = rc.bottom - rc.top;
                 if (bw <= 0 || bh <= 0) return TRUE;
                 if (g_main.theme.classic && !isDisabled) {
@@ -2007,7 +1979,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 Gdiplus::GraphicsPath path; path.AddArc(prc.left,prc.top,8,8,180,90); path.AddArc(prc.right-8,prc.top,8,8,270,90); path.AddArc(prc.right-8,prc.bottom-8,8,8,0,90); path.AddArc(prc.left,prc.bottom-8,8,8,90,90); path.CloseFigure();
                 if (g_main.theme.classic) {
                     Gdiplus::RectF box((Gdiplus::REAL)prc.left, (Gdiplus::REAL)prc.top, (Gdiplus::REAL)(prc.right - prc.left), (Gdiplus::REAL)(prc.bottom - prc.top));
-                    if (isEdit) paintThemedBox(g, box, bg, true, isPressed);  // combo field gets the 3D border
+                    if (isEdit) paintThemedBox(g, box, bg, true, isPressed);
                     else { Gdiplus::SolidBrush fb(Gdiplus::Color(GetRValue(bg),GetGValue(bg),GetBValue(bg))); g.FillRectangle(&fb, box); }  // list rows stay flat
                 } else {
                     Gdiplus::Color gc(GetRValue(bg),GetGValue(bg),GetBValue(bg)); Gdiplus::SolidBrush br2(gc); g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias); g.FillPath(&br2,&path);
@@ -2053,8 +2025,8 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 bool isDark = g_main.theme.isDark;
                 COLORREF bg = g_main.theme.panel;
                 COLORREF fg = isDark ? RGB(255,255,255) : g_main.theme.text;
-                if(isDisabled){ bg=isDark?RGB(20,20,20):RGB(200,200,200); fg=isDark?RGB(100,100,100):RGB(120,120,120); }
-                else if(isPressed || isHover){ fg=RGB(255,255,255); }
+                if(isDisabled){ bg=isDark?RGB(20,20,20):blendThemeColor(g_main.theme.panel, g_main.theme.bg, 50); fg=isDark?RGB(100,100,100):themeMutedText(g_main.theme.text, bg); }
+                else if(isPressed || isHover){ bg=g_main.theme.accent; fg=themeContrastText(bg); }
                 int bw = rc.right - rc.left; int bh = rc.bottom - rc.top;
                 if (bw <= 0 || bh <= 0) return TRUE;
                 if (g_main.theme.classic && !isDisabled) {
@@ -2104,7 +2076,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             if(id==IDC_WINLABEL){
                 HDC dc=ds->hDC; RECT rc=ds->rcItem;
                 HBRUSH bgBr=CreateSolidBrush(g_main.theme.bg); FillRect(dc,&rc,bgBr); DeleteObject(bgBr);
-                SetBkColor(dc,g_main.theme.bg); SetTextColor(dc,RGB(150,150,150));
+                SetBkColor(dc,g_main.theme.bg); SetTextColor(dc,themeMutedText(g_main.theme.text, g_main.theme.bg));
                 SetBkMode(dc,TRANSPARENT);
                 int iconSz=16, pad=4;
                 wchar_t txt[128]; GetWindowTextW(ds->hwndItem,txt,128);
@@ -2135,7 +2107,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     g.DrawImage(g_main.skinBmp, dst);
                 } else {
                     SetBkMode(dc, TRANSPARENT);
-                    SetTextColor(dc, RGB(150,150,150));
+                    SetTextColor(dc, themeMutedText(g_main.theme.text, g_main.theme.panel));
                     HFONT oldF=(HFONT)SelectObject(dc, g_main.font);
                     RECT tr=rc; tr.top+= (rc.bottom-rc.top)/2 - 8;
                     DrawTextW(dc, L"Skin", -1, &tr, DT_CENTER|DT_SINGLELINE|DT_END_ELLIPSIS);
@@ -2178,8 +2150,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_ERASEBKGND: {
             HDC dc = reinterpret_cast<HDC>(wParam);
             RECT rc; GetClientRect(hwnd, &rc);
-            // paint from the LIVE theme color (not a cached brush) so the
-            // background can never lag behind the active theme.
+            // live theme color, never a cached brush that could lag behind
             HBRUSH liveBg = CreateSolidBrush(g_main.theme.bg);
             FillRect(dc, &rc, liveBg);
             DeleteObject(liveBg);
@@ -2241,7 +2212,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 std::thread([copy] { workerLauncherInstall(copy); }).detach();
                 return 0;
             }
-            // optional update: remember the decision and never ask for this release again.
+            // remember the decline, never ask for this release again
             g_main.cfg.skipUpdateTag = offer->version;
             saveLauncherConfig(g_main.cfg);
             setStatus(lang("update_declined"));
@@ -2266,12 +2237,12 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             DWORD code = info ? info->exitCode : 0;
             std::wstring logPath = info ? info->logPath : L"";
             std::wstring gameDir = info ? info->gameDir : L"";
-            // small delay to let crash report flush
+            // let the crash report flush first
             Sleep(500);
             bool crashed = false;
             std::wstring crashPath = findLatestCrashReport(gameDir);
             if (crashPath.empty()) {
-                // also check global .minecraft
+                // fall back to the global .minecraft
                 std::wstring globalMc = joinPath(joinPath(ravexDir(), L"..\\.minecraft"), L"crash-reports");
                 WIN32_FIND_DATAW fd2; HANDLE h2 = FindFirstFileW(joinPath(globalMc, L"crash-*.txt").c_str(), &fd2);
                 if (h2 != INVALID_HANDLE_VALUE) {
@@ -2297,7 +2268,7 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 crashed = true;
                 reason = "Exit code " + std::to_string(code);
             }
-            // always check logs for Exception even if code==0
+            // scan logs for Exception even when the exit code is 0
             if (!crashed) {
                 auto checkLogForCrash = [&](const std::wstring& p, std::string& out){
                     if (p.empty() || !fileExists(p)) return false;
@@ -2309,7 +2280,6 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     if (pos == std::string::npos) pos = txt.rfind("Error");
                     if (pos == std::string::npos) pos = txt.rfind("crash");
                     if (pos != std::string::npos) { out = txt.substr(pos, 800); if(out.size()>800) out.resize(800); return true; }
-                    // check for quick exit without log
                     if (txt.size() > 0 && txt.find("KnotClient") != std::string::npos && txt.size() < 2000) { out = txt.substr(txt.size()>600?txt.size()-600:0); return false; }
                     return false;
                 };
@@ -2323,10 +2293,8 @@ LRESULT CALLBACK MainProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                         if (checkLogForCrash(globalLog, logReason)) { crashed = true; reason = logReason; if(crashPath.empty()) crashPath = globalLog; }
                     }
                 }
-                // if still not crashed but exitCode !=0, treat as crash
                 if (!crashed && code != 0 && !g_killRequested) { crashed = true; if(reason.empty()) reason = "Exit code " + std::to_string(code); }
             } else if (!reason.empty() && reason.find("Exception") == std::string::npos && !logPath.empty()) {
-                // enrich reason from log
                 std::string logText;
                 if (readFile(logPath, logText)) {
                     size_t pos = logText.rfind("Exception");
@@ -2574,8 +2542,7 @@ int runMainWindow(HINSTANCE hInstance) {
     }
 
     {
-        // apply the configured theme to the frame (never a hardcoded dark mode:
-        // the Windows 95 theme needs its navy title bar, dark theme its dark one).
+        // frame follows the configured theme, never a hardcoded dark title bar
         applyWindowTheme(hwnd, g_main.theme);
     }
 
@@ -2583,7 +2550,7 @@ int runMainWindow(HINSTANCE hInstance) {
     UpdateWindow(hwnd);
     RedrawWindow(hwnd, nullptr, nullptr, RDW_INVALIDATE | RDW_ALLCHILDREN | RDW_UPDATENOW | RDW_FRAME);
 
-    // optional: check the newest release for a newer launcher / client build.
+    // look for a newer launcher / client build in the background
     std::thread(workerStartupCheck).detach();
 
     MSG msg;

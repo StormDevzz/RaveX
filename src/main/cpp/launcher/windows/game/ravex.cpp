@@ -59,7 +59,7 @@ std::string trimWhitespace(const std::string& s) {
     return s.substr(b, e - b + 1);
 }
 
-// find "<sha256>  <fileName>" in the content of a SHA256SUMS.txt file.
+// find "<sha256>  <fileName>" lines in SHA256SUMS.txt content
 std::string lookupSha256InSums(const std::string& sums, const std::string& fileName) {
     std::size_t pos = 0;
     while (pos < sums.size()) {
@@ -192,10 +192,7 @@ bool fetchLauncherUpdate(LauncherUpdate* out, std::string* error) {
     if (!findAssetUrl(root, "kickx-version.txt", versionUrl)) return false;
     std::string version = trimWhitespace(net::httpGet(versionUrl, error));
     if (version.empty() || version.size() > 32) return false;
-    // sanity gate: the self-update channel must stay inside launcher versioning.
-    // the game mod grows independently (1.4.9, 1.5.0, ...) - if foreign data ever
-    // lands in kickx-version.txt, a jump like 1.2.1 -> 1.4.9 must be ignored
-    // instead of offering a bogus update.
+    // guard: ignore foreign mod versions instead of a bogus update
     {
         auto majorMinor = [](const std::string& s, long& maj, long& minor) {
             std::size_t i = 0;
@@ -206,12 +203,11 @@ bool fetchLauncherUpdate(LauncherUpdate* out, std::string* error) {
             minor = 0;
             while (i < s.size() && s[i] >= '0' && s[i] <= '9') { minor = minor * 10 + (s[i] - '0'); ++i; if (minor > 1000000) break; }
         };
-        if (version.find('.') == std::string::npos) return false;   // no dot - not a launcher version
+        if (version.find('.') == std::string::npos) return false;
         long ourMaj = 0, ourMinor = 0, maj = 0, minor = 0;
         majorMinor(RAVEX_VERSION, ourMaj, ourMinor);
         majorMinor(version, maj, minor);
-        // launcher releases only step within one minor (1.1.x -> 1.2.x -> ...):
-        // a different major or a minor jump of 2+ means foreign (mod) version data
+        // one minor step at a time; bigger jumps are foreign data
         if (maj != ourMaj || minor < ourMinor - 1 || minor > ourMinor + 1) return false;
     }
     out->version = version;

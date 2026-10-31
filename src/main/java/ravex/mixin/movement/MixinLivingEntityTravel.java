@@ -11,20 +11,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.modules.combat.KillAura;
 import ravex.modules.Modules;
 
-/**
- * Hooks into LivingEntity.travel() to apply silent rotation for KillAura.
- *
- * Why here and not in sendPosition?
- * sendPosition fires AFTER travel() has already computed velocity using the player's
- * current yaw. GrimAC uses the reported yaw to simulate the expected next position.
- * If the yaw sent in the packet differs from the yaw used for movement, GrimAC's
- * simulation diverges → Simulation flags.
- *
- * By setting the silent yaw at HEAD of travel() and restoring at TAIL, we ensure:
- *   1. Movement is computed with the silent (target-facing) yaw  → GrimAC simulation matches
- *   2. sendPosition packet is sent during travel() with the silent yaw → consistent
- *   3. After travel() returns the real camera yaw is restored → player sees no rotation
- */
+// sets the silent yaw before travel() computes the velocity
+// grimac compares the sent yaw with the one used for the movement
+// the camera yaw is restored at the tail
 @Mixin(LivingEntity.class)
 public class MixinLivingEntityTravel {
 
@@ -48,6 +37,29 @@ public class MixinLivingEntityTravel {
         player.setYRot(KillAura.silentRotation.yaw);
         player.setXRot(KillAura.silentRotation.pitch);
         ravexTravelModified = true;
+
+        if (Modules.enabled(ravex.modules.movement.Speed.class) && mc.options != null) {
+            float forward = 0.0f;
+            if (mc.options.keyUp.isDown()) forward++;
+            if (mc.options.keyDown.isDown()) forward--;
+            float strafe = 0.0f;
+            if (mc.options.keyLeft.isDown()) strafe++;
+            if (mc.options.keyRight.isDown()) strafe--;
+
+            if (forward != 0.0f || strafe != 0.0f) {
+                Vec3 motion = player.getDeltaMovement();
+                double horiz = Math.hypot(motion.x, motion.z);
+                if (horiz > 0.01) {
+                    double yaw = KillAura.silentRotation.yaw;
+                    double angle = 90.0 * Math.signum(strafe);
+                    if (forward != 0.0f) angle *= Math.signum(forward) * 0.5;
+                    yaw -= angle;
+                    if (forward < 0.0f) yaw -= 180.0;
+                    double rad = Math.toRadians(yaw);
+                    player.setDeltaMovement(-Math.sin(rad) * horiz, motion.y, Math.cos(rad) * horiz);
+                }
+            }
+        }
     }
 
     @Inject(method = "travel", at = @At("TAIL"))

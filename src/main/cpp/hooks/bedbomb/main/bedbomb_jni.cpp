@@ -1,5 +1,6 @@
 #include "bedbomb_jni.hpp"
 #include "bedbomb.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
 JNIEXPORT void JNICALL Java_ravex_modules_combat_BedBomb_nativeFindBestPlace(
     JNIEnv* env, jclass cls,
@@ -12,10 +13,13 @@ JNIEXPORT void JNICALL Java_ravex_modules_combat_BedBomb_nativeFindBestPlace(
 
     ravex::Vec3 best = ravex::findBestBedPlace(playerPos, enemyPos, range);
 
-    jdouble* elements = env->GetDoubleArrayElements(out, nullptr);
+    JniDoubleElements guard(env, out);
+    if (ravex::jni::checkAndClearException(env)) return;
+    if (!guard) return;
+
+    jdouble* elements = guard.get();
     elements[0] = best.x;
     elements[1] = best.y;
     elements[2] = best.z;
     elements[3] = 0.0;
-    env->ReleaseDoubleArrayElements(out, elements, 0);
 }

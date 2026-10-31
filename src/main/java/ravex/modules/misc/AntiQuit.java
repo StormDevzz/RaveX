@@ -11,42 +11,53 @@ import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "AntiQuit", category = "Misc")
 public class AntiQuit {
-    @Parameter(name = "Mode", modes = {"Server", "Game", "Both"})
-    public String mode = "Server";
+    // guard leaving the server and/or closing the game
+    @Parameter(name = "Server")
+    public boolean server = true;
+    @Parameter(name = "Game")
+    public boolean game = true;
+    // confirm asks first, Strict never quits
+    @Parameter(name = "Mode", modes = {"Confirm", "Strict"})
+    public String mode = "Confirm";
+
+    private static boolean bypassDisconnect;
+    private static boolean confirmOpen;
 
     static {
         NativeLoader.load();
+        NativeLoader.loadLibrary("ravex_antiquit");
     }
     public void onEnable() {
         try {
-            nativeBlockQuit(true);
+            // strict guard also blocks paths outside the window callback
+            nativeBlockQuit(game && "Strict".equals(mode));
         } catch (UnsatisfiedLinkError ignored) {}
         var mc = MinecraftWrapper.getWrapper();
         Window window = mc.getWindow();
         if (window == null) return;
         window.setWindowCloseCallback(() -> {
-            String m = mode;
-            if (m.equals("Game") || m.equals("Both")) {
-                long handle = window.handle();
-                GLFW.glfwSetWindowShouldClose(handle, false);
-                mc.execute(() -> mc.setScreen(new ConfirmScreen(
-                    confirmed -> {
-                        if (confirmed) {
-                            window.setWindowCloseCallback(null);
-                            GLFW.glfwSetWindowShouldClose(handle, true);
-                        } else {
-                            mc.setScreen(new PauseScreen(true));
-                        }
-                    },
-                    Component.literal("Are you sure bro?"),
-                    Component.literal("Do you really want to quit?"),
-                    Component.literal("Yep"),
-                    Component.literal("Nah")
-                )));
-            } else {
-                long handle = window.handle();
-                GLFW.glfwSetWindowShouldClose(handle, false);
+            long handle = window.handle();
+            GLFW.glfwSetWindowShouldClose(handle, false);
+            if (!game) {
+                window.setWindowCloseCallback(null);
+                GLFW.glfwSetWindowShouldClose(handle, true);
+                return;
             }
+            if ("Strict".equals(mode)) return;
+            mc.execute(() -> mc.setScreen(new ConfirmScreen(
+                confirmed -> {
+                    if (confirmed) {
+                        window.setWindowCloseCallback(null);
+                        GLFW.glfwSetWindowShouldClose(handle, true);
+                    } else {
+                        mc.setScreen(new PauseScreen(true));
+                    }
+                },
+                Component.literal("Are you sure bro?"),
+                Component.literal("Do you really want to quit the game?"),
+                Component.literal("Yep"),
+                Component.literal("Nah")
+            )));
         });
     }
     public void onDisable() {
@@ -59,11 +70,35 @@ public class AntiQuit {
             window.setWindowCloseCallback(null);
         }
     }
-    public static boolean shouldBlockDisconnect() {
+
+    // true when this disconnect attempt must be swallowed.
+    public static boolean handleDisconnect(Component reason) {
         AntiQuit $ = Modules.get(AntiQuit.class);
-        if ($ == null || !Modules.enabled(AntiQuit.class)) return false;
-        String m = $.mode;
-        return m.equals("Server") || m.equals("Both");
+        if ($ == null || !Modules.enabled(AntiQuit.class) || !$.server || bypassDisconnect) return false;
+        if ("Strict".equals($.mode)) return true;
+        if (confirmOpen) return true;
+        var mc = MinecraftWrapper.getWrapper();
+        confirmOpen = true;
+        mc.execute(() -> mc.setScreen(new ConfirmScreen(
+            confirmed -> {
+                confirmOpen = false;
+                if (confirmed) {
+                    bypassDisconnect = true;
+                    try {
+                        mc.getRaw().disconnectFromWorld(reason);
+                    } finally {
+                        bypassDisconnect = false;
+                    }
+                } else if (mc.getLevel() != null) {
+                    mc.setScreen(new PauseScreen(true));
+                }
+            },
+            Component.literal("Hold on..."),
+            Component.literal("Do you really want to leave the server?"),
+            Component.literal("Yep"),
+            Component.literal("Nah")
+        )));
+        return true;
     }
     private native void nativeBlockQuit(boolean block);
     private native boolean nativeIsQuitBlocked();

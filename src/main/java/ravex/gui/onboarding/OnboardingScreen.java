@@ -67,6 +67,10 @@ public class OnboardingScreen extends Screen {
     private final int[] enRect = new int[4];
     private final int[] ruRect = new int[4];
 
+    private float uiScale = 1f;
+    private int uiX;
+    private int uiY;
+
     public OnboardingScreen() {
         super(Component.literal("RaveX"));
         markCompleted();
@@ -79,7 +83,8 @@ public class OnboardingScreen extends Screen {
     }
 
     public static boolean isCompleted() {
-        if (markerCache == null) markerCache = MARKER.exists();
+        if (markerCache != null) return markerCache;
+        markerCache = MARKER.exists();
         return markerCache;
     }
 
@@ -150,25 +155,6 @@ public class OnboardingScreen extends Screen {
         return (color & 0xFF000000) | (r << 16) | (g << 8) | b;
     }
 
-    private static void strokeLine(GuiGraphics g, float x0, float y0, float x1, float y1, int thickness, int color) {
-        if (((color >> 24) & 0xFF) == 0) return;
-        float dx = x1 - x0;
-        float dy = y1 - y0;
-        float len = (float) Math.sqrt(dx * dx + dy * dy);
-        int t = Math.max(2, Math.round(thickness / 2f) * 2);
-        int w = Math.max(t, Math.round(len + t));
-        if (w % 2 != 0) w++;
-        if (len < 0.5f) {
-            Render2DUtility.drawRoundQ(g, Math.round(x0) - t / 2, Math.round(y0) - t / 2, t, t, t / 2, color);
-            return;
-        }
-        g.pose().pushMatrix();
-        g.pose().translate((x0 + x1) / 2f, (y0 + y1) / 2f);
-        g.pose().rotate((float) Math.atan2(dy, dx));
-        Render2DUtility.drawRoundQ(g, -w / 2, -t / 2, w, t, t / 2, color);
-        g.pose().popMatrix();
-    }
-
     private static void drawCentered(GuiGraphics g, FontRenderUtility.FontType font, String text, int centerX, int y, int color, boolean shadow) {
         int w = FontRenderUtility.getStringWidth(font, text);
         FontRenderUtility.drawString(g, font, text, centerX - w / 2, y, color, shadow);
@@ -187,12 +173,6 @@ public class OnboardingScreen extends Screen {
     private static void drawFlagUs(GuiGraphics g, int x, int y, int w, int h, float af) {
         g.blit(RenderPipelines.GUI_TEXTURED, FLAG_US, x, y, 0f, 0f, w, h, 160, 84, 160, 84, withAlpha(0xFFFFFFFF, af));
         Render2DUtility.drawBorder(g, x - 1, y - 1, w + 2, h + 2, 1, withAlpha(0x40FFFFFF, af));
-    }
-
-    private static void drawArrow(GuiGraphics g, float x, float y, int color) {
-        strokeLine(g, x, y, x + 9, y, 2, color);
-        strokeLine(g, x + 6, y - 3, x + 9, y, 2, color);
-        strokeLine(g, x + 6, y + 3, x + 9, y, 2, color);
     }
 
     @Override
@@ -226,7 +206,7 @@ public class OnboardingScreen extends Screen {
         } catch (Exception ignored) {
         }
         markCompleted();
-        SoundUtility.playDone(1.0f);
+        SoundUtility.playOnboardingDone(1.0f);
         ScreenUtility.setToTitle(ravex.mcwrapper.MinecraftWrapper.getWrapper());
     }
 
@@ -328,22 +308,28 @@ public class OnboardingScreen extends Screen {
         time += dt;
 
         int accent = ColorUtility.getActiveColor();
-        int cardW = Math.min(this.width - 40, 500);
-        int cardH = Math.min(this.height - 96, 306);
-        int cardX = (this.width - cardW) / 2;
-        int cardY = (this.height - cardH) / 2;
-        layout(cardX, cardY, cardW, cardH);
-        updateAnims(dt, mouseX, mouseY);
+        // fixed design size, uiScale keeps it stable on any gui scale
+        int cardW = 500;
+        int cardH = 306;
+        float guiScale = MinecraftWrapper.getWrapper().getWindow().getGuiScale();
+        if (!(guiScale >= 1f)) guiScale = 1f;
+        float ui = 2f / guiScale;
+        ui = Math.min(ui, this.width * 0.94f / cardW);
+        ui = Math.min(ui, this.height * 0.94f / cardH);
+        uiScale = ui;
+        uiX = Math.round((this.width - cardW * ui) / 2f);
+        uiY = Math.round((this.height - cardH * ui) / 2f);
+        layout(0, 0, cardW, cardH);
+        int designX = Math.round((mouseX - uiX) / ui);
+        int designY = Math.round((mouseY - uiY) / ui);
+        updateAnims(dt, designX, designY);
 
         graphics.fill(0, 0, this.width, this.height, 0x9604050B);
-        for (int i = 0; i < 26; i++) {
-            float seed = i * 61.7f;
-            float px = (float) ((Math.sin(seed + time * (0.13f + (i % 5) * 0.035f)) * 0.5 + 0.5) * this.width);
-            float py = (float) ((Math.cos(seed * 1.7f + time * (0.10f + (i % 3) * 0.045f)) * 0.5 + 0.5) * this.height);
-            float size = 2f + (i % 3);
-            float twinkle = 0.5f + 0.5f * (float) Math.sin(seed * 3.1f + time * 1.4f);
-            Render2DUtility.drawRoundQ(graphics, px, py, size, size, size / 2f, ((int) (0x18 * twinkle) << 24) | 0xFFFFFF);
-        }
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(uiX, uiY);
+        graphics.pose().scale(ui, ui);
+        int cardX = 0;
+        int cardY = 0;
 
         Render2DUtility.drawGaussianShadow(graphics, cardX - 6, cardY - 4, cardW + 12, cardH + 16, 24, 0x77000000);
         Render2DUtility.drawRoundQ(graphics, cardX, cardY, cardW, cardH, 18, 0xF20B0E18);
@@ -369,6 +355,7 @@ public class OnboardingScreen extends Screen {
         String counter = (step + 1) + " / 3";
         int counterW = FontRenderUtility.getStringWidth(FontRenderUtility.FontType.SF_MEDIUM, counter);
         FontRenderUtility.drawString(graphics, FontRenderUtility.FontType.SF_MEDIUM, counter, cardX + cardW - counterW, cardY + cardH + 12, 0x88FFFFFF, false);
+        graphics.pose().popMatrix();
     }
 
     private void drawProgressDots(GuiGraphics graphics, int cardX, int cardW, int cardY, int accent, float dt) {
@@ -486,11 +473,8 @@ public class OnboardingScreen extends Screen {
         int ccy = cardY + 78;
         int rr = Math.round(30 * pop);
         if (rr > 1) {
-            Render2DUtility.drawGaussianShadow(g, centerX - rr - 4, ccy - rr - 4, rr * 2 + 8, rr * 2 + 8, 16,
-                withAlpha(ColorUtility.withAlpha(accent, 120), af));
-            Render2DUtility.drawRoundGradient(g, centerX - rr, ccy - rr, rr * 2, rr * 2, rr,
-                withAlpha(brighten(accent, 45), af), withAlpha(accent, af),
-                withAlpha(darken(accent, 40), af), withAlpha(darken(accent, 70), af));
+            Render2DUtility.drawRound(g, centerX - rr, ccy - rr, rr * 2, rr * 2, rr,
+                withAlpha(accent, af));
             int checkS = Math.round(rr * 1.33f);
             g.blit(RenderPipelines.GUI_TEXTURED, CHECK, centerX - checkS / 2, ccy - checkS / 2,
                 0f, 0f, checkS, checkS, 256, 256, 256, 256, withAlpha(0xFFFFFFFF, af));
@@ -510,32 +494,23 @@ public class OnboardingScreen extends Screen {
         int y = rect[1];
         int w = rect[2];
         int h = rect[3];
-        if (hoverAnim > 0.02f && interactive) {
-            Render2DUtility.drawGaussianShadow(g, x - 4, y - 2, w + 8, h + 8, 14, withAlpha(ColorUtility.withAlpha(accent, 110), hoverAnim * af));
-        }
-        int lift = Math.round(hoverAnim * 1f);
-        int topLift = y - lift;
-        int hi = 45 + Math.round(hoverAnim * 40f);
-        Render2DUtility.drawRoundGradient(g, x, topLift, w, h, h / 2,
-            withAlpha(brighten(accent, hi), af), withAlpha(brighten(accent, hi - 25), af),
-            withAlpha(darken(accent, 30), af), withAlpha(darken(accent, 60), af));
-        Render2DUtility.drawRoundBorder(g, x, topLift, w, h, h / 2, 1, withAlpha(0x50FFFFFF, af));
+        int bg = interactive && hoverAnim > 0.02f
+            ? ColorUtility.interpolate(accent, brighten(accent, 30), hoverAnim)
+            : accent;
+        Render2DUtility.drawRoundQ(g, x, y, w, h, 8, withAlpha(bg, af));
 
         FontRenderUtility.FontType ft = FontRenderUtility.FontType.SF_BOLD;
         int textW = FontRenderUtility.getStringWidth(ft, label);
-        int arrowSpace = 14;
-        int startX = x + (w - textW - arrowSpace) / 2;
-        int textY = topLift + (h - FontRenderUtility.getFontHeight()) / 2 + 1;
-        FontRenderUtility.drawString(g, ft, label, startX, textY, withAlpha(0xFFFFFFFF, af), true);
-        drawArrow(g, startX + textW + 4, textY + FontRenderUtility.getFontHeight() / 2f - 1, withAlpha(0xFFFFFFFF, af));
+        int textY = y + (h - FontRenderUtility.getFontHeight()) / 2 + 1;
+        FontRenderUtility.drawString(g, ft, label, x + (w - textW) / 2, textY, withAlpha(0xFFFFFFFF, af), true);
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         if (event.button() != 0) return true;
         if (transitioning()) return true;
-        int mx = (int) event.x();
-        int my = (int) event.y();
+        int mx = Math.round((float) ((event.x() - uiX) / uiScale));
+        int my = Math.round((float) ((event.y() - uiY) / uiScale));
         if (step == 0) {
             if (hit(contRect, mx, my)) {
                 EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.TOGGLE, 0.5f));

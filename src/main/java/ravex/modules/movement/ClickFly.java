@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.movement.MoveUtility;
-import net.minecraft.world.phys.HitResult;
 import ravex.mcwrapper.MinecraftWrapper;
 
 
@@ -11,8 +10,6 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "ClickFly", category = "Movement")
 public class ClickFly {
-    @Parameter(name = "Mode", modes = {"Fly", "TP"})
-    public String mode = "Fly";
     @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.25)
     public double speed = 1.5;
     @Parameter(name = "Range", min = 10.0, max = 300.0, step = 10.0)
@@ -57,11 +54,7 @@ public class ClickFly {
             }
         }
         if (!flying || target == null) return;
-        if ("TP".equals(mode)) {
-            tpStep(mc);
-        } else {
-            flyStep(mc);
-        }
+        flyStep(mc);
     }
     private void abort() {
         target = null;
@@ -78,25 +71,15 @@ public class ClickFly {
             stuckSince = now;
         }
         lastDist = dist;
-        return now - stuckSince > 1500;
+        return now - stuckSince > 800;
     }
     private net.minecraft.world.phys.Vec3 getTarget(MinecraftWrapper mc) {
-        HitResult hit = mc.getHitResult();
-        if (hit != null) {
-            if (hit.getType() == HitResult.Type.BLOCK) {
-                net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
-                net.minecraft.core.BlockPos pos = blockHit.getBlockPos();
-                return PhysicUtility.centerOf(pos).add(0, 0.5 + height, 0);
-            }
-            if (hit.getType() == HitResult.Type.ENTITY) {
-                net.minecraft.world.phys.EntityHitResult entityHit = (net.minecraft.world.phys.EntityHitResult) hit;
-                return entityHit.getEntity().position().add(0, height, 0);
-            }
-        }
-        double dist = range;
-        net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition(1.0F);
-        net.minecraft.world.phys.Vec3 look = mc.getPlayer().getViewVector(1.0F);
-        return eye.add(look.x * dist, look.y * dist + height, look.z * dist);
+        var target = MoveUtility.targetFromHit(mc.getHitResult(), 1.0 + height, height);
+        if (target != null) return target;
+        // only a real block along the ray, never the void
+        var clip = PhysicUtility.raycastFromEyes(range);
+        if (clip == null) return null;
+        return PhysicUtility.centerOf(clip.getBlockPos()).add(0, 1.0 + height, 0);
     }
     private void flyStep(MinecraftWrapper mc) {
         var p = mc.getPlayer();
@@ -118,26 +101,14 @@ public class ClickFly {
             return;
         }
         net.minecraft.world.phys.Vec3 dir = diff.normalize();
+        // steer up over obstacles instead of pressing in
+        if (p.horizontalCollision || p.verticalCollision) {
+            dir = new net.minecraft.world.phys.Vec3(dir.x, Math.max(dir.y, 0.45), dir.z).normalize();
+        }
         double spd = speed;
         MoveUtility.setMotion(dir.x * spd, dir.y * spd, dir.z * spd);
     }
     private void tpStep(MinecraftWrapper mc) {
-        var p = mc.getPlayer();
-        net.minecraft.world.phys.Vec3 pos = p.position();
-        net.minecraft.world.phys.Vec3 diff = target.subtract(pos);
-        double dist = diff.length();
-        if (dist < 1.5) {
-            abort();
-            return;
-        }
-        if (isStuck(dist)) {
-            abort();
-            return;
-        }
-        net.minecraft.world.phys.Vec3 dir = diff.normalize();
-        double spd = speed;
-        double step = Math.min(spd, dist);
-        net.minecraft.world.phys.Vec3 next = pos.add(dir.x * step, dir.y * step, dir.z * step);
-        p.setPos(next.x, next.y, next.z);
+        abort();
     }
 }

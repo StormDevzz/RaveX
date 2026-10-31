@@ -2,12 +2,6 @@ package ravex.modules.world;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
-import net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket;
-import net.minecraft.network.protocol.game.ServerboundPlayerActionPacket;
-import net.minecraft.network.protocol.game.ServerboundUseItemOnPacket;
-import net.minecraft.resources.Identifier;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.network.NetworkUtility;
@@ -107,22 +101,26 @@ public class GhostBlocks {
     @Subscribe
     public void onPacketEvent(PacketEvent event) {
         if (!Modules.enabled(GhostBlocks.class)) return;
-        Object packet = event.getPacket();
+        var packet = event.getPacket();
+        String name = NetworkUtility.packetName(packet);
         if (event.isReceive()) {
-            if (packet instanceof ClientboundBlockUpdatePacket blockUpdate) {
+            if ("BlockUpdate".equals(name)) {
+                var blockUpdate = (net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket) packet;
                 net.minecraft.core.BlockPos pos = blockUpdate.getPos();
                 onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), getBlockId(blockUpdate.getBlockState()));
-            } else if (packet instanceof ClientboundSectionBlocksUpdatePacket sectionUpdate) {
+            } else if ("SectionBlocksUpdate".equals(name)) {
+                var sectionUpdate = (net.minecraft.network.protocol.game.ClientboundSectionBlocksUpdatePacket) packet;
                 sectionUpdate.runUpdates((pos, state) -> {
                     onServerBlockUpdate(pos.getX(), pos.getY(), pos.getZ(), getBlockId(state));
                 });
             }
         } else {
-            if (packet instanceof ServerboundPlayerActionPacket action) {
-                ServerboundPlayerActionPacket.Action a = action.getAction();
-                if (a == ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK)
+            if ("PlayerAction".equals(name)) {
+                var action = (net.minecraft.network.protocol.game.ServerboundPlayerActionPacket) packet;
+                if (action.getAction() == net.minecraft.network.protocol.game.ServerboundPlayerActionPacket.Action.START_DESTROY_BLOCK)
                     markMined(action.getPos());
-            } else if (packet instanceof ServerboundUseItemOnPacket useOn) {
+            } else if ("UseItemOn".equals(name)) {
+                var useOn = (net.minecraft.network.protocol.game.ServerboundUseItemOnPacket) packet;
                 var hit = useOn.getHitResult();
                 if (hit != null)
                     markPlaced(hit.getBlockPos().relative(hit.getDirection()));
@@ -156,7 +154,7 @@ public class GhostBlocks {
         return false;
     }
     public static String getBlockId(net.minecraft.world.level.block.state.BlockState state) {
-        Identifier rl = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-        return rl != null ? rl.toString() : "minecraft:air";
+        var id = BlockUtility.getIdentifier(state.getBlock());
+        return id != null ? id.toString() : "minecraft:air";
     }
 }

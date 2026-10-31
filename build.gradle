@@ -83,6 +83,96 @@ task runLoader(type: JavaExec) {
     workingDir = rootProject.projectDir
 }
 
+// нативная CMake-сборка: ./gradlew build соберёт dll/so и java-мод
+
+def nativesDir = file("src/main/resources/assets/ravex/natives")
+def nativeBuildDir = file("build/native")
+
+task buildNatives {
+    description 'Build native C++ libraries via CMake (skipped if CMake or compiler is not available)'
+    doLast {
+        def cmakeAvailable = false
+        try {
+            def pb = new ProcessBuilder(["cmake", "--version"])
+            pb.redirectOutput(ProcessBuilder.Redirect.PIPE)
+            pb.redirectError(ProcessBuilder.Redirect.PIPE)
+            def proc = pb.start()
+            proc.waitFor()
+            cmakeAvailable = proc.exitValue() == 0
+        } catch (Throwable t) {
+            cmakeAvailable = false
+        }
+
+        if (!cmakeAvailable) {
+            println "[RaveX] CMake not found, skipping native build. Using committed natives in ${nativesDir.absolutePath}"
+            return
+        }
+
+        if (!nativeBuildDir.exists()) nativeBuildDir.mkdirs()
+        if (!nativesDir.exists()) nativesDir.mkdirs()
+
+        def configArgs = ["cmake", "-S", "src/main/cpp", "-B", "build/native",
+                          "-DCMAKE_BUILD_TYPE=Release",
+                          "-DCMAKE_INSTALL_PREFIX=${nativesDir.absolutePath}"]
+        // генератор CMake выберет сам
+
+        try {
+            println "[RaveX] Configuring native CMake build..."
+            exec {
+                commandLine configArgs
+            }
+        } catch (Throwable t) {
+            println "[RaveX] CMake configuration failed: ${t.message}. Using committed natives."
+            return
+        }
+
+        try {
+            println "[RaveX] Building native libraries..."
+            exec {
+                commandLine "cmake", "--build", "build/native", "--config", "Release", "--parallel"
+            }
+        } catch (Throwable t) {
+            println "[RaveX] CMake build failed: ${t.message}. Using committed natives."
+            return
+        }
+
+        try {
+            copy {
+                from(nativeBuildDir)
+                include("**/*.dll")
+                include("**/*.so")
+                into(nativesDir)
+                eachFile { details ->
+                    details.path = details.name
+                }
+                includeEmptyDirs = false
+            }
+            println "[RaveX] Native libraries copied to ${nativesDir.absolutePath}"
+        } catch (Throwable t) {
+            println "[RaveX] Failed to copy native binaries: ${t.message}"
+            return
+        }
+
+        try {
+            exec {
+                commandLine "python", "scripts/sync_native_manifest.py"
+            }
+            println "[RaveX] Native manifest synchronized"
+        } catch (Throwable t) {
+            println "[RaveX] Failed to synchronize native manifest: ${t.message}"
+        }
+    }
+}
+
+// Нативные библиотеки собираются только при явной команде ./gradlew build.
+tasks.named('build') {
+    dependsOn buildNatives
+}
+// Нативка должна быть готова до копирования ресурсов (только в рамках сборки).
+tasks.named('processResources') {
+    mustRunAfter buildNatives
+}
+
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude("assets/ravex/companion/textures/**")
@@ -96,9 +186,7 @@ jar {
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
 
-// The in-game changelog is rendered from .github/RELEASE_NOTES.md, the same file that
-// feeds the GitHub release body. It is copied into the jar so the changelog also works
-// offline, without keeping a second copy of the notes in the resources folder.
+// changelog в игре берётся из .github/RELEASE_NOTES.md, копируется в jar
 def changelogNotes = file('.github/RELEASE_NOTES.md')
 
 tasks.register('copyChangelog', Copy) {

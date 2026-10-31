@@ -22,12 +22,17 @@ public class MixinSpider {
         if (!player.horizontalCollision && !isAgainstWall(player)) return;
 
         String mode = Modules.get(Spider.class).mode;
+        Spider spider = Modules.get(Spider.class);
+        if ("Custom".equals(mode)) {
+            if (spider.customRequireSneak && !player.isShiftKeyDown()) return;
+            if (spider.customOnlyOnGround && !player.onGround()) return;
+        }
         double motion;
 
         switch (mode) {
             case "Normal" -> motion = 0.2;
             case "NCP" -> motion = 0.18;
-            case "Custom" -> motion = Modules.get(Spider.class).motion;
+            case "Custom" -> motion = spider.customMotion;
             default -> motion = 0.2;
         }
 

@@ -34,6 +34,7 @@ endif()
 set_target_properties(ravex_nuker PROPERTIES
     OUTPUT_NAME "ravex_nuker"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
 
 if(WIN32)

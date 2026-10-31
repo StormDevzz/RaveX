@@ -25,6 +25,18 @@ public abstract class MixinChatComponent {
         }
     }
 
+    @Inject(method = "addMessage(Lnet/minecraft/network/chat/Component;)V", at = @At("HEAD"))
+    private void ravexNotifyChatAnim(Component message, CallbackInfo ci) {
+        ravex.modules.render.Animations.chatMessageNs = System.nanoTime();
+        ravex.modules.render.Animations.chatDirty = true;
+    }
+
+    @Inject(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V", at = @At("HEAD"))
+    private void ravexNotifyChatAnimFull(Component message, MessageSignature signature, GuiMessageTag tag, CallbackInfo ci) {
+        ravex.modules.render.Animations.chatMessageNs = System.nanoTime();
+        ravex.modules.render.Animations.chatDirty = true;
+    }
+
     @Inject(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
             at = @At("HEAD"), cancellable = true)
     private void filterChatMessageFull(Component message, MessageSignature signature, GuiMessageTag tag, CallbackInfo ci) {
@@ -50,5 +62,13 @@ public abstract class MixinChatComponent {
             }
         }
         return m;
+    }
+
+    @ModifyVariable(method = "addMessage(Lnet/minecraft/network/chat/Component;Lnet/minecraft/network/chat/MessageSignature;Lnet/minecraft/client/GuiMessageTag;)V",
+                    at = @At("HEAD"), argsOnly = true)
+    private Component ravexApplyChatFont(Component message) {
+        ravex.modules.client.Fonts fonts = Modules.get(ravex.modules.client.Fonts.class);
+        if (fonts == null || !Modules.enabled(ravex.modules.client.Fonts.class) || !fonts.chatFont) return message;
+        return ravex.utility.render.FontRenderUtility.applyGlobalFont(message);
     }
 }

@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 
 
 import ravex.parameter.ActionParameter;
-import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.gui.clickgui.AutoReGearScreen;
 import java.util.HashMap;
@@ -21,14 +20,6 @@ public class AutoReGear {
             new AutoReGearScreen(MinecraftWrapper.getWrapper().getCurrentScreen())
         );
     });
-    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoregear");
-    public static native int nativeCalculateRegear(
-        String[] containerItemIds,
-        int[] containerCounts,
-        String[] targetItemIds,
-        int[] targetCounts,
-        int[] currentCounts
-    );
     private long lastActionTime = 0;
     public void saveExtra(JsonObject obj) {
         JsonArray arr = new JsonArray();
@@ -107,29 +98,13 @@ public class AutoReGear {
         for (int i = 0; i < targetItemIds.length; i++) {
             currentCounts[i] = currentInventoryCounts.get(targetItemIds[i]);
         }
-        int containerSlotToClick = -1;
-        if (NATIVE.isLoaded()) {
-            try {
-                containerSlotToClick = nativeCalculateRegear(
-                    containerItemIds,
-                    containerCounts,
-                    targetItemIds,
-                    targetCounts,
-                    currentCounts
-                );
-            } catch (Exception e) {
-                containerSlotToClick = -1;
-            }
-        }
-        if (containerSlotToClick == -1) {
-            containerSlotToClick = fallbackCalculateRegear(
-                containerItemIds,
-                containerCounts,
-                targetItemIds,
-                targetCounts,
-                currentCounts
-            );
-        }
+        int containerSlotToClick = fallbackCalculateRegear(
+            containerItemIds,
+            containerCounts,
+            targetItemIds,
+            targetCounts,
+            currentCounts
+        );
         if (containerSlotToClick >= 0 && containerSlotToClick < 27) {
             InventoryUtility.handleInventoryClick(mc, (net.minecraft.client.player.LocalPlayer) mc.getPlayer(), containerSlotToClick, 0, InventoryUtility.QUICK_MOVE);
             lastActionTime = now;

@@ -8,7 +8,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "TickShift", category = "Movement")
 public class TickShift {
-    @Parameter(name = "Mode", modes = {"Motion", "Strafe", "Timer", "GrimStrict"})
+    @Parameter(name = "Mode", modes = {"Motion", "Timer", "GrimStrict"})
     public String mode = "Motion";
     @Parameter(name = "Delay", min = 1.0, max = 200.0, step = 1.0)
     public double delay = 20.0;
@@ -89,24 +89,6 @@ public class TickShift {
         if (m.equals("Motion")) {
             double mult = speed;
             MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);
-        } else if (m.equals("Strafe")) {
-            double yaw = player.getYRot() * Math.PI / 180.0;
-            var input = player.input.keyPresses;
-            double forward = (input.forward() ? 1 : 0) - (input.backward() ? 1 : 0);
-            double strafe = (input.right() ? 1 : 0) - (input.left() ? 1 : 0);
-            double cos = Math.cos(yaw);
-            double sin = Math.sin(yaw);
-            double dx = strafe * cos - forward * sin;
-            double dz = forward * cos + strafe * sin;
-            double len = Math.sqrt(dx * dx + dz * dz);
-            if (len > 0) {
-                dx /= len;
-                dz /= len;
-            }
-            double baseSpeed = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-            double mult = speed;
-            double targetSpeed = Math.max(baseSpeed, 0.2873) * mult;
-            MoveUtility.setMotion(dx * targetSpeed, motion.y, dz * targetSpeed);
         } else if (m.equals("Timer")) {
             double mult = timerSpeed;
             MoveUtility.setMotion(motion.x * mult, motion.y, motion.z * mult);

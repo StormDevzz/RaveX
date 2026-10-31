@@ -2,8 +2,6 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 
-import net.minecraft.world.entity.item.ItemEntity;
-
 import ravex.utility.misc.EntityUtility;
 import ravex.modules.Modules;
 @Module(name = "NoPush", category = "Movement")
@@ -14,14 +12,14 @@ public class NoPush {
     public boolean mobs = true;
     @Parameter(name = "Items")
     public boolean items = true;
-    @Parameter(name = "Water")
-    public boolean water = false;
+    @Parameter(name = "Liquid")
+    public boolean liquid = false;
 
     public boolean shouldCancelPush(net.minecraft.world.entity.Entity self, net.minecraft.world.entity.Entity other) {
         if (!Modules.enabled(NoPush.class)) return false;
         boolean otherPlayer = EntityUtility.isPlayer(EntityUtility.asLivingEntity(other));
-        boolean otherMob = other instanceof net.minecraft.world.entity.LivingEntity && !otherPlayer;
-        boolean otherItem = other instanceof ItemEntity;
+        boolean otherMob = EntityUtility.asLivingEntity(other) != null && !otherPlayer;
+        boolean otherItem = EntityUtility.isItem(other);
         return (otherPlayer && players) || (otherMob && mobs) || (otherItem && items);
     }
     public boolean shouldCancelPush() {

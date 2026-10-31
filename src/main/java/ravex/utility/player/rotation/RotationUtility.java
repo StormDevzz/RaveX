@@ -91,22 +91,15 @@ public class RotationUtility {
         return new float[]{yaw, pitch};
     }
 
-    /**
-     * Returns the mouse sensitivity GCD step size.
-     * GrimAC's AimModulo360 check verifies that yaw/pitch changes are multiples
-     * of this step (i.e. they could have come from real mouse movement).
-     * Formula: (sensitivity * 0.6 + 0.2)^3 * 8
-     */
+        // mouse sensitivity step size, grimac wants multiples of it
     public static float getGCD() {
         double sensitivity = MinecraftWrapper.getWrapper().getOptions().sensitivity().get();
         double value = sensitivity * 0.6 + 0.2;
         return (float) (Math.pow(value, 3) * 8.0);
     }
 
-    /**
-     * Rounds an angle to the nearest valid mouse-movement increment.
-     * Use this on every yaw/pitch before sending it to the server.
-     */
+        // rounds an angle to the nearest valid mouse-movement increment.
+    // use this on every yaw/pitch before sending it to the server.
     public static float fixAngle(float angle) {
         float step = getGCD() * 0.15f;
         if (step == 0) return angle;

@@ -130,11 +130,14 @@ Java_ravex_addon_core_CAddonManager_nativeInitCAddons(
     if (!path_array) return;
 
     jsize count = (*env)->GetArrayLength(env, path_array);
+    if ((*env)->ExceptionCheck(env)) return;
     for (jsize i = 0; i < count; i++) {
         jstring path_j = (*env)->GetObjectArrayElement(env, path_array, i);
+        if ((*env)->ExceptionCheck(env)) return;
         if (!path_j) continue;
 
         const char* path = (*env)->GetStringUTFChars(env, path_j, NULL);
+        if ((*env)->ExceptionCheck(env)) { (*env)->DeleteLocalRef(env, path_j); return; }
         if (path) {
             try_load_c_addon(path);
             (*env)->ReleaseStringUTFChars(env, path_j, path);

@@ -14,6 +14,10 @@ public class Hud {
     public boolean dragEnabled = false;
     @Parameter(name = "ShowCounter")
     public boolean showCounter = true;
+    @Parameter(name = "Outlines")
+    public boolean outlines = true;
+    @Parameter(name = "OutlineColor", color = true)
+    public int outlineColor = 0x30FFFFFF;
 
     public static ravex.modules.Module draggingHud = null;
     public static int dragOffX = 0;
@@ -28,10 +32,4 @@ public class Hud {
             }
         }
     }
-
-
-
-
-
-
 }

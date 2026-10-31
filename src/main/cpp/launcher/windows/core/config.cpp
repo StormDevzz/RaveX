@@ -174,7 +174,7 @@ std::string unprotectSecret(const std::string& stored) {
 
 LauncherConfig loadLauncherConfig() {
     LauncherConfig cfg;
-    setThemeIconSubdir(themeIconSubdirFor(cfg.theme));  // reset to defaults on every (re)load
+    setThemeIconSubdir(themeIconSubdirFor(cfg.theme));  // reset to defaults on every load
     std::string text;
     if (!readFile(launcherConfigPath(), text)) return cfg;
     Value root = Value::parse(text);

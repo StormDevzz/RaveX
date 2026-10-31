@@ -1,7 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.gui.screens.Screen;
 @Module(name = "GuiMove", category = "Movement")
 public class GuiMove {
     @Parameter(name = "Mode", modes = {"Vanilla", "NoClick", "NCPStrict", "Grim", "Matrix"})
@@ -12,10 +11,6 @@ public class GuiMove {
     public boolean noJump = false;
     @Parameter(name = "NoSprint")
     public boolean noSprint = false;
-    public Screen closedScreen = null;
-    public int grimCooldown = 0;
-
-
-
-
+    @Parameter(name = "DisableInClickGui")
+    public boolean disableInClickGui = false;
 }

@@ -1,6 +1,7 @@
 #include <jni.h>
 #include <vector>
 #include <string>
+#include "../../../common/include/jni_raii.hpp"
 #include "autoregear.hpp"
 
 extern "C" {
@@ -19,49 +20,69 @@ Java_ravex_modules_player_AutoReGear_AutoReGear_nativeCalculateRegear(
     }
 
     jsize containerLen = env->GetArrayLength(containerItemIds);
+    if (ravex::jni::checkAndClearException(env)) return -1;
     std::vector<std::string> cItemIds;
     cItemIds.reserve(containerLen);
     for (jsize i = 0; i < containerLen; ++i) {
         jstring str = (jstring)env->GetObjectArrayElement(containerItemIds, i);
+        if (ravex::jni::checkAndClearException(env)) return -1;
         if (str) {
-            const char* chars = env->GetStringUTFChars(str, nullptr);
-            cItemIds.push_back(chars ? chars : "");
-            env->ReleaseStringUTFChars(str, chars);
+            JniStringUtfChars charsGuard(env, str);
+            if (!charsGuard) {
+                env->DeleteLocalRef(str);
+                cItemIds.push_back("");
+                continue;
+            }
+            if (ravex::jni::checkAndClearException(env)) return -1;
+            cItemIds.push_back(charsGuard.get());
             env->DeleteLocalRef(str);
         } else {
             cItemIds.push_back("");
         }
     }
 
-    jint* cCountsData = env->GetIntArrayElements(containerCounts, nullptr);
+    JniIntElements cCountsGuard(env, containerCounts);
+    if (ravex::jni::checkAndClearException(env)) return -1;
+    if (!cCountsGuard) return -1;
     jsize cCountsLen = env->GetArrayLength(containerCounts);
-    std::vector<int> cCounts(cCountsData, cCountsData + cCountsLen);
-    env->ReleaseIntArrayElements(containerCounts, cCountsData, JNI_ABORT);
+    if (ravex::jni::checkAndClearException(env)) return -1;
+    std::vector<int> cCounts(cCountsGuard.get(), cCountsGuard.get() + cCountsLen);
 
     jsize targetLen = env->GetArrayLength(targetItemIds);
+    if (ravex::jni::checkAndClearException(env)) return -1;
     std::vector<std::string> tItemIds;
     tItemIds.reserve(targetLen);
     for (jsize i = 0; i < targetLen; ++i) {
         jstring str = (jstring)env->GetObjectArrayElement(targetItemIds, i);
+        if (ravex::jni::checkAndClearException(env)) return -1;
         if (str) {
-            const char* chars = env->GetStringUTFChars(str, nullptr);
-            tItemIds.push_back(chars ? chars : "");
-            env->ReleaseStringUTFChars(str, chars);
+            JniStringUtfChars charsGuard(env, str);
+            if (!charsGuard) {
+                env->DeleteLocalRef(str);
+                tItemIds.push_back("");
+                continue;
+            }
+            if (ravex::jni::checkAndClearException(env)) return -1;
+            tItemIds.push_back(charsGuard.get());
             env->DeleteLocalRef(str);
         } else {
             tItemIds.push_back("");
         }
     }
 
-    jint* tCountsData = env->GetIntArrayElements(targetCounts, nullptr);
+    JniIntElements tCountsGuard(env, targetCounts);
+    if (ravex::jni::checkAndClearException(env)) return -1;
+    if (!tCountsGuard) return -1;
     jsize tCountsLen = env->GetArrayLength(targetCounts);
-    std::vector<int> tCounts(tCountsData, tCountsData + tCountsLen);
-    env->ReleaseIntArrayElements(targetCounts, tCountsData, JNI_ABORT);
+    if (ravex::jni::checkAndClearException(env)) return -1;
+    std::vector<int> tCounts(tCountsGuard.get(), tCountsGuard.get() + tCountsLen);
 
-    jint* curCountsData = env->GetIntArrayElements(currentCounts, nullptr);
+    JniIntElements curCountsGuard(env, currentCounts);
+    if (ravex::jni::checkAndClearException(env)) return -1;
+    if (!curCountsGuard) return -1;
     jsize curCountsLen = env->GetArrayLength(currentCounts);
-    std::vector<int> curCounts(curCountsData, curCountsData + curCountsLen);
-    env->ReleaseIntArrayElements(currentCounts, curCountsData, JNI_ABORT);
+    if (ravex::jni::checkAndClearException(env)) return -1;
+    std::vector<int> curCounts(curCountsGuard.get(), curCountsGuard.get() + curCountsLen);
 
     return calculateRegear(cItemIds, cCounts, tItemIds, tCounts, curCounts);
 }

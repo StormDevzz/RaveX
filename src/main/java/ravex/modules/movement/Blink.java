@@ -15,8 +15,8 @@ import ravex.modules.Modules;
 
 @Module(name = "Blink", category = "Movement")
 public class Blink {
-    @Parameter(name = "Mode", modes = {"Normal", "Packet", "Grim", "NCP"})
-    public String mode = "Normal";
+    @Parameter(name = "Mode", modes = {"Grim", "NCP"})
+    public String mode = "NCP";
     @Parameter(name = "Limit", min = 5.0, max = 200.0, step = 5.0)
     public double limit = 30.0;
     @Parameter(name = "MaxTicks", min = 1.0, max = 20.0, step = 1.0)
@@ -100,6 +100,8 @@ public class Blink {
 
         if ("Grim".equals(modeVal) || "NCP".equals(modeVal)) {
             if (flushing) return false;
+            // keep alive replies must go through
+            if (packet instanceof net.minecraft.network.protocol.common.ServerboundKeepAlivePacket) return false;
             if (packet instanceof net.minecraft.network.protocol.common.ServerboundPongPacket) return false;
             if (packet instanceof net.minecraft.network.protocol.game.ServerboundAcceptTeleportationPacket) return false;
 
@@ -120,12 +122,6 @@ public class Blink {
             return true;
         }
 
-        if ("Packet".equals(modeVal) && !(packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket)) return false;
-        if (packetBuffer.size() >= (int) limit) return true;
-        if (packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket) {
-            packetBuffer.add(packet);
-            return true;
-        }
         return false;
     }
 

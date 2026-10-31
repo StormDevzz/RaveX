@@ -85,9 +85,21 @@ public final class SearchUtility {
         return new String(chars);
     }
 
+    // query is reused every frame, build the variant set once
+    private static String cachedQuery;
+    private static List<String> cachedVariants = java.util.Collections.emptyList();
+
     public static List<String> queryVariants(String query) {
-        List<String> variants = new ArrayList<>();
         String q = lower(query);
+        if (q.equals(cachedQuery)) return cachedVariants;
+        List<String> variants = buildVariants(q);
+        cachedQuery = q;
+        cachedVariants = variants;
+        return variants;
+    }
+
+    private static List<String> buildVariants(String q) {
+        List<String> variants = new ArrayList<>();
         if (q.isEmpty()) return variants;
         addVariant(variants, q);
         addVariant(variants, stripDiacritics(q));

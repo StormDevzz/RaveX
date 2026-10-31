@@ -6,12 +6,18 @@ import java.util.List;
 
 public class ShulkerDataTooltipComponent implements TooltipComponent {
     private final List<ItemStack> items;
+    private final int tintColor;
 
-    public ShulkerDataTooltipComponent(List<ItemStack> items) {
+    public ShulkerDataTooltipComponent(List<ItemStack> items, int tintColor) {
         this.items = items;
+        this.tintColor = tintColor;
     }
 
     public List<ItemStack> getItems() {
         return items;
+    }
+
+    public int getTintColor() {
+        return tintColor;
     }
 }

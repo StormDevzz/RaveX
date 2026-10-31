@@ -13,7 +13,15 @@ public class AutoSprint {
         var player = mc.getPlayer();
         if (player == null) return;
         if ("Rage".equals(mode)) {
-            player.setSprinting(true);
+            boolean moving = (mc.getOptions() != null)
+                && (mc.getOptions().keyUp.isDown() || mc.getOptions().keyDown.isDown()
+                    || mc.getOptions().keyLeft.isDown() || mc.getOptions().keyRight.isDown());
+            if (moving) {
+                player.setSprinting(true);
+            } else if (PlayerUtility.isSprinting(player)) {
+                // only the flag here, the mixin handles velocity
+                player.setSprinting(false);
+            }
         } else {
             if (player.input.hasForwardImpulse() && !PlayerUtility.isUsingItem(player) && !PlayerUtility.isSneaking(player)) {
                 player.setSprinting(true);

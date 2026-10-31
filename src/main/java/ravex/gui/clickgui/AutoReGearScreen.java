@@ -1,12 +1,10 @@
 package ravex.gui.clickgui;
-import ravex.utility.render.ColorUtility;
 
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.MouseButtonEvent;
-import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
@@ -14,525 +12,466 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.lwjgl.glfw.GLFW;
+import ravex.gui.browser.SearchBrowserScreen;
 import ravex.modules.player.autoregear.AutoReGearData;
+import ravex.utility.misc.LanguageUtility;
+import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
+// kit editor for AutoReGear - the SearchBrowser layout, adapted to items.
 public class AutoReGearScreen extends Screen {
-
-    private static final int ITEM_SIZE   = 20;
-
     private final Screen parent;
-    private final List<Item> allItems = new ArrayList<>();
-    private final List<Item> filteredItems = new ArrayList<>();
 
-    private String searchQuery  = "";
-    private boolean searchFocus = false;
-    private float gridScroll = 0;
-    private float selectedScroll = 0;
-    private String hoveredTooltip = null;
-    private int tooltipX, tooltipY;
+    private static class Entry {
+        final Identifier id;
+        final String name;
+        final ItemStack stack;
+        Entry(Item item) {
+            this.id = BuiltInRegistries.ITEM.getKey(item);
+            this.stack = new ItemStack(item);
+            this.name = stack.getHoverName().getString();
+        }
+    }
+
+    private enum Tab { ITEMS, SELECTED }
+
+    private final List<Entry> allItems = new ArrayList<>();
+    private List<Entry> filtered = new ArrayList<>();
+    private List<Entry> previousFiltered = new ArrayList<>();
+    private Tab tab = Tab.ITEMS;
+
+    private String searchQuery = "";
+    private boolean searchFocused;
+    private float scrollOffset;
+    private float scrollAnim;
+    private float previousScrollAnim;
+    private float tabTransition = 1f;
+    private float swipeDirection = 1f;
     private long openTime = -1;
+    private boolean closing = false;
+    private long closeStart = 0;
+    private ItemStack hoveredStack = ItemStack.EMPTY;
+    private String hoveredName = "";
+    private String hoveredId = "";
+    private final Set<Identifier> selectedIds = new HashSet<>();
 
-    private boolean quitHovered  = false;
-
-    private String editingItemId = null;
+    private String editingKey = null;
     private String editingText = "";
 
-    private void saveEditingTargetCount() {
-        if (editingItemId == null) return;
+    public AutoReGearScreen(Screen parent) {
+        super(Component.literal(LanguageUtility.t("arg_subtitle")));
+        this.parent = parent;
+        for (Item item : BuiltInRegistries.ITEM) {
+            if (item == Items.AIR) continue;
+            allItems.add(new Entry(item));
+        }
+        refilter();
+        SearchBrowserScreen.restoreAtlasFilter();
+    }
+
+    @Override public boolean isPauseScreen() { return false; }
+
+    private void saveEditing() {
+        if (editingKey == null) return;
         try {
             int count = editingText.isEmpty() ? 1 : Integer.parseInt(editingText);
             count = Math.max(1, Math.min(256, count));
-            AutoReGearData.INSTANCE.setTargetCount(editingItemId, count);
-        } catch (NumberFormatException e) {
-
+            AutoReGearData.INSTANCE.setTargetCount(editingKey, count);
+        } catch (NumberFormatException ignored) {
         }
-        editingItemId = null;
+        editingKey = null;
+        editingText = "";
     }
 
-    public AutoReGearScreen(Screen parent) {
-        super(Component.literal(ravex.utility.misc.LanguageUtility.t("arg_subtitle")));
-        this.parent = parent;
-
-        for (Item item : BuiltInRegistries.ITEM) {
-            if (item == Items.AIR) continue;
-            allItems.add(item);
-        }
-        rebuildFiltered();
-    }
-
-    private void rebuildFiltered() {
-        filteredItems.clear();
-        String q = searchQuery.toLowerCase().trim();
-        for (Item item : allItems) {
-            if (q.isEmpty()) {
-                filteredItems.add(item);
-            } else {
-                String name = new ItemStack(item).getHoverName().getString().toLowerCase();
-                Identifier rl = BuiltInRegistries.ITEM.getKey(item);
-                if (rl == null) continue;
-                String id = rl.toString();
-                if (name.contains(q) || id.contains(q)) {
-                    filteredItems.add(item);
-                }
-            }
-        }
-        gridScroll = 0;
+    private void close() {
+        if (closing) return;
+        saveEditing();
+        closing = true;
+        closeStart = System.currentTimeMillis();
     }
 
     @Override
-    public boolean isPauseScreen() { return false; }
-
-    @Override
-    public void render(GuiGraphics g, int mouseX, int mouseY, float pt) {
+    public void render(GuiGraphics g, int mx, int my, float pt) {
         long now = System.currentTimeMillis();
         if (openTime < 0) openTime = now;
 
-        float elapsed = (now - openTime);
-        float progress = Math.min(1.0f, elapsed / 200f);
-        float scale = progress * (2f - progress);
+        float elapsed = now - openTime;
+        float openAlpha = Math.min(1f, elapsed / 150f);
+        float openScale = 0.85f + 0.15f * openAlpha;
 
-        int W = this.width;
-        int H = this.height;
+        float closeAlpha = 1f;
+        float closeScale = 1f;
+        if (closing) {
+            float cElapsed = (now - closeStart) / 120f;
+            closeAlpha = Math.max(0f, 1f - cElapsed);
+            closeScale = 1f - 0.15f * cElapsed;
+            if (cElapsed >= 1f) {
+                minecraft.setScreen(parent);
+                return;
+            }
+        }
 
-        int bgA = (int)(progress * 0x99);
-        g.fill(0, 0, W, H, ColorUtility.setAlpha(0x05050E, bgA));
+        float alpha = openAlpha * closeAlpha;
+        float scale = openScale * closeScale;
 
-        int panelW = 680;
-        int panelH = 420;
-        if (W < panelW + 40) panelW = W - 40;
-        if (H < panelH + 40) panelH = H - 40;
+        int w = width, h = height;
+        g.fill(0, 0, w, h, (int) (0x60 * alpha) << 24);
 
-        int panelX = (W - panelW) / 2;
-        int panelY = (H - panelH) / 2;
+        int pw = Math.min(480, w - 40);
+        int ph = Math.min(360, h - 40);
+        int px = (w - pw) / 2;
+        int py = (h - ph) / 2;
 
         var pose = g.pose();
         pose.pushMatrix();
-        pose.translate(W / 2.0f, H / 2.0f);
+        pose.translate(w / 2f, h / 2f);
         pose.scale(scale, scale);
-        pose.translate(-W / 2.0f, -H / 2.0f);
+        pose.translate(-w / 2f, -h / 2f);
 
-        float cx = W / 2.0f, cy = H / 2.0f;
-        int mx = scale > 0.01f ? (int)((mouseX - cx) / scale + cx) : mouseX;
-        int my = scale > 0.01f ? (int)((mouseY - cy) / scale + cy) : mouseY;
+        int amx = (int) ((mx - w / 2f) / scale + w / 2f);
+        int amy = (int) ((my - h / 2f) / scale + h / 2f);
 
-        hoveredTooltip = null;
+        int ac = ColorUtility.getActiveColor();
+        int alpha255 = (int) (255 * alpha);
+        int r = 8;
 
-        g.fill(panelX, panelY, panelX + panelW, panelY + panelH, 0xF0121218);
-        Render2DUtility.drawBorder(g, panelX, panelY, panelW, panelH, 1, 0xFF33333F);
+        Render2DUtility.drawRound(g, px, py, pw, ph, r, 0xF00A0A0E);
+        Render2DUtility.drawRoundBorder(g, px, py, pw, ph, r, 1, ColorUtility.withAlpha(ac, alpha255));
 
-        int headerH = 28;
-        g.fill(panelX, panelY, panelX + panelW, panelY + headerH, 0xFF1A1A22);
-        g.fill(panelX, panelY + headerH - 1, panelX + panelW, panelY + headerH, ColorUtility.getActiveColor());
-        FontRenderUtility.drawString(g, ravex.utility.misc.LanguageUtility.t("arg_title"), panelX + 10, panelY + 6, ColorUtility.getActiveColor(), true);
-        FontRenderUtility.drawString(g, ravex.utility.misc.LanguageUtility.t("arg_back"), panelX + panelW - 72, panelY + 8, 0xFF606080, false);
+        g.fill(px, py + 28, px + pw, py + 29, 0x22FFFFFF);
 
-        int leftW  = (panelW / 2) - 6;
-        int rightW = panelW - leftW - 18;
-        int leftX  = panelX + 6;
-        int rightX = panelX + leftW + 12;
-        int contentY = panelY + headerH + 6;
-        int contentH = panelH - headerH - 50;
+        FontRenderUtility.drawString(g, LanguageUtility.t("arg_title"), px + 12, py + 8,
+            ColorUtility.withAlpha(0xFFE0E0E0, alpha255), true);
 
-
-        g.fill(leftX, contentY, leftX + leftW, contentY + contentH, 0xFF121218);
-        Render2DUtility.drawBorder(g, leftX, contentY, leftW, contentH, 1, 0xFF2E2E3A);
-
-        int colHeaderH = 18;
-        g.fill(leftX, contentY, leftX + leftW, contentY + colHeaderH, 0xFF1A1A22);
-        FontRenderUtility.drawString(g, "§7All Items §8(" + filteredItems.size() + ")", leftX + 5, contentY + 3, 0xFFAAAAAA, false);
-
-        int searchY = contentY + colHeaderH + 2;
-        int searchH = 14;
-        int searchW = leftW - 8;
-        g.fill(leftX + 4, searchY, leftX + 4 + searchW, searchY + searchH, searchFocus ? 0xFF20202A : 0xFF16161C);
-        Render2DUtility.drawBorder(g, leftX + 4, searchY, searchW, searchH, 1, searchFocus ? ColorUtility.getActiveColor() : 0xFF3A3A46);
-        String searchDisplay = searchQuery.isEmpty() && !searchFocus ? "§8Search..." : searchQuery + (searchFocus ? "§8|" : "");
-        FontRenderUtility.drawString(g, searchDisplay, leftX + 7, searchY + 2, 0xFFCCCCCC, false);
-
-        int gridY = searchY + searchH + 3;
-        int gridH = contentH - colHeaderH - searchH - 8;
-        int gridX = leftX + 4;
-        int gridW = leftW - 8;
-        int cols = Math.max(8, gridW / ITEM_SIZE);
-
-        int totalRows = (filteredItems.size() + cols - 1) / cols;
-        int maxGridScroll = Math.max(0, totalRows * ITEM_SIZE - gridH);
-        gridScroll = Math.max(0, Math.min(maxGridScroll, gridScroll));
-
-        Render2DUtility.pushScissor(g, leftX, gridY, leftW, gridH);
-
-        for (int i = 0; i < filteredItems.size(); i++) {
-            int col = i % cols;
-            int row = i / cols;
-            int ix = gridX + col * ITEM_SIZE;
-            int iy = gridY + row * ITEM_SIZE - (int) gridScroll;
-            if (iy + ITEM_SIZE < gridY || iy > gridY + gridH) continue;
-
-            Item item = filteredItems.get(i);
-            ItemStack stack = new ItemStack(item);
-            Identifier rl = BuiltInRegistries.ITEM.getKey(item);
-            String itemId = rl != null ? rl.toString() : "";
-
-            boolean sel = AutoReGearData.INSTANCE.isSelected(itemId);
-            boolean hov = mx >= ix && mx <= ix + ITEM_SIZE - 1 && my >= iy && my <= iy + ITEM_SIZE - 1;
-
-            if (hov) {
-                g.fill(ix, iy, ix + ITEM_SIZE, iy + ITEM_SIZE, 0xFF2A2C38);
-                hoveredTooltip = new ItemStack(item).getHoverName().getString() + "\n§8" + itemId + "\n§eClick to toggle in kit";
-                tooltipX = mx; tooltipY = my;
-            } else if (sel) {
-                g.fill(ix, iy, ix + ITEM_SIZE, iy + ITEM_SIZE, 0x44DA70D6);
-            }
-
-            g.renderItem(stack, ix + 2, iy + 2);
-
-            if (sel) {
-                Render2DUtility.drawBorder(g, ix, iy, ITEM_SIZE, ITEM_SIZE, 1, 0xFF44FF88);
-            }
-        }
-
-        Render2DUtility.popScissor(g);
-
-        if (maxGridScroll > 0) {
-            int barH = Math.max(20, gridH * gridH / (totalRows * ITEM_SIZE));
-            int barY = gridY + (int) ((gridH - barH) * (gridScroll / maxGridScroll));
-            int barX = leftX + leftW - 4;
-            g.fill(barX, gridY, barX + 2, gridY + gridH, 0xFF1E1E26);
-            g.fill(barX, barY, barX + 2, barY + barH, ColorUtility.getActiveColor());
-        }
-
-
-        g.fill(rightX, contentY, rightX + rightW, contentY + contentH, 0xFF121218);
-        Render2DUtility.drawBorder(g, rightX, contentY, rightW, contentH, 1, 0xFF2E2E3A);
-
-        g.fill(rightX, contentY, rightX + rightW, contentY + colHeaderH, 0xFF1A1A22);
         int selCount = AutoReGearData.INSTANCE.getSelectedItems().size();
-        FontRenderUtility.drawString(g, "§dKit Items §7(" + selCount + ")", rightX + 5, contentY + 3,
-            selCount > 0 ? ColorUtility.getActiveColor() : 0xFF777777, false);
+        FontRenderUtility.drawString(g, selCount + "/" + allItems.size(), px + pw - 80, py + 10,
+            ColorUtility.withAlpha(0xFF606060, alpha255), true);
 
-        int selContentY = contentY + colHeaderH + 3;
-        int selContentH = contentH - colHeaderH - 6;
-        Render2DUtility.pushScissor(g, rightX, selContentY, rightW, selContentH);
+        int cy = py + 34;
+        int ch = ph - 64;
 
-        var selectedSet = AutoReGearData.INSTANCE.getSelectedItems().keySet();
-        String[] selectedArr = selectedSet.toArray(new String[0]);
-        int maxSelScroll = Math.max(0, selectedArr.length * 18 - selContentH);
-        selectedScroll = Math.max(0, Math.min(maxSelScroll, selectedScroll));
-
-        int sy = selContentY + 3 - (int)selectedScroll;
-        for (String itemId : selectedArr) {
-            Identifier rlId = Identifier.tryParse(itemId);
-            if (rlId == null) continue;
-            Item item = null;
-            for (Item candidate : BuiltInRegistries.ITEM) {
-                Identifier key = BuiltInRegistries.ITEM.getKey(candidate);
-                if (rlId.equals(key)) { item = candidate; break; }
+        int tabX = px + 10, tabY = cy, tabH = 16;
+        int tabW = 60;
+        String[] labels = { LanguageUtility.t("arg_all_items"), LanguageUtility.t("arg_kit_items") };
+        for (int ti = 0; ti < 2; ti++) {
+            int tix = tabX + ti * (tabW + 4);
+            boolean ta = tab == (ti == 0 ? Tab.ITEMS : Tab.SELECTED);
+            boolean th = !ta && amx >= tix && amx <= tix + tabW && amy >= tabY && amy <= tabY + tabH;
+            Render2DUtility.drawRound(g, tix, tabY, tabW, tabH, 4, ta ? 0x20FFFFFF : (th ? 0x15151515 : 0x05000000));
+            if (ta) {
+                Render2DUtility.drawRoundBorder(g, tix, tabY, tabW, tabH, 4, 1, ColorUtility.withAlpha(ac, (int) (220 * alpha)));
             }
-            if (item == null || item == Items.AIR) continue;
-
-            ItemStack stack = new ItemStack(item);
-            int targetCount = AutoReGearData.INSTANCE.getTargetCount(itemId);
-
-            boolean rowHov = mx >= rightX + 3 && mx <= rightX + rightW - 3 && my >= sy && my <= sy + 16;
-            if (rowHov) {
-                g.fill(rightX + 3, sy, rightX + rightW - 3, sy + 16, 0xFF23232C);
-                hoveredTooltip = "§eLeft-click: +8 Target Count\n§cRight-click: -8 Target Count\n"
-                                 + "§bScroll over count: +/-1 count\n"
-                                 + "§aMiddle-click: type count manually\n"
-                                 + "§7Item: " + new ItemStack(item).getHoverName().getString();
-                tooltipX = mx; tooltipY = my;
-            }
-
-            g.renderItem(stack, rightX + 4, sy);
-            FontRenderUtility.drawString(g, new ItemStack(item).getHoverName().getString(), rightX + 22, sy + 3, 0xFFDDDDDD, false);
-
-
-            if (itemId.equals(editingItemId)) {
-                String amountStr = editingText + (System.currentTimeMillis() % 1000 < 500 ? "|" : "");
-                int amW = FontRenderUtility.getStringWidth(amountStr);
-                g.fill(rightX + rightW - 85, sy + 1, rightX + rightW - 20, sy + 15, 0xFF16161C);
-                Render2DUtility.drawBorder(g, rightX + rightW - 85, sy + 1, 65, 14, 1, ColorUtility.getActiveColor());
-                FontRenderUtility.drawString(g, amountStr, rightX + rightW - 25 - amW, sy + 3, 0xFFFFFFFF, false);
-            } else {
-                String amountStr = "x" + targetCount;
-                int amW = FontRenderUtility.getStringWidth(amountStr);
-                FontRenderUtility.drawString(g, amountStr, rightX + rightW - 32 - amW, sy + 3, ColorUtility.getActiveColor(), false);
-            }
-
-
-            FontRenderUtility.drawString(g, "x", rightX + rightW - 14, sy + 3, 0xFFFF4455, false);
-
-            sy += 18;
+            String tabLabel = labels[ti];
+            int tabLabelW = FontRenderUtility.getStringWidth(tabLabel);
+            FontRenderUtility.drawString(g, tabLabel, tix + (tabW - tabLabelW) / 2, tabY + 3,
+                ColorUtility.withAlpha(ta ? 0xFFFFFFFF : (th ? 0xFFB0B0B0 : 0xFF707070), alpha255), true);
         }
 
+        int sx = px + pw - 170, sy2 = cy, sw = 160, sh = 16;
+        boolean sHov = amx >= sx && amx <= sx + sw && amy >= sy2 && amy <= sy2 + sh;
+        Render2DUtility.drawRound(g, sx, sy2, sw, sh, 4, searchFocused ? 0xFF141418 : (sHov ? 0xFF121216 : 0xFF0C0C10));
+        Render2DUtility.drawRoundBorder(g, sx, sy2, sw, sh, 4, 1,
+            searchFocused ? ColorUtility.withAlpha(ac, (int) (255 * alpha)) : ColorUtility.withAlpha(0xFF222222, alpha255));
+        String st = searchQuery.isEmpty() && !searchFocused ? "\u00A78Search..." : searchQuery + (searchFocused ? "\u00A78|" : "");
+        FontRenderUtility.drawString(g, st, sx + 6, sy2 + 3, ColorUtility.withAlpha(0xFF909090, alpha255), true);
+
+        int gx = px + 10, gy = cy + 24, gw = pw - 20, gh = ch - 28;
+        int cols = Math.max(4, (gw + 2) / 28);
+        int cell = 28;
+        int rows = (filtered.size() + cols - 1) / cols;
+        int maxScroll = Math.max(0, rows - (gh / cell));
+
+        scrollAnim += (scrollOffset - scrollAnim) * 0.18f;
+        if (Math.abs(scrollAnim - scrollOffset) < 0.01f) scrollAnim = scrollOffset;
+
+        if (tabTransition < 1f) {
+            tabTransition += (1f - tabTransition) * 0.20f;
+            if (Math.abs(tabTransition - 1f) < 0.001f) tabTransition = 1f;
+        }
+
+        Render2DUtility.drawRound(g, gx, gy, gw, gh, 6, 0xFF06060A);
+        Render2DUtility.pushScissor(g, gx, gy, gw, gh);
+
+        hoveredStack = ItemStack.EMPTY;
+        hoveredName = "";
+        hoveredId = "";
+        int sr = (int) scrollAnim;
+        int er = Math.min(rows, sr + (gh / cell) + 1);
+
+        int selColor = ColorUtility.withAlpha(ac, 80);
+        int selHovColor = ColorUtility.withAlpha(ac, 110);
+        int hovColor = ColorUtility.withAlpha(0x22FFFFFF, 100);
+        boolean transitioning = tabTransition < 1f;
+
+        if (transitioning && !previousFiltered.isEmpty()) {
+            float oldOffX = -swipeDirection * tabTransition * gw;
+            int oldCols = Math.max(4, (gw + 2) / 28);
+            int oldRows = (previousFiltered.size() + oldCols - 1) / oldCols;
+            int oldSr = (int) previousScrollAnim;
+            int oldEr = Math.min(oldRows, oldSr + (gh / cell) + 1);
+            var oldPose = g.pose();
+            oldPose.pushMatrix();
+            oldPose.translate(oldOffX, 0);
+            for (int r2 = oldSr; r2 < oldEr; r2++) {
+                for (int c = 0; c < oldCols; c++) {
+                    int idx = r2 * oldCols + c;
+                    if (idx >= previousFiltered.size()) break;
+                    Entry e = previousFiltered.get(idx);
+                    int tx = gx + c * cell;
+                    int ty = gy + (r2 - oldSr) * cell;
+                    int cellBg2 = selectedIds.contains(e.id) ? ColorUtility.withAlpha(ac, (int) (30 * alpha)) : 0xFF06060A;
+                    Render2DUtility.drawRound(g, tx, ty, cell, cell, 6, cellBg2);
+                    renderIcon(g, e, tx + 6, ty + 6);
+                }
+            }
+            oldPose.popMatrix();
+        }
+
+        float newOffX = swipeDirection * (1f - tabTransition) * gw;
+        if (transitioning) {
+            var newPose = g.pose();
+            newPose.pushMatrix();
+            newPose.translate(newOffX, 0);
+            renderGrid(g, sr, er, cols, gx, gy, cell, amx, amy, false, selColor, selHovColor, hovColor, alpha);
+            newPose.popMatrix();
+        } else {
+            renderGrid(g, sr, er, cols, gx, gy, cell, amx, amy, true, selColor, selHovColor, hovColor, alpha);
+        }
         Render2DUtility.popScissor(g);
 
+        if (maxScroll > 0) {
+            float ratio = (float) cell * rows / gh;
+            int th = Math.max(12, (int) (gh / ratio));
+            float sr2 = scrollOffset / Math.max(1, maxScroll);
+            int ty2 = gy + (int) ((gh - th) * sr2);
+            Render2DUtility.drawRound(g, px + pw - 6, ty2, 3, th, 2, ColorUtility.withAlpha(0x44FFFFFF, alpha255));
+        }
 
-        int btnY   = panelY + panelH - 36;
-        int btnH   = 18;
-        int quitW  = 120;
-        int quitX  = panelX + (panelW - quitW) / 2;
+        int cw = 60, ch2 = 14;
+        int cxx = px + 10, cyy = py + ph - 20;
+        boolean chov = amx >= cxx && amx <= cxx + cw && amy >= cyy && amy <= cyy + ch2;
+        boolean hasSelection = selCount > 0;
+        Render2DUtility.drawRound(g, cxx, cyy, cw, ch2, 4, hasSelection ? (chov ? 0xFF3A1010 : 0xFF1A0E0E) : 0xFF101014);
+        Render2DUtility.drawRoundBorder(g, cxx, cyy, cw, ch2, 4, 1,
+            hasSelection ? (chov ? 0xFFFF4455 : 0xFF3A2020) : 0xFF202028);
+        FontRenderUtility.drawString(g, "Clear", cxx + 14, cyy + 2, hasSelection ? 0xFFFF8888 : 0xFF505058, true);
 
-        quitHovered = mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH;
-        g.fill(quitX, btnY, quitX + quitW, btnY + btnH, quitHovered ? 0xFF2A2A35 : 0xFF1C1C24);
-        Render2DUtility.drawBorder(g, quitX, btnY, quitW, btnH, 1, quitHovered ? ColorUtility.getActiveColor() : 0xFF3A3A46);
-        String scv = ravex.utility.misc.LanguageUtility.t("arg_save_close");
-        int qtw = FontRenderUtility.getStringWidth(scv);
-        FontRenderUtility.drawString(g, scv, quitX + quitW / 2 - qtw / 2, btnY + 4, 0xFFFFFFFF, true);
+        int bw = 50, bh = 14;
+        int bx = px + pw - bw - 10, by2 = py + ph - 20;
+        boolean bh2 = amx >= bx && amx <= bx + bw && amy >= by2 && amy <= by2 + bh;
+        Render2DUtility.drawRound(g, bx, by2, bw, bh, 4, bh2 ? 0xFF1A1A1E : 0xFF0E0E12);
+        Render2DUtility.drawRoundBorder(g, bx, by2, bw, bh, 4, 1, ColorUtility.withAlpha(0xFF303030, alpha255));
+        FontRenderUtility.drawString(g, "Back", bx + 12, by2 + 2, ColorUtility.withAlpha(0xFFD0D0D0, alpha255), true);
 
         pose.popMatrix();
 
-        if (hoveredTooltip != null && scale > 0.8f) {
-            renderTooltip(g, hoveredTooltip, mouseX, mouseY);
+        if (!hoveredName.isEmpty() && alpha > 0.8f) {
+            List<String> lines = new ArrayList<>();
+            lines.add(hoveredName);
+            lines.add("\u00A77" + hoveredId);
+            if (selectedIds.contains(Identifier.tryParse(hoveredId)) && tab == Tab.SELECTED) {
+                lines.add("\u00A7eLMB: +count  \u00A7cRMB: -count  \u00A7bMMB: type");
+            }
+            int mw = 0;
+            for (String l : lines) mw = Math.max(mw, FontRenderUtility.getStringWidth(l));
+            int tx2 = mx + 10, ty3 = my - 6;
+            if (tx2 + mw > width) tx2 = mx - mw - 10;
+            if (ty3 < 2) ty3 = my + 10;
+            for (String l : lines) {
+                FontRenderUtility.drawString(g, l, tx2 + 6, ty3, 0xFFCCCCCC, false);
+                ty3 += 10;
+            }
         }
 
-        super.render(g, mouseX, mouseY, pt);
+        super.render(g, mx, my, pt);
     }
 
-    private void renderTooltip(GuiGraphics g, String text, int mx, int my) {
-        String[] lines = text.split("\n");
-        int maxW = 0;
-        for (String line : lines) {
-            int lw = FontRenderUtility.getStringWidth(line);
-            if (lw > maxW) maxW = lw;
-        }
-        int tw = maxW + 10;
-        int th = lines.length * 10 + 6;
-        int tx = mx + 8;
-        int ty = my - th - 4;
-        if (tx + tw > this.width) tx = this.width - tw - 4;
-        if (ty < 2) ty = my + 12;
+    private void renderIcon(GuiGraphics g, Entry e, int x, int y) {
+        g.renderItem(e.stack, x, y);
+    }
 
-        g.fill(tx - 1, ty - 1, tx + tw + 1, ty + th + 1, 0xCC23232C);
-        g.fill(tx, ty, tx + tw, ty + th, 0xEE121216);
-        Render2DUtility.drawBorder(g, tx, ty, tw, th, 1, ColorUtility.withAlpha(ColorUtility.getActiveColor(), 160));
+    private void renderGrid(GuiGraphics g, int sr, int er, int cols, int gx, int gy, int cell,
+                            int amx, int amy, boolean hoverable, int selColor, int selHovColor, int hovColor,
+                            float alpha) {
+        int ac = ColorUtility.getActiveColor();
+        int a255 = (int) (255 * alpha);
+        for (int r2 = sr; r2 < er; r2++) {
+            for (int c = 0; c < cols; c++) {
+                int idx = r2 * cols + c;
+                if (idx >= filtered.size()) break;
+                Entry e = filtered.get(idx);
+                int tx = gx + c * cell;
+                int ty = gy + (r2 - sr) * cell;
+                boolean hov = hoverable && amx >= tx && amx <= tx + cell && amy >= ty && amy <= ty + cell;
 
-        int ly = ty + 3;
-        for (String line : lines) {
-            FontRenderUtility.drawString(g, line, tx + 5, ly, 0xFFEEEEEE, false);
-            ly += 10;
+                if (hov) {
+                    hoveredStack = e.stack;
+                    hoveredName = e.name;
+                    hoveredId = e.id.toString();
+                }
+
+                boolean sel = selectedIds.contains(e.id);
+                int cellBg;
+                if (sel && hov) {
+                    cellBg = ColorUtility.withAlpha(ac, (int) (60 * alpha));
+                } else if (sel) {
+                    cellBg = ColorUtility.withAlpha(ac, (int) (30 * alpha));
+                } else if (hov) {
+                    cellBg = ColorUtility.withAlpha(0xFF1A1A1E, a255);
+                } else {
+                    cellBg = ColorUtility.withAlpha(0xFF06060A, a255);
+                }
+                Render2DUtility.drawRound(g, tx, ty, cell, cell, 6, cellBg);
+                renderIcon(g, e, tx + 6, ty + 6);
+
+                if (sel) {
+                    String badge;
+                    if (editingKey != null && editingKey.equals(e.id.toString())) {
+                        badge = editingText + (System.currentTimeMillis() % 1000 < 500 ? "|" : "");
+                    } else {
+                        badge = String.valueOf(AutoReGearData.INSTANCE.getTargetCount(e.id.toString()));
+                    }
+                    int bwid = FontRenderUtility.getStringWidth(badge);
+                    int bxx = tx + cell - bwid - 2;
+                    int byy = ty + cell - 9;
+                    g.fill(bxx - 1, byy - 1, tx + cell - 1, ty + cell - 1, 0x99000000);
+                    FontRenderUtility.drawString(g, badge, bxx, byy, 0xFFFFE680, false);
+                    Render2DUtility.drawRoundBorder(g, tx, ty, cell, cell, 6, 1, ColorUtility.withAlpha(ac, 200));
+                }
+            }
         }
     }
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
-        int mx = (int) event.x();
-        int my = (int) event.y();
-        int btn = event.button();
+        int w = width, h = height;
+        int pw = Math.min(480, w - 40), ph = Math.min(360, h - 40);
+        int px = (w - pw) / 2, py = (h - ph) / 2;
 
-        int W = this.width, H = this.height;
-        int panelW = Math.max(300, Math.min(680, W - 40));
-        int panelH = Math.max(250, Math.min(420, H - 40));
-        int panelX = (W - panelW) / 2;
-        int panelY = (H - panelH) / 2;
+        float scale = 0.85f + 0.15f * Math.min(1f, (System.currentTimeMillis() - openTime) / 150f);
+        if (closing) scale *= (1f - 0.15f * Math.min(1f, (System.currentTimeMillis() - closeStart) / 120f));
+        double amx = (event.x() - w / 2f) / scale + w / 2f;
+        double amy = (event.y() - h / 2f) / scale + h / 2f;
 
-        int headerH  = 28;
-        int contentY = panelY + headerH + 6;
-        int contentH = panelH - headerH - 50;
-        int leftW    = (panelW / 2) - 6;
-        int rightW   = panelW - leftW - 18;
-        int leftX    = panelX + 6;
-        int rightX   = panelX + leftW + 12;
-        int colHeaderH = 18;
+        int sx = px + pw - 170, sy2 = py + 34, sw = 160, sh = 16;
+        int tabW = 60, tabH = 16;
+        int tabX = px + 10, tabY = py + 34;
+        int cxx = px + 10, cyy = py + ph - 20, cw = 60, ch2 = 14;
+        int bx = px + pw - 60, by2 = py + ph - 20, bw = 50, bh = 14;
+        int gx = px + 10, gy = py + 58, cols = Math.max(4, (pw - 22) / 28), cell = 28;
 
-        int btnY  = panelY + panelH - 36;
-        int btnH  = 18;
-        int quitW = 120;
-        int quitX = panelX + (panelW - quitW) / 2;
-
-
-        if (mx >= quitX && mx <= quitX + quitW && my >= btnY && my <= btnY + btnH && btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            saveEditingTargetCount();
-            onClose();
+        if (amx >= sx && amx <= sx + sw && amy >= sy2 && amy <= sy2 + sh) {
+            searchFocused = true;
             return true;
         }
+        searchFocused = false;
+        if (editingKey != null) saveEditing();
 
-
-        int searchY = contentY + colHeaderH + 2;
-        int searchH = 14;
-        if (mx >= leftX + 4 && mx <= leftX + leftW - 4 && my >= searchY && my <= searchY + searchH) {
-            saveEditingTargetCount();
-            searchFocus = true;
-            return true;
-        } else if (btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-            searchFocus = false;
-        }
-
-
-        int gridY = searchY + searchH + 3;
-        int gridH = contentH - colHeaderH - searchH - 8;
-
-        int gridX = leftX + 4;
-        int gridW = leftW - 8;
-        int cols = Math.max(8, gridW / ITEM_SIZE);
-        if (mx >= leftX && mx <= leftX + leftW && my >= gridY && my <= gridY + gridH) {
-            int col = (mx - gridX) / ITEM_SIZE;
-            int row = (my - gridY + (int) gridScroll) / ITEM_SIZE;
-            int idx = row * cols + col;
-            if (col >= 0 && col < cols && row >= 0 && idx < filteredItems.size()) {
-                saveEditingTargetCount();
-                Item item = filteredItems.get(idx);
-                Identifier rl = BuiltInRegistries.ITEM.getKey(item);
-                if (rl != null) {
-                    AutoReGearData.INSTANCE.toggle(rl.toString(), item.getDefaultMaxStackSize());
+        for (int ti = 0; ti < 2; ti++) {
+            int tix = tabX + ti * (tabW + 4);
+            if (amx >= tix && amx <= tix + tabW && amy >= tabY && amy <= tabY + tabH) {
+                Tab target = ti == 0 ? Tab.ITEMS : Tab.SELECTED;
+                if (tab != target) {
+                    previousFiltered = new ArrayList<>(filtered);
+                    previousScrollAnim = scrollAnim;
+                    swipeDirection = ti > tab.ordinal() ? 1f : -1f;
+                    tab = target;
+                    refilter();
+                    tabTransition = 0f;
                 }
                 return true;
             }
         }
 
+        if (AutoReGearData.INSTANCE.getSelectedItems().size() > 0
+                && amx >= cxx && amx <= cxx + cw && amy >= cyy && amy <= cyy + ch2) {
+            AutoReGearData.INSTANCE.clear();
+            refilter();
+            return true;
+        }
 
-        int selContentY = contentY + colHeaderH + 3;
-        int selContentH = contentH - colHeaderH - 6;
-        if (mx >= rightX && mx <= rightX + rightW && my >= selContentY && my <= selContentY + selContentH) {
-            var selectedArr = AutoReGearData.INSTANCE.getSelectedItems().keySet().toArray(new String[0]);
-            int sy = selContentY + 3 - (int)selectedScroll;
-            for (String itemId : selectedArr) {
-                if (my >= sy && my <= sy + 16) {
+        if (amx >= bx && amx <= bx + bw && amy >= by2 && amy <= by2 + bh) {
+            close();
+            return true;
+        }
 
-                    if (mx >= rightX + rightW - 16 && mx <= rightX + rightW - 4) {
-                        AutoReGearData.INSTANCE.deselect(itemId);
-                        if (itemId.equals(editingItemId)) {
-                            editingItemId = null;
-                        }
-                    } else if (btn == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
-                        if (editingItemId != null && !editingItemId.equals(itemId)) {
-                            saveEditingTargetCount();
-                        }
-                        editingItemId = itemId;
-                        editingText = String.valueOf(AutoReGearData.INSTANCE.getTargetCount(itemId));
-                    } else {
-                        if (editingItemId != null && !editingItemId.equals(itemId)) {
-                            saveEditingTargetCount();
-                        }
-
-                        int count = AutoReGearData.INSTANCE.getTargetCount(itemId);
-                        int maxStack = 64;
-                        Identifier rId = Identifier.tryParse(itemId);
-                        if (rId != null) {
-                            for (Item candidate : BuiltInRegistries.ITEM) {
-                                if (rId.equals(BuiltInRegistries.ITEM.getKey(candidate))) {
-                                    maxStack = candidate.getDefaultMaxStackSize();
-                                    break;
-                                }
-                            }
-                        }
-                        int step = (maxStack == 1) ? 1 : (maxStack == 16) ? 4 : 8;
-
-                        if (btn == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
-                            count = Math.min(256, count + step);
-                        } else if (btn == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
-                            count = Math.max(1, count - step);
-                        }
-                        AutoReGearData.INSTANCE.setTargetCount(itemId, count);
+        int col = (int) ((amx - gx) / cell);
+        int row = (int) ((amy - gy) / cell) + (int) scrollAnim;
+        if (col >= 0 && col < cols && row >= 0) {
+            int idx = row * cols + col;
+            if (idx < filtered.size() && amx >= gx + col * cell && amx <= gx + col * cell + cell
+                && amy >= gy + row * cell - (int) scrollAnim && amy <= gy + row * cell - (int) scrollAnim + cell) {
+                Entry e = filtered.get(idx);
+                String key = e.id.toString();
+                if (tab == Tab.ITEMS) {
+                    AutoReGearData.INSTANCE.toggle(key, e.stack.getItem().getDefaultMaxStackSize());
+                } else {
+                    int count = AutoReGearData.INSTANCE.getTargetCount(key);
+                    int maxStack = Math.max(1, e.stack.getItem().getDefaultMaxStackSize());
+                    int step = maxStack == 1 ? 1 : maxStack == 16 ? 4 : 8;
+                    if (event.button() == GLFW.GLFW_MOUSE_BUTTON_MIDDLE) {
+                        editingKey = key;
+                        editingText = String.valueOf(count);
+                    } else if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                        AutoReGearData.INSTANCE.setTargetCount(key, Math.min(256, count + step));
+                    } else if (event.button() == GLFW.GLFW_MOUSE_BUTTON_RIGHT) {
+                        AutoReGearData.INSTANCE.setTargetCount(key, Math.max(1, count - step));
                     }
-                    return true;
                 }
-                sy += 18;
+                refilter();
+                return true;
             }
-            if (editingItemId != null) {
-                saveEditingTargetCount();
-            }
-        } else if (editingItemId != null) {
-            saveEditingTargetCount();
         }
 
         return super.mouseClicked(event, handled);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double hAmt, double vAmt) {
-        int W = this.width, H = this.height;
-        int panelW = Math.max(300, Math.min(680, W - 40));
-        int panelH = Math.max(250, Math.min(420, H - 40));
-        int panelX = (W - panelW) / 2;
-        int panelY = (H - panelH) / 2;
-        int headerH  = 28;
-        int contentY = panelY + headerH + 6;
-        int contentH = panelH - headerH - 50;
-        int leftW    = (panelW / 2) - 6;
-        int rightW   = panelW - leftW - 18;
-        int leftX    = panelX + 6;
-        int rightX   = panelX + leftW + 12;
-        int colHeaderH = 18;
-        int selContentY = contentY + colHeaderH + 3;
-        int selContentH = contentH - colHeaderH - 6;
-
-        int gridTopY = contentY + colHeaderH + 2 + 14 + 3;
-        int gridBotH = contentH - colHeaderH - 14 - 8;
-        if (mouseX >= leftX && mouseX <= leftX + leftW && mouseY >= gridTopY && mouseY <= gridTopY + gridBotH) {
-            int gridCols = Math.max(8, (leftW - 8) / ITEM_SIZE);
-            int gridRows = (filteredItems.size() + gridCols - 1) / gridCols;
-            int maxScroll = Math.max(0, gridRows * ITEM_SIZE - gridBotH);
-            gridScroll = Math.max(0, Math.min(maxScroll, gridScroll - (float) (vAmt * 40)));
-            return true;
-        }
-
-        if (mouseX >= rightX && mouseX <= rightX + rightW && mouseY >= selContentY && mouseY <= selContentY + selContentH) {
-
-            var selectedArr = AutoReGearData.INSTANCE.getSelectedItems().keySet().toArray(new String[0]);
-            int sy = selContentY + 3 - (int)selectedScroll;
-            for (String itemId : selectedArr) {
-                if (mouseY >= sy && mouseY <= sy + 16) {
-                    if (mouseX >= rightX + rightW - 85 && mouseX <= rightX + rightW - 18) {
-                        int count = AutoReGearData.INSTANCE.getTargetCount(itemId);
-                        int change = (vAmt > 0) ? 1 : -1;
-                        count = Math.max(1, Math.min(256, count + change));
-                        AutoReGearData.INSTANCE.setTargetCount(itemId, count);
-
-                        if (itemId.equals(editingItemId)) {
-                            editingText = String.valueOf(count);
-                        }
-                        return true;
-                    }
-                }
-                sy += 18;
-            }
-
-            int selCount = AutoReGearData.INSTANCE.getSelectedItems().size();
-            int maxSelScroll = Math.max(0, selCount * 18 - selContentH);
-            selectedScroll = (float) Math.max(0, Math.min(maxSelScroll, selectedScroll - vAmt * 12));
-            return true;
-        }
-
-        return super.mouseScrolled(mouseX, mouseY, hAmt, vAmt);
+    public boolean mouseScrolled(double mx, double my, double hAmt, double vAmt) {
+        int pw = Math.min(480, width - 40);
+        int ph = Math.min(360, height - 40);
+        int gw = pw - 20, cols = Math.max(4, (gw + 2) / 28);
+        int rows = (filtered.size() + cols - 1) / cols;
+        float gh = (ph - 64) - 28;
+        int maxScroll = Math.max(0, rows - (int) (gh / 28));
+        scrollOffset = Math.max(0, Math.min(maxScroll, scrollOffset - (float) vAmt * 1.5f));
+        return true;
     }
 
     @Override
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
-        if (key == GLFW.GLFW_KEY_ESCAPE) {
-            if (editingItemId != null) {
-                saveEditingTargetCount();
-                return true;
-            }
-            onClose();
-            return true;
-        }
-        if (editingItemId != null) {
+        if (editingKey != null) {
             if (key == GLFW.GLFW_KEY_BACKSPACE) {
-                if (!editingText.isEmpty()) {
-                    editingText = editingText.substring(0, editingText.length() - 1);
-                }
+                if (!editingText.isEmpty()) editingText = editingText.substring(0, editingText.length() - 1);
                 return true;
             }
             if (key == GLFW.GLFW_KEY_ENTER) {
-                saveEditingTargetCount();
+                saveEditing();
+                return true;
+            }
+            if (key == GLFW.GLFW_KEY_ESCAPE) {
+                editingKey = null;
+                editingText = "";
                 return true;
             }
         }
-        if (searchFocus) {
-              if (key == GLFW.GLFW_KEY_BACKSPACE && !searchQuery.isEmpty()) {
-                  searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
-                  rebuildFiltered();
+        if (key == GLFW.GLFW_KEY_ESCAPE) { close(); return true; }
+        if (searchFocused) {
+            if (key == GLFW.GLFW_KEY_BACKSPACE && !searchQuery.isEmpty()) {
+                searchQuery = searchQuery.substring(0, searchQuery.length() - 1);
+                scrollOffset = 0;
+                refilter();
                 return true;
             }
             if (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_ESCAPE) {
-                searchFocus = false;
+                searchFocused = false;
                 return true;
             }
         }
@@ -541,29 +480,42 @@ public class AutoReGearScreen extends Screen {
 
     @Override
     public boolean charTyped(CharacterEvent event) {
-        if (editingItemId != null) {
-            int codepoint = event.codepoint();
-            if (Character.isDigit((char) codepoint)) {
-                if (editingText.length() < 3) {
-                    editingText += (char) codepoint;
-                }
-                return true;
+        int codepoint = event.codepoint();
+        if (editingKey != null) {
+            if (Character.isDigit((char) codepoint) && editingText.length() < 3) {
+                editingText += (char) codepoint;
             }
+            return true;
         }
-        if (searchFocus) {
-            int codepoint = event.codepoint();
-              if (codepoint >= 32 && codepoint < 127) {
-                  searchQuery += (char)codepoint;
-                  rebuildFiltered();
-                return true;
-            }
+        if (searchFocused && codepoint >= 32 && codepoint < 127) {
+            searchQuery += (char) codepoint;
+            scrollOffset = 0;
+            refilter();
+            return true;
         }
         return super.charTyped(event);
     }
 
+    private void refilter() {
+        selectedIds.clear();
+        for (String id : AutoReGearData.INSTANCE.getSelectedItems().keySet()) {
+            Identifier rl = Identifier.tryParse(id);
+            if (rl != null) selectedIds.add(rl);
+        }
+
+        String q = searchQuery.toLowerCase();
+        filtered = new ArrayList<>();
+        for (Entry e : allItems) {
+            boolean sel = selectedIds.contains(e.id);
+            if (tab == Tab.SELECTED && !sel) continue;
+            if (!q.isEmpty() && !e.name.toLowerCase().contains(q) && !e.id.toString().contains(q)) continue;
+            filtered.add(e);
+        }
+    }
+
     @Override
     public void onClose() {
-        saveEditingTargetCount();
-        MinecraftWrapper.getWrapper().setScreen(parent);
+        saveEditing();
+        close();
     }
 }

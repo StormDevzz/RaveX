@@ -1,5 +1,8 @@
 package ravex.mixin.render;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Optional;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Player;
@@ -12,13 +15,12 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import ravex.gui.tooltip.BookDataTooltipComponent;
+import ravex.gui.tooltip.BundleDataTooltipComponent;
+import ravex.gui.tooltip.MapDataTooltipComponent;
 import ravex.gui.tooltip.ShulkerDataTooltipComponent;
-import ravex.modules.render.ToolTips;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import ravex.modules.Modules;
+import ravex.modules.render.ToolTips;
 
 @Mixin(ItemStack.class)
 public class MixinItemStack {
@@ -33,10 +35,19 @@ public class MixinItemStack {
         if (self.isEmpty()) return;
         if (IN_RECURSION.get()) return;
 
+        ToolTips toolTips = Modules.get(ToolTips.class);
+        if (toolTips == null) return;
+
         List<Component> original = cir.getReturnValue();
         List<Component> modified = new ArrayList<>(original);
 
-        if (Modules.get(ToolTips.class).showShulker && Modules.get(ToolTips.class).isShulker(self)) {
+        boolean isShulker = toolTips.isShulker(self);
+        boolean isContainer = false;
+        boolean hideContainerLines = (isShulker && toolTips.shulkerRegear);
+        boolean isBook = toolTips.isBook(self);
+        boolean hideBookLines = (isBook && toolTips.showBooks);
+
+        if (hideContainerLines) {
             IN_RECURSION.set(true);
             try {
                 ItemStack copy = self.copy();
@@ -48,18 +59,55 @@ public class MixinItemStack {
             }
         }
 
-        modified.addAll(Modules.get(ToolTips.class).getTooltip(self));
+        if (hideBookLines) {
+            modified.clear();
+        }
+
+        if (isShulker && toolTips.shulkerRegear) {
+            modified.clear();
+            modified.add(Component.literal("§7" + self.getHoverName().getString()));
+        }
+
+        if (toolTips.showId && !modified.isEmpty() && !hideContainerLines && !hideBookLines && !(isShulker && toolTips.shulkerRegear)) {
+            String id = toolTips.idSuffix(self);
+            modified.set(0, Component.literal("").append(modified.get(0)).append(Component.literal(" §8" + id)));
+        }
+
         cir.setReturnValue(modified);
     }
 
     @Inject(method = "getTooltipImage()Ljava/util/Optional;", at = @At("HEAD"), cancellable = true)
     private void onGetTooltipImage(CallbackInfoReturnable<Optional<TooltipComponent>> cir) {
-        if (!Modules.enabled(ToolTips.class) || !Modules.get(ToolTips.class).showShulker) return;
+        if (!Modules.enabled(ToolTips.class)) return;
+        ToolTips toolTips = Modules.get(ToolTips.class);
+        if (toolTips == null) return;
+
         ItemStack self = (ItemStack) (Object) this;
-        if (Modules.get(ToolTips.class).isShulker(self)) {
-            ItemContainerContents contents = self.get(DataComponents.CONTAINER);
-            if (contents != null) {
-                cir.setReturnValue(Optional.of(new ShulkerDataTooltipComponent(contents.stream().toList())));
+        if (self.isEmpty()) return;
+
+        if (toolTips.isMap(self) && toolTips.showMaps) {
+            cir.setReturnValue(Optional.of(new MapDataTooltipComponent(self)));
+            return;
+        }
+
+        if (toolTips.isBook(self) && toolTips.showBooks) {
+            cir.setReturnValue(Optional.of(new BookDataTooltipComponent(self)));
+            return;
+        }
+
+        if (toolTips.isBundle(self)) {
+            cir.setReturnValue(Optional.of(new BundleDataTooltipComponent(self)));
+            return;
+        }
+
+        if (self.has(DataComponents.CONTAINER)) {
+            boolean isShulker = toolTips.isShulker(self);
+            if ((isShulker && toolTips.shulkerRegear) || (!isShulker && toolTips.showStorage)) {
+                ItemContainerContents contents = self.get(DataComponents.CONTAINER);
+                if (contents != null && !contents.stream().toList().isEmpty()) {
+                    int tint = isShulker ? ToolTips.getBoxColor(self) : 0xFF7D8C99;
+                    cir.setReturnValue(Optional.of(new ShulkerDataTooltipComponent(contents.stream().toList(), tint)));
+                }
             }
         }
     }

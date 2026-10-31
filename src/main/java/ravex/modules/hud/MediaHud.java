@@ -46,6 +46,10 @@ public class MediaHud extends ravex.modules.Module {
     private static final int COVER_BORDER = 2;
     private volatile long lastPositionTime;
     private volatile long displayPosition;
+    private String lastRenderedTitle = "";
+    private float trackFade = 1f;
+    private float coverFade = 0f;
+    private long lastRenderNs = System.nanoTime();
 
     private volatile long lastSuccessfulPollTime = 0;
     private static final long STALE_GRACE_MS = 3000;
@@ -132,13 +136,8 @@ public class MediaHud extends ravex.modules.Module {
         }
         String raw = null;
         try {
-            raw = NowPlayingHud.nativeGetNowPlaying();
+            raw = nativeGetNowPlaying();
         } catch (Throwable ignored) {}
-        if (raw == null || raw.isEmpty()) {
-            try {
-                raw = nativeGetNowPlaying();
-            } catch (Throwable ignored) {}
-        }
         if (raw != null && !raw.isEmpty() && isNonMediaWindow(raw)) {
             raw = null;
         }
@@ -216,6 +215,8 @@ public class MediaHud extends ravex.modules.Module {
         try {
             long sampleNanos = System.nanoTime();
             String raw = queryNativeOrFallback();
+            // stamp after the query, it is not playback time
+            long sampleDoneNanos = System.nanoTime();
             if (raw == null || raw.isEmpty()) {
                 if (lastSuccessfulPollTime > 0 && System.currentTimeMillis() - lastSuccessfulPollTime < STALE_GRACE_MS) {
                     return;
@@ -276,7 +277,7 @@ public class MediaHud extends ravex.modules.Module {
             cachedPlaying = nowPlaying;
             if (acceptPosition) {
                 cachedPosition = pos;
-                lastPositionTime = sampleNanos;
+                lastPositionTime = sampleDoneNanos;
             }
             cachedLength = len;
             lastSuccessfulPollTime = System.currentTimeMillis();
@@ -322,13 +323,8 @@ public class MediaHud extends ravex.modules.Module {
             } else {
                 byte[] data = null;
                 try {
-                    data = NowPlayingHud.nativeDownloadArt(artUrl);
+                    data = nativeDownloadArt(artUrl);
                 } catch (Throwable ignored) {}
-                if (data == null || data.length == 0) {
-                    try {
-                        data = nativeDownloadArt(artUrl);
-                    } catch (Throwable ignored) {}
-                }
                 if (data == null || data.length == 0) {
                     data = SystemUtility.downloadArt(artUrl);
                 }
@@ -439,6 +435,18 @@ public class MediaHud extends ravex.modules.Module {
         int pw = 175;
         int ph = 46;
 
+        // fade in again when track or cover changes
+        long frameNow = System.nanoTime();
+        float frameDelta = Math.min(50f, (frameNow - lastRenderNs) / 1_000_000f);
+        lastRenderNs = frameNow;
+        if (!title.equals(lastRenderedTitle)) {
+            lastRenderedTitle = title;
+            trackFade = 0f;
+            coverFade = 0f;
+        }
+        trackFade = Math.min(1f, trackFade + frameDelta / 220f);
+        int trackAlpha = Math.round(255 * trackFade);
+
         setWidth(pw);
         setHeight(ph);
 
@@ -451,12 +459,14 @@ public class MediaHud extends ravex.modules.Module {
         boolean hasArt = coverTexture != null && coverId != null;
 
         int bgColor = 0x880A0A10;
-        int borderColor = ColorUtility.withAlpha(activeColor, 85);
-        Render2DUtility.drawRoundedRectWithBorder(graphics, bx, by, pw, ph, 5, bgColor, borderColor, 1);
+        HudRendererUtility.drawBackground(graphics, bx, by, pw, ph);
 
         if (hasArt) {
-            graphics.blit(coverId, bx + 5, by + 5, bx + 41, by + 41, 0.0F, 1.0F, 0.0F, 1.0F);
-            Render2DUtility.drawRoundBorder(graphics, bx + 5, by + 5, 36, 36, 2, 1, 0x40FFFFFF);
+            coverFade = Math.min(1f, coverFade + frameDelta / 240f);
+            int coverAlpha = Math.round(255 * coverFade);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, coverId,
+                bx + 5, by + 5, 0.0F, 0.0F, 36, 36, 36, 36,
+                (coverAlpha << 24) | 0x00FFFFFF);
         } else {
             Render2DUtility.drawRound(graphics, bx + 5, by + 5, 36, 36, 18, 0xFF14141E);
             Render2DUtility.drawRound(graphics, bx + 11, by + 11, 24, 24, 12, 0xFF222232);
@@ -469,25 +479,41 @@ public class MediaHud extends ravex.modules.Module {
 
         String titleStr = (playing ? "\u25B6 " : "\u23F8 ") + title;
         String artistStr = (!artist.isEmpty()) ? artist : "";
-        String timeStr = (len > 0) ? formatTime(pos) + " / " + formatTime(len) : "0:00 / 0:00";
+        // real time when known, no useless 0:00 / 0:00
+        String timeStr;
+        if (len > 0) {
+            timeStr = formatTime(pos) + " / " + formatTime(len);
+        } else if (pos > 0) {
+            timeStr = formatTime(pos);
+        } else {
+            timeStr = "";
+        }
         if (!source.isEmpty()) {
-            timeStr = source + " • " + timeStr;
+            timeStr = timeStr.isEmpty() ? source : source + " \u2022 " + timeStr;
         }
 
+        int titleColor = ColorUtility.withAlpha(playing ? 0xFFE0E0FF : 0xFF8080A0, trackAlpha);
+        int artistColor = ColorUtility.withAlpha(0xFFA0A0BA, trackAlpha);
+        int timeColor = ColorUtility.withAlpha(0xFF707090, trackAlpha);
+
         if (!artistStr.isEmpty()) {
-            drawScrollingText(graphics, titleStr, textX, by + 5, maxTextWidth, playing ? 0xFFE0E0FF : 0xFF8080A0, true);
-            drawScrollingText(graphics, artistStr, textX, by + 17, maxTextWidth, 0xFFA0A0BA, false);
-            if (HudRendererUtility.textWidth(timeStr) > maxTextWidth) {
-                drawScrollingText(graphics, timeStr, textX, by + 29, maxTextWidth, 0xFF707090, false);
+            drawScrollingText(graphics, titleStr, textX, by + 5, maxTextWidth, titleColor, true);
+            drawScrollingText(graphics, artistStr, textX, by + 17, maxTextWidth, artistColor, false);
+            if (timeStr.isEmpty()) {
+                // nothing to show, skip the row
+            } else if (HudRendererUtility.textWidth(timeStr) > maxTextWidth) {
+                drawScrollingText(graphics, timeStr, textX, by + 29, maxTextWidth, timeColor, false);
             } else {
-                HudRendererUtility.drawText(graphics, timeStr, textX, by + 29, 0xFF707090, false);
+                HudRendererUtility.drawText(graphics, timeStr, textX, by + 29, timeColor, false);
             }
         } else {
-            drawScrollingText(graphics, titleStr, textX, by + 9, maxTextWidth, playing ? 0xFFE0E0FF : 0xFF8080A0, true);
-            if (HudRendererUtility.textWidth(timeStr) > maxTextWidth) {
-                drawScrollingText(graphics, timeStr, textX, by + 24, maxTextWidth, 0xFF707090, false);
-            } else {
-                HudRendererUtility.drawText(graphics, timeStr, textX, by + 24, 0xFF707090, false);
+            drawScrollingText(graphics, titleStr, textX, by + (timeStr.isEmpty() ? 14 : 9), maxTextWidth, titleColor, true);
+            if (!timeStr.isEmpty()) {
+                if (HudRendererUtility.textWidth(timeStr) > maxTextWidth) {
+                    drawScrollingText(graphics, timeStr, textX, by + 24, maxTextWidth, timeColor, false);
+                } else {
+                    HudRendererUtility.drawText(graphics, timeStr, textX, by + 24, timeColor, false);
+                }
             }
         }
 
@@ -498,7 +524,17 @@ public class MediaHud extends ravex.modules.Module {
 
             Render2DUtility.drawRect(graphics, bx + 1, by + ph - 2, pw - 2, 2, 0x15FFFFFF);
             if (filled > 0) {
-                Render2DUtility.drawRect(graphics, bx + 1, by + ph - 2, filled, 2, activeColor);
+                // bar pulses while playing, stays still when paused
+                int barAlpha = 255;
+                if (playing) {
+                    double pulse = Math.sin(frameNow / 1_000_000_000.0 * Math.PI * 1.1) * 0.5 + 0.5;
+                    barAlpha = (int) Math.round(205 + 50 * pulse);
+                }
+                Render2DUtility.drawRect(graphics, bx + 1, by + ph - 2, filled, 2,
+                    ColorUtility.withAlpha(activeColor, barAlpha));
+                int dotX = bx + Math.max(0, Math.min(pw - 4, filled - 2));
+                Render2DUtility.drawRound(graphics, dotX, by + ph - 3, 3, 3, 1,
+                    ColorUtility.withAlpha(0xFFFFFFFF, Math.round(150 * trackFade)));
             }
         }
     }

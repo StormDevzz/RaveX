@@ -1,5 +1,6 @@
 #include "nametags_jni.hpp"
 #include "nametags.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
 JNIEXPORT jdoubleArray JNICALL
 Java_ravex_modules_render_NameTags_nativeCalculateLayout(
@@ -32,6 +33,7 @@ Java_ravex_modules_render_NameTags_nativeCalculateLayout(
 
     jdoubleArray out = env->NewDoubleArray(10);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     jdouble buf[10] = {
         layout.scale,
@@ -47,5 +49,6 @@ Java_ravex_modules_render_NameTags_nativeCalculateLayout(
     };
 
     env->SetDoubleArrayRegion(out, 0, 10, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }

@@ -20,30 +20,6 @@ std::wstring tempExtractDir() {
     return dir;
 }
 
-bool extractZipWithTar(const std::wstring& zipPath, const std::wstring& destDir, std::string* error) {
-    createDirs(destDir);
-    STARTUPINFOW si{};
-    si.cb = sizeof(si);
-    PROCESS_INFORMATION pi{};
-    std::wstring cmd = L"tar -xf \"" + zipPath + L"\" -C \"" + destDir + L"\"";
-    std::vector<wchar_t> cmdBuf(cmd.begin(), cmd.end());
-    cmdBuf.push_back(0);
-    if (!CreateProcessW(nullptr, cmdBuf.data(), nullptr, nullptr, FALSE, CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
-        if (error) *error = "Failed to launch tar";
-        return false;
-    }
-    WaitForSingleObject(pi.hProcess, 120000);
-    DWORD exitCode = 0;
-    GetExitCodeProcess(pi.hProcess, &exitCode);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    if (exitCode != 0) {
-        if (error) *error = "tar extraction failed with code " + std::to_string(exitCode);
-        return false;
-    }
-    return true;
-}
-
 void removeDirectoryRecursive(const std::wstring& dir) {
     WIN32_FIND_DATAW fd;
     std::wstring pat = joinPath(dir, L"*");
@@ -155,7 +131,7 @@ bool importCurseForgeModpack(const std::wstring& zipPath, const std::wstring& de
     removeDirectoryRecursive(extractDir);
     createDirs(extractDir);
     if (status) status("Extracting modpack archive...");
-    if (!extractZipWithTar(zipPath, extractDir, error)) {
+    if (!ravex::extractZip(zipPath, extractDir, error)) {
         removeDirectoryRecursive(extractDir);
         return false;
     }
@@ -259,7 +235,7 @@ bool importModrinthModpack(const std::wstring& zipPath, const std::wstring& dest
     removeDirectoryRecursive(extractDir);
     createDirs(extractDir);
     if (status) status("Extracting modpack archive...");
-    if (!extractZipWithTar(zipPath, extractDir, error)) {
+    if (!ravex::extractZip(zipPath, extractDir, error)) {
         removeDirectoryRecursive(extractDir);
         return false;
     }

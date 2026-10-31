@@ -26,6 +26,7 @@ public class ConfigsScreen extends Screen {
 
     private boolean creatingNew = false;
     private String newName = "";
+    private boolean nameFocused = false;
 
 
     private String status = "";
@@ -53,14 +54,30 @@ public class ConfigsScreen extends Screen {
 
 
 
+    private float openT = 0f;
+    private long openLast = System.nanoTime();
+
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
 
         SubScreenStyle.background(graphics, this.width, this.height);
+        boolean openAnimate = ravex.modules.render.Animations.tabAnimation();
+        long openNow = System.nanoTime();
+        float openDt = Math.min(50f, (openNow - openLast) / 1_000_000f);
+        openLast = openNow;
+        if (openAnimate && openT < 1f) openT = Math.min(1f, openT + openDt / 160f);
+        float openP = openAnimate ? ravex.utility.render.animate.AnimationUtility.Easing.CUBIC_OUT.apply(openT) : 1f;
+        graphics.pose().pushMatrix();
+        if (openP < 0.999f) {
+            float s = 0.95f + 0.05f * openP;
+            graphics.pose().translate(this.width / 2f, this.height / 2f);
+            graphics.pose().scale(s, s);
+            graphics.pose().translate(-this.width / 2f, -this.height / 2f);
+        }
 
         int activeColor = ColorUtility.getActiveColor();
 
-        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("cfg_title"), ravex.utility.misc.LanguageUtility.t("cfg_subtitle"), activeColor);
+        SubScreenStyle.header(graphics, this.width, ravex.utility.misc.LanguageUtility.t("cfg_title"), ravex.utility.misc.LanguageUtility.t("cfg_subtitle"), activeColor, ravex.utility.render.ScreenIcons.CONFIGS);
 
         int centerX = this.width / 2;
 
@@ -132,17 +149,8 @@ public class ConfigsScreen extends Screen {
 
             String playerName = mc.getPlayer().getName().getString();
             int nameW = FontRenderUtility.getStringWidth(playerName);
-            ravex.utility.render.Render2DUtility.drawRound(graphics, rightX + (rightW - nameW - 12) / 2, rightY + 100,
-                          nameW + 12, 14, 4, 0x88000010);
             FontRenderUtility.drawString(graphics, playerName,
                 rightX + (rightW - nameW) / 2, rightY + 102, activeColor, true);
-
-
-            var skinType = mc.getPlayer().getSkin().model();
-            String modelName = skinType.name().equals("slim") ? ravex.utility.misc.LanguageUtility.t("cfg_model_slim") : ravex.utility.misc.LanguageUtility.t("cfg_model_wide");
-            int mnW = FontRenderUtility.getStringWidth(modelName);
-            FontRenderUtility.drawString(graphics, modelName,
-                rightX + (rightW - mnW) / 2, rightY + 113, 0xFF505070, false);
         } else {
             FontRenderUtility.drawString(graphics, ravex.utility.misc.LanguageUtility.t("cfg_not_in_world"), rightX + 8, rightY + 20, 0xFF505070, false);
         }
@@ -181,6 +189,7 @@ public class ConfigsScreen extends Screen {
         }
 
         super.render(graphics, mouseX, mouseY, partialTicks);
+        graphics.pose().popMatrix();
     }
 
     private void renderToolbar(GuiGraphics graphics, int mouseX, int mouseY, int activeColor, int toolbarY) {
@@ -234,6 +243,10 @@ public class ConfigsScreen extends Screen {
         String display = newName.isEmpty() ? ravex.utility.misc.LanguageUtility.t("cfg_name_hint") : newName + "│";
         int textCol = newName.isEmpty() ? 0xFF404060 : 0xFFD0D0F0;
         FontRenderUtility.drawString(graphics, display, inputX + 5, inputY + 4, textCol, false);
+        if (nameFocused && (System.currentTimeMillis() / 500) % 2 == 0) {
+            int shownW = FontRenderUtility.getStringWidth(display);
+            graphics.fill(inputX + 5 + shownW + 1, inputY + 4, inputX + 5 + shownW + 2, inputY + 14, 0xFFE8E8F2);
+        }
 
 
         int btnY = dlgY + 64;
@@ -359,8 +372,20 @@ public class ConfigsScreen extends Screen {
 
         if (mx >= dlgX + dlgW - 10 - btnW && mx <= dlgX + dlgW - 10 && my >= btnY && my <= btnY + btnH) {
             creatingNew = false;
+            nameFocused = false;
             return true;
         }
+
+        int inputX = dlgX + 12;
+        int inputY = dlgY + 32;
+        int inputW = dlgW - 24;
+        int inputH = 18;
+        if (mx >= inputX && mx <= inputX + inputW && my >= inputY && my <= inputY + inputH) {
+            nameFocused = true;
+            return true;
+        }
+
+        nameFocused = false;
         return true;
     }
 
@@ -376,6 +401,7 @@ public class ConfigsScreen extends Screen {
             statusTimer = 80;
         }
         creatingNew = false;
+        nameFocused = false;
     }
 
     @Override
@@ -388,7 +414,7 @@ public class ConfigsScreen extends Screen {
     public boolean keyPressed(KeyEvent event) {
         int key = event.key();
         if (creatingNew) {
-            if (key == GLFW.GLFW_KEY_ESCAPE) { creatingNew = false; return true; }
+            if (key == GLFW.GLFW_KEY_ESCAPE) { creatingNew = false; nameFocused = false; return true; }
             if (key == GLFW.GLFW_KEY_ENTER) { saveNewConfig(); return true; }
             if (key == GLFW.GLFW_KEY_BACKSPACE && !newName.isEmpty()) {
                 newName = newName.substring(0, newName.length() - 1);
@@ -406,6 +432,7 @@ public class ConfigsScreen extends Screen {
     @Override
     public boolean charTyped(CharacterEvent event) {
         if (creatingNew) {
+            if (!nameFocused) nameFocused = true;
             char c = event.codepointAsString().isEmpty() ? 0 : event.codepointAsString().charAt(0);
             if (c >= 32 && c <= 126 && newName.length() < 32) newName += c;
             return true;

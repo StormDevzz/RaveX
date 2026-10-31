@@ -15,7 +15,7 @@ import ravex.utility.misc.LanguageUtility;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Manual and automatic update UI: check, download, verify and install a new RaveX build. */
+// manual and automatic update ui
 public class UpdateScreen extends Screen {
     private static final int CARD_PAD = 10;
     private static final int BTN_H = 18;
@@ -235,7 +235,7 @@ public class UpdateScreen extends Screen {
         }
     }
 
-    /** Returns {text, style} pairs where style is "b" (bold), "c" (code/link) or "n". */
+    // returns {text, style pairs where style is "b" (bold), "c" (code/link) or "n".
     private static List<String[]> wrapNotes(String notes, int maxWidth) {
         List<String[]> out = new ArrayList<>();
         if (notes == null || notes.isBlank()) return out;

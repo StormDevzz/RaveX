@@ -82,7 +82,7 @@ public abstract class MixinCamera {
             this.setPosition(targetPos);
             this.setRotation(yaw, pitch);
         } else if (Modules.enabled(ravex.modules.world.Scaffold.class)
-                && Modules.get(ravex.modules.world.Scaffold.class).noRotate
+                && ravex.modules.world.Scaffold.noRotateView()
                 && ravex.modules.world.Scaffold.capturingView) {
             this.setRotation(ravex.modules.world.Scaffold.viewYaw, ravex.modules.world.Scaffold.viewPitch);
         } else if (Modules.enabled(ravex.modules.world.ECFarmer.class)
@@ -90,6 +90,44 @@ public abstract class MixinCamera {
             this.setRotation(ravex.modules.world.ECFarmer.viewYaw, ravex.modules.world.ECFarmer.viewPitch);
         }
 
+        // smooth camera glide on teleports
+        boolean scriptOwned = Modules.enabled(FreeCam.class) || Modules.enabled(FreeLook.class)
+                || (Modules.enabled(ravex.modules.world.Scaffold.class)
+                    && ravex.modules.world.Scaffold.noRotateView()
+                    && ravex.modules.world.Scaffold.capturingView)
+                || (Modules.enabled(ravex.modules.world.ECFarmer.class)
+                    && ravex.modules.world.ECFarmer.capturingView);
+        if (!scriptOwned && ravex.modules.render.Animations.smoothCamera()) {
+            net.minecraft.world.phys.Vec3 desired = this.position;
+            // own clock, shared deltaTime is consumed first
+            long now = System.nanoTime();
+            float dt = Math.min(50f, (now - smoothLastNanos) / 1_000_000f) / 1000f;
+            smoothLastNanos = now;
+            // dimension hop: snap instead of gliding
+            if (smoothCamPos == null || smoothDim == null || !smoothDim.equals(area.dimension())) {
+                smoothCamPos = desired;
+                smoothDim = area.dimension();
+            } else {
+                double dist = smoothCamPos.distanceTo(desired);
+                // snap on teleport, small hops still glide
+                if (dist > 48.0) {
+                    smoothCamPos = desired;
+                } else if (dist < 0.004) {
+                    smoothCamPos = desired;
+                } else {
+                    // short distances follow fast, teleports glide long
+                    double speed = Math.max(6.0, Math.min(55.0, 55.0 / (1.0 + dist)));
+                    float alpha = (float) (1.0 - Math.exp(-dt * speed));
+                    smoothCamPos = smoothCamPos.lerp(desired, alpha);
+                    if (smoothCamPos.distanceTo(desired) < 0.01) smoothCamPos = desired;
+                    this.setPosition(smoothCamPos);
+                }
+            }
+        } else {
+            smoothCamPos = null;
+            smoothDim = null;
+            smoothLastNanos = System.nanoTime();
+        }
     }
 
     @Inject(method = "isDetached", at = @At("HEAD"), cancellable = true)
@@ -101,10 +139,19 @@ public abstract class MixinCamera {
     }
 
     private boolean inGetMaxZoom = false;
+    private net.minecraft.world.phys.Vec3 smoothCamPos;
+    private net.minecraft.resources.ResourceKey<net.minecraft.world.level.Level> smoothDim = null;
+    private long smoothLastNanos = System.nanoTime();
 
     @Inject(method = "getMaxZoom", at = @At("HEAD"), cancellable = true)
     private void onGetMaxZoom(float startingDistance, CallbackInfoReturnable<Float> cir) {
         if (inGetMaxZoom) return;
+        // free look owns distance while zooming
+        FreeLook fl = Modules.get(FreeLook.class);
+        if (fl != null && Modules.enabled(FreeLook.class) && fl.zoom) {
+            cir.setReturnValue(startingDistance);
+            return;
+        }
         if (Modules.enabled(ViewClip.class)) {
             float dist = (float) Modules.get(ViewClip.class).cameraDistance;
             if (Modules.get(ViewClip.class).bypassWalls) {

@@ -1,5 +1,4 @@
 #include "collateral_damage.hpp"
-/* Source implementation for collateral_damage */
 namespace ravex {
 namespace damage {
     CollateralDamage::CollateralDamage() {}

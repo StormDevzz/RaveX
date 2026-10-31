@@ -14,6 +14,8 @@ public class AddonManager {
     public static final AddonManager INSTANCE = new AddonManager();
     private final List<Addon> loadedAddons = new ArrayList<>();
     private final AddonRegistry registry = new AddonRegistry();
+    private static final boolean NATIVE_AVAILABLE =
+        ravex.utility.nativelib.NativeLoader.loadLibrary("ravex_addon");
 
     private AddonManager() {}
 
@@ -47,9 +49,14 @@ public class AddonManager {
         }
 
         if (!verifiedNative.isEmpty()) {
-            try {
-                nativeInitAddons(verifiedNative.toArray(new String[0]));
-            } catch (UnsatisfiedLinkError ignored) {}
+            if (!NATIVE_AVAILABLE) {
+                ravex.RaveX.LOGGER.warn("[AddonManager] native addon library is not available, skipping {} native addon(s)",
+                    verifiedNative.size());
+            } else {
+                try {
+                    nativeInitAddons(verifiedNative.toArray(new String[0]));
+                } catch (UnsatisfiedLinkError ignored) {}
+            }
         }
 
         File[] jarFiles = addonsDir.listFiles((dir, name) -> name.endsWith(".jar"));

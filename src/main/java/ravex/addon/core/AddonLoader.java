@@ -27,6 +27,11 @@ public class AddonLoader {
                 throw new AddonException("Missing required manifest attributes in " + jarFile.getName());
             }
 
+            if (!AddonVersion.isCompatible(version)) {
+                throw new AddonException("Addon " + name + " needs api " + version
+                    + ", this client provides " + AddonVersion.API_VERSION);
+            }
+
             AddonInfo info = new AddonInfo(name, "External Addon", version, author != null ? author : "Unknown", mainClass);
             URL[] urls = { jarFile.toURI().toURL() };
             SecureAddonClassLoader classLoader = new SecureAddonClassLoader(

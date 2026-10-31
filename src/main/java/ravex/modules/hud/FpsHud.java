@@ -2,6 +2,7 @@ package ravex.modules.hud;
 
 import ravex.modules.annotations.HudModule;
 import ravex.modules.annotations.Parameter;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.utility.render.ColorUtility;
@@ -44,7 +45,7 @@ public class FpsHud extends ravex.modules.Module {
         else if (fps >= 30) fpsColor = midColor;
         else fpsColor = lowColor;
         String fpsStr = String.valueOf(fps);
-        String suffix = " FPS";
+        String suffix = isVsync() ? " FPS (Vsync)" : " FPS";
         int tw = HudRendererUtility.textWidth(fpsStr) + HudRendererUtility.textWidth(suffix);
         int IS = HudRendererUtility.getIconSize();
         int pw = 4 + tw + 4 + IS + 4;
@@ -57,5 +58,26 @@ public class FpsHud extends ravex.modules.Module {
         ix += HudRendererUtility.textWidth(fpsStr);
         HudRendererUtility.drawText(graphics, suffix, ix, by + 2, 0xFF8080A0, false);
         HudRendererUtility.drawIcon(graphics, ICON, bx + pw - 4 - IS, by + (ph - IS) / 2, ac);
+    }
+
+    private boolean isVsync() {
+        try {
+            Minecraft mc = Minecraft.getInstance();
+            if (mc == null) return false;
+            if (mc.options != null && mc.options.enableVsync() != null) {
+                return mc.options.enableVsync().get();
+            }
+            try {
+                java.lang.reflect.Field f = mc.options.getClass().getField("enableVsync");
+                Object v = f.get(mc.options);
+                if (v instanceof net.minecraft.client.OptionInstance<?> oi) {
+                    return Boolean.TRUE.equals(oi.get());
+                }
+                if (v instanceof Boolean b) return b;
+            } catch (Throwable ignored) {
+            }
+        } catch (Throwable ignored) {
+        }
+        return false;
     }
 }

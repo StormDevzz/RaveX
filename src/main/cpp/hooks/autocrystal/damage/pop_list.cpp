@@ -1,5 +1,4 @@
 #include "pop_list.hpp"
-/* Source implementation for pop_list */
 namespace ravex {
 namespace damage {
     PopList::PopList() {}

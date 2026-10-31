@@ -31,10 +31,23 @@ public class LayoutManager {
         layoutFile.getParentFile().mkdirs();
     }
 
+    // coalesced writer, saves used to run on the render thread
+    private static final java.util.concurrent.ExecutorService LAYOUT_IO =
+        java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "RaveX-LayoutIO");
+            t.setDaemon(true);
+            return t;
+        });
+    private final java.util.concurrent.atomic.AtomicBoolean writeScheduled = new java.util.concurrent.atomic.AtomicBoolean();
+    private volatile String queuedJson;
+    private volatile Map<String, double[]> cachedLayout = null;
+
     public void save(Map<String, CategoryPanel> panels, int width, int height, float scale) {
         try {
+            if (width <= 0 || height <= 0) return;
             double cx = width / 2.0;
             double cy = height / 2.0;
+            Map<String, double[]> newCache = new HashMap<>();
             JsonObject root = new JsonObject();
             for (Map.Entry<String, CategoryPanel> e : panels.entrySet()) {
                 CategoryPanel p = e.getValue();
@@ -48,13 +61,39 @@ public class LayoutManager {
                 pos.addProperty("custom", p.isCustomPosition());
                 root.add(e.getKey(), pos);
                 root.add(e.getKey().toLowerCase(), pos);
+                if (p.isCustomPosition()) {
+                    newCache.put(e.getKey(), new double[]{p.getX(), p.getY()});
+                }
             }
-            try (FileWriter w = new FileWriter(layoutFile)) {
-                gson.toJson(root, w);
-            }
+            cachedLayout = newCache;
+            LAYOUT_IO.execute(() -> {
+                queuedJson = gson.toJson(root);
+                scheduleWrite();
+            });
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[LayoutManager] Failed to save layout: {}", e.getMessage());
+            RaveX.LOGGER.warn("[LayoutManager] Failed to build layout: {}", e.getMessage());
         }
+    }
+
+    private void scheduleWrite() {
+        if (!writeScheduled.compareAndSet(false, true)) return;
+        LAYOUT_IO.execute(() -> {
+            try {
+                while (true) {
+                    String data = queuedJson;
+                    if (data == null) break;
+                    queuedJson = null;
+                    try (FileWriter w = new FileWriter(layoutFile)) {
+                        w.write(data);
+                    } catch (Exception e) {
+                        RaveX.LOGGER.warn("[LayoutManager] Failed to save layout: {}", e.getMessage());
+                    }
+                }
+            } finally {
+                writeScheduled.set(false);
+                if (queuedJson != null) scheduleWrite();
+            }
+        });
     }
 
     public void save(Map<String, CategoryPanel> panels) {
@@ -66,7 +105,11 @@ public class LayoutManager {
     }
 
     public void reset() {
-        if (layoutFile.exists()) layoutFile.delete();
+        cachedLayout = new HashMap<>();
+        queuedJson = null;
+        LAYOUT_IO.execute(() -> {
+            if (layoutFile.exists()) layoutFile.delete();
+        });
     }
 
     private static final List<String> ALL_CATEGORIES = Arrays.asList(
@@ -74,8 +117,15 @@ public class LayoutManager {
     );
 
     public Map<String, double[]> load() {
+        Map<String, double[]> cached = cachedLayout;
+        if (cached != null) {
+            return cached;
+        }
         Map<String, double[]> result = new HashMap<>();
-        if (!layoutFile.exists()) return result;
+        if (!layoutFile.exists()) {
+            cachedLayout = result;
+            return result;
+        }
         try (FileReader r = new FileReader(layoutFile)) {
             JsonObject root = JsonParser.parseReader(r).getAsJsonObject();
             for (String cat : ALL_CATEGORIES) {
@@ -101,6 +151,7 @@ public class LayoutManager {
         } catch (Exception e) {
             RaveX.LOGGER.warn("[LayoutManager] Failed to load layout: {}", e.getMessage());
         }
+        cachedLayout = result;
         return result;
     }
 }

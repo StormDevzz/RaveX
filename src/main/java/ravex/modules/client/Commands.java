@@ -4,7 +4,7 @@ import ravex.modules.annotations.Parameter;
 @Module(name = "Commands", category = "Client", enabled = true)
 public class Commands {
     @Parameter(name = "Prefix")
-    public String prefix = ".";
+    public String prefix = "^";
     @Parameter(name = "Feedback")
     public boolean showFeedback = true;
 }

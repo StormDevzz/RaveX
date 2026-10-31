@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "packetmine.hpp"
 
 static jintArray vec3iArrayToJIntArray(JNIEnv* env, const std::vector<ravex::Vec3i>& vecs) {
@@ -6,6 +7,7 @@ static jintArray vec3iArrayToJIntArray(JNIEnv* env, const std::vector<ravex::Vec
     jsize len = static_cast<jsize>(vecs.size()) * 3;
     jintArray result = env->NewIntArray(len);
     if (!result) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     std::vector<jint> buf(vecs.size() * 3);
     for (size_t i = 0; i < vecs.size(); i++) {
         buf[i * 3 + 0] = vecs[i].x;
@@ -13,6 +15,7 @@ static jintArray vec3iArrayToJIntArray(JNIEnv* env, const std::vector<ravex::Vec
         buf[i * 3 + 2] = vecs[i].z;
     }
     env->SetIntArrayRegion(result, 0, len, buf.data());
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return result;
 }
 
@@ -55,14 +58,19 @@ Java_ravex_modules_player_PacketMine_nativeCanSee(
     jintArray solidBlocks)
 {
     jsize len = env->GetArrayLength(solidBlocks) / 3;
-    jint* elems = env->GetIntArrayElements(solidBlocks, nullptr);
+    if (ravex::jni::checkAndClearException(env)) return JNI_FALSE;
+
+    JniIntElements guard(env, solidBlocks);
+    if (ravex::jni::checkAndClearException(env)) return JNI_FALSE;
+    if (!guard) return JNI_FALSE;
+
+    const jint* elems = guard.get();
     std::vector<ravex::Vec3i> blocks(len);
     for (jsize i = 0; i < len; i++) {
         blocks[i].x = elems[i * 3 + 0];
         blocks[i].y = elems[i * 3 + 1];
         blocks[i].z = elems[i * 3 + 2];
     }
-    env->ReleaseIntArrayElements(solidBlocks, elems, JNI_ABORT);
     return ravex::canSee(ex, ey, ez, tx, ty, tz, blocks);
 }
 
@@ -74,24 +82,34 @@ Java_ravex_modules_player_PacketMine_nativeFilterVisible(
     jdouble ex, jdouble ey, jdouble ez)
 {
     jsize candLen = env->GetArrayLength(candidates) / 3;
-    jint* candElems = env->GetIntArrayElements(candidates, nullptr);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+
+    JniIntElements candGuard(env, candidates);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    if (!candGuard) return nullptr;
+
+    const jint* candElems = candGuard.get();
     std::vector<ravex::Vec3i> candVecs(candLen);
     for (jsize i = 0; i < candLen; i++) {
         candVecs[i].x = candElems[i * 3 + 0];
         candVecs[i].y = candElems[i * 3 + 1];
         candVecs[i].z = candElems[i * 3 + 2];
     }
-    env->ReleaseIntArrayElements(candidates, candElems, JNI_ABORT);
 
     jsize solidLen = env->GetArrayLength(solidBlocks) / 3;
-    jint* solidElems = env->GetIntArrayElements(solidBlocks, nullptr);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+
+    JniIntElements solidGuard(env, solidBlocks);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    if (!solidGuard) return nullptr;
+
+    const jint* solidElems = solidGuard.get();
     std::vector<ravex::Vec3i> solidVecs(solidLen);
     for (jsize i = 0; i < solidLen; i++) {
         solidVecs[i].x = solidElems[i * 3 + 0];
         solidVecs[i].y = solidElems[i * 3 + 1];
         solidVecs[i].z = solidElems[i * 3 + 2];
     }
-    env->ReleaseIntArrayElements(solidBlocks, solidElems, JNI_ABORT);
 
     std::vector<ravex::Vec3i> visible;
     ravex::filterVisibleBlocks(candVecs, solidVecs, ex, ey, ez, visible);

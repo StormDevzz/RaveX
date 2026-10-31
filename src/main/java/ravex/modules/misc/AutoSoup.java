@@ -10,7 +10,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 
 
-@Module(name = "AutoSoup", category = "Misc")
+@Module(name = "AutoSoup", category = "Combat")
 public class AutoSoup {
     @Parameter(name = "Health", min = 1.0, max = 20.0, step = 1.0)
     public double health = 10.0;

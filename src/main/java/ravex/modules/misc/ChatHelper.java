@@ -284,7 +284,8 @@ public class ChatHelper {
     public void onDeath(DeathEvent event) {
         if (!Modules.enabled(ChatHelper.class) || !autoEZEnabled) return;
         if (event.isSelf()) return;
-        net.minecraft.world.entity.player.Player victim = event.getPlayer();
+        net.minecraft.world.entity.LivingEntity victim = event.getEntity();
+        if (victim == null) return;
         if (ezOnlyPlayers && !(victim instanceof net.minecraft.world.entity.player.Player)) return;
         net.minecraft.world.entity.Entity killer = event.getSource().getEntity();
         if (killer != MinecraftWrapper.getWrapper().getPlayer()) return;

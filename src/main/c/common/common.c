@@ -5,6 +5,7 @@
 const char* ravex_strdup(JNIEnv* env, jstring str) {
     if (!str) return NULL;
     const char* utf = (*env)->GetStringUTFChars(env, str, NULL);
+    if ((*env)->ExceptionCheck(env)) return NULL;
     if (!utf) return NULL;
     char* copy = strdup(utf);
     (*env)->ReleaseStringUTFChars(env, str, utf);
@@ -13,7 +14,9 @@ const char* ravex_strdup(JNIEnv* env, jstring str) {
 
 jstring ravex_to_java_string(JNIEnv* env, const char* str) {
     if (!str) return NULL;
-    return (*env)->NewStringUTF(env, str);
+    jstring result = (*env)->NewStringUTF(env, str);
+    if ((*env)->ExceptionCheck(env)) return NULL;
+    return result;
 }
 
 void ravex_throw(JNIEnv* env, const char* msg) {
@@ -25,9 +28,11 @@ void ravex_throw(JNIEnv* env, const char* msg) {
 int32_t* ravex_jintarray_to_c(JNIEnv* env, jintArray arr, jsize* out_len) {
     if (!arr) { *out_len = 0; return NULL; }
     *out_len = (*env)->GetArrayLength(env, arr);
+    if ((*env)->ExceptionCheck(env)) { *out_len = 0; return NULL; }
     int32_t* data = malloc(*out_len * sizeof(int32_t));
     if (!data) return NULL;
     (*env)->GetIntArrayRegion(env, arr, 0, *out_len, data);
+    if ((*env)->ExceptionCheck(env)) { free(data); *out_len = 0; return NULL; }
     return data;
 }
 
@@ -39,9 +44,11 @@ void ravex_release_jintarray(JNIEnv* env, jintArray arr, int32_t* data) {
 float* ravex_jfloatarray_to_c(JNIEnv* env, jfloatArray arr, jsize* out_len) {
     if (!arr) { *out_len = 0; return NULL; }
     *out_len = (*env)->GetArrayLength(env, arr);
+    if ((*env)->ExceptionCheck(env)) { *out_len = 0; return NULL; }
     float* data = malloc(*out_len * sizeof(float));
     if (!data) return NULL;
     (*env)->GetFloatArrayRegion(env, arr, 0, *out_len, data);
+    if ((*env)->ExceptionCheck(env)) { free(data); *out_len = 0; return NULL; }
     return data;
 }
 

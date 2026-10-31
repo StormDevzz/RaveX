@@ -17,15 +17,26 @@ public class MixinLivingEntityTracker {
 
     @Inject(method = "die", at = @At("HEAD"))
     private void onDie(DamageSource source, CallbackInfo ci) {
-        if ((Object)this instanceof Player player) {
-            EventBusHolder.get().post(new DeathEvent(player, source));
-        }
+        // on LivingEntity, so mobs are covered too
+        EventBusHolder.get().post(new DeathEvent((LivingEntity) (Object) this, source));
     }
 
     @Inject(method = "checkTotemDeathProtection", at = @At("RETURN"))
     private void onCheckTotem(DamageSource source, CallbackInfoReturnable<Boolean> cir) {
         if (cir.getReturnValue() && (Object)this instanceof Player player) {
             EventBusHolder.get().post(new TotemPopEvent(player));
+            if (player == ravex.utility.player.PlayerUtility.getPlayer()) {
+                ravex.modules.render.Animations.totemPopNs = System.nanoTime();
+            }
         }
+    }
+
+    @Inject(method = "handleEntityEvent", at = @At("HEAD"))
+    private void onHandleEntityEvent(byte id, CallbackInfo ci) {
+        // remote players pop through the entity event
+        if (id != net.minecraft.world.entity.EntityEvent.PROTECTED_FROM_DEATH) return;
+        if (!((Object) this instanceof Player player)) return;
+        if (player == ravex.utility.player.PlayerUtility.getPlayer()) return;
+        EventBusHolder.get().post(new TotemPopEvent(player));
     }
 }

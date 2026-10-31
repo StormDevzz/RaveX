@@ -1,10 +1,7 @@
 package ravex.mixin.network;
 
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ServerboundContainerClickPacket;
 import net.minecraft.network.protocol.game.ServerboundInteractPacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.event.EventBusHolder;
 import ravex.event.network.PacketEvent;
-import ravex.modules.movement.GuiMove;
 import io.netty.channel.ChannelHandlerContext;
 import ravex.modules.Modules;
 
@@ -28,13 +24,20 @@ public class MixinConnection {
             }
         }
 
-        if (packet instanceof ServerboundContainerClickPacket) {
-            GuiMove gw = Modules.get(GuiMove.class);
-            if (Modules.enabled(GuiMove.class) && "Grim".equals(gw.mode)) {
-                var mc = MinecraftWrapper.getInstance();
-                if (mc.screen instanceof AbstractContainerScreen) {
-                    ci.cancel();
-                    return;
+        if (packet instanceof net.minecraft.network.protocol.game.ServerboundContainerClickPacket click) {
+            // clicks are too frequent to log
+        }
+
+        // packetMine strict rotations: angles ride in movement packets
+        if (packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket
+                && (movePacket instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.Rot
+                    || movePacket instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket.PosRot)) {
+            if (Modules.enabled(ravex.modules.player.PacketMine.class)) {
+                ravex.modules.player.PacketMine pm = Modules.get(ravex.modules.player.PacketMine.class);
+                if (pm != null && "Strict".equals(pm.rotate) && ravex.modules.player.PacketMine.silentRotation.hasRotation) {
+                    var accessor = (ravex.mixin.network.AccessorServerboundMovePlayerPacket) (Object) movePacket;
+                    accessor.setyRot(ravex.modules.player.PacketMine.silentRotation.yaw);
+                    accessor.setxRot(ravex.modules.player.PacketMine.silentRotation.pitch);
                 }
             }
         }

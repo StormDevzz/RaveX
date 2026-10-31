@@ -128,20 +128,24 @@ bool findCachedJava(int version, std::wstring& out) {
     std::wstring base = joinPath(javaDir(), fromUtf8(std::to_string(version)));
     if (tryJavaPath(base, out)) return true;
     WIN32_FIND_DATAW fd;
-    std::wstring pattern = joinPath(base, L"jdk-*");
-    HANDLE hFind = FindFirstFileW(pattern.c_str(), &fd);
-    if (hFind == INVALID_HANDLE_VALUE) return false;
-    bool found = false;
-    do {
-        if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
-        std::wstring candidate = joinPath(base, fd.cFileName);
-        if (tryJavaPath(candidate, out)) {
-            found = true;
-            break;
-        }
-    } while (FindNextFileW(hFind, &fd));
-    FindClose(hFind);
-    return found;
+    // Adoptium JRE archives extract to jre-*, JDK archives to jdk-*
+    for (const wchar_t* prefix : {L"jre-*", L"jdk-*"}) {
+        std::wstring pattern = joinPath(base, prefix);
+        HANDLE hFind = FindFirstFileW(pattern.c_str(), &fd);
+        if (hFind == INVALID_HANDLE_VALUE) continue;
+        bool found = false;
+        do {
+            if (!(fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)) continue;
+            std::wstring candidate = joinPath(base, fd.cFileName);
+            if (tryJavaPath(candidate, out)) {
+                found = true;
+                break;
+            }
+        } while (FindNextFileW(hFind, &fd));
+        FindClose(hFind);
+        if (found) return true;
+    }
+    return false;
 }
 
 bool findSystemJava(int version, std::wstring& out) {
@@ -170,92 +174,98 @@ bool findSystemJava(int version, std::wstring& out) {
 bool downloadJava(int version, const std::function<void(const std::string&)>& status,
                   const bool* cancelled, std::wstring& outPath) {
     std::string error;
-    std::string apiUrl = "https://api.adoptium.net/v3/assets/latest/" + std::to_string(version) +
-                         "/hotspot?architecture=x64&image_type=jdk&os=windows&vendor=eclipse";
-    status("Fetching Java " + std::to_string(version) + " from Adoptium...");
+    const std::string versionText = std::to_string(version);
+    // Adoptium dropped Windows 7/8 support, so those systems use the Liberica
+    // JRE instead. Liberica still publishes Java 21 builds for Windows 7 SP1
+    // and newer, which keeps old machines able to launch the game.
+    const bool legacyWindows = isLegacyWindows();
+    // A runtime is enough to launch the game. The JRE archive is roughly a
+    // third of the JDK size, so a fresh install downloads far less.
+    std::string apiUrl;
+    if (legacyWindows) {
+        apiUrl = "https://api.bell-sw.com/v1/liberica/releases?version-feature=" + versionText +
+                 "&version-modifier=latest&bitness=64&os=windows&arch=x86&package-type=zip&bundle-type=jre";
+    } else {
+        apiUrl = "https://api.adoptium.net/v3/assets/latest/" + versionText +
+                 "/hotspot?architecture=x64&image_type=jre&os=windows&vendor=eclipse";
+    }
+    const char* vendor = legacyWindows ? "Liberica" : "Adoptium";
+    status(std::string("Fetching Java ") + versionText + " from " + vendor + "...");
     std::string json = net::httpGet(apiUrl, &error);
     if (json.empty()) {
-        error = "Failed to fetch Adoptium API: " + error;
+        error = std::string("Failed to fetch ") + vendor + " API: " + error;
         return false;
     }
     ravex::json::Value root = ravex::json::Value::parse(json);
     if (root.isNull() || root.type() != ravex::json::Value::Type::Array || root.size() == 0) {
-        error = "Invalid Adoptium response";
+        error = std::string("Invalid ") + vendor + " response";
         return false;
     }
     const ravex::json::Value& first = root.at(0);
-    if (!first.has("binary") || !first.at("binary").has("package")) {
-        error = "Invalid Adoptium response structure";
-        return false;
-    }
-    const ravex::json::Value& pkg = first.at("binary").at("package");
     std::string downloadUrl;
-    if (pkg.has("link")) downloadUrl = pkg.at("link").asString();
+    std::string expectedHash;
+    bool hashIsSha1 = false;
+    if (legacyWindows) {
+        if (first.has("downloadUrl")) downloadUrl = first.at("downloadUrl").asString();
+        if (first.has("sha1")) {
+            expectedHash = first.at("sha1").asString();
+            hashIsSha1 = true;
+        }
+    } else {
+        if (!first.has("binary") || !first.at("binary").has("package")) {
+            error = "Invalid Adoptium response structure";
+            return false;
+        }
+        const ravex::json::Value& pkg = first.at("binary").at("package");
+        if (pkg.has("link")) downloadUrl = pkg.at("link").asString();
+        if (pkg.has("checksum")) expectedHash = pkg.at("checksum").asString();
+    }
     if (downloadUrl.empty()) {
-        error = "No download URL in Adoptium response";
+        error = std::string("No download URL in ") + vendor + " response";
         return false;
     }
-    std::wstring destDir = joinPath(javaDir(), fromUtf8(std::to_string(version)));
+    std::wstring destDir = joinPath(javaDir(), fromUtf8(versionText));
     createDirs(destDir);
-    std::wstring zipPath = joinPath(destDir, L"jdk.zip");
-    status("Downloading Java " + std::to_string(version) + "...");
+    std::wstring zipPath = joinPath(destDir, L"java.zip");
+    status("Downloading Java " + versionText + "...");
     bool dlOk = net::downloadFile(downloadUrl, zipPath,
                                   [&status](const net::Progress& p) {
                                       if (p.total > 0) {
                                           int pct = static_cast<int>((p.downloaded * 100) / p.total);
+                                          if (pct > 100) pct = 100;
                                           status("Downloading Java " + std::to_string(pct) + "%");
                                       }
                                   },
                                   cancelled, &error);
     if (!dlOk) return false;
-    if (pkg.has("checksum")) {
-        std::string expected = pkg.at("checksum").asString();
-        for (char& c : expected) {
-            if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
-        }
-        if (!expected.empty()) {
-            std::string actual = sha256File(zipPath);
-            if (actual.empty() || actual != expected) {
-                DeleteFileW(zipPath.c_str());
-                error = "Java archive checksum mismatch";
-                return false;
-            }
+    for (char& c : expectedHash) {
+        if (c >= 'A' && c <= 'Z') c = static_cast<char>(c - 'A' + 'a');
+    }
+    if (!expectedHash.empty()) {
+        std::string actual = hashIsSha1 ? sha1File(zipPath) : sha256File(zipPath);
+        if (actual.empty() || actual != expectedHash) {
+            DeleteFileW(zipPath.c_str());
+            error = "Java archive checksum mismatch";
+            return false;
         }
     }
-    status("Extracting Java " + std::to_string(version) + "...");
-    std::wstring extractCmd = L"tar -xf \"" + zipPath + L"\" -C \"" + destDir + L"\"";
-    STARTUPINFOW si{};
-    si.cb = sizeof(si);
-    si.dwFlags = STARTF_USESHOWWINDOW;
-    si.wShowWindow = SW_HIDE;
-    PROCESS_INFORMATION pi{};
-    std::vector<wchar_t> cmdBuf(extractCmd.begin(), extractCmd.end());
-    cmdBuf.push_back(L'\0');
-    if (!CreateProcessW(nullptr, cmdBuf.data(), nullptr, nullptr, FALSE,
-                        CREATE_NO_WINDOW, nullptr, nullptr, &si, &pi)) {
-        error = "Failed to extract Java archive";
-        return false;
-    }
-    WaitForSingleObject(pi.hProcess, INFINITE);
-    DWORD exitCode = 0;
-    GetExitCodeProcess(pi.hProcess, &exitCode);
-    CloseHandle(pi.hProcess);
-    CloseHandle(pi.hThread);
-    if (exitCode != 0) {
-        error = "Java extraction failed (exit code " + std::to_string(exitCode) + ")";
+    status("Extracting Java " + versionText + "...");
+    if (!extractZip(zipPath, destDir, &error)) {
+        DeleteFileW(zipPath.c_str());
         return false;
     }
     DeleteFileW(zipPath.c_str());
     WIN32_FIND_DATAW fd;
-    std::wstring pattern = joinPath(destDir, L"jdk-*");
-    HANDLE hFind = FindFirstFileW(pattern.c_str(), &fd);
-    if (hFind != INVALID_HANDLE_VALUE) {
+    for (const wchar_t* prefix : {L"jre-*", L"jdk-*"}) {
+        std::wstring pattern = joinPath(destDir, prefix);
+        HANDLE hFind = FindFirstFileW(pattern.c_str(), &fd);
+        if (hFind == INVALID_HANDLE_VALUE) continue;
         std::wstring jdkDir = joinPath(destDir, fd.cFileName);
         FindClose(hFind);
-        if (tryJavaPath(jdkDir, outPath)) return true;
+        if (tryJavaPath(jdkDir, outPath) && queryJavaMajor(outPath) >= version) return true;
     }
-    if (tryJavaPath(destDir, outPath)) return true;
-    error = "Java downloaded but java.exe not found";
+    if (tryJavaPath(destDir, outPath) && queryJavaMajor(outPath) >= version) return true;
+    error = "Java downloaded but does not run on this system";
     return false;
 }
 
@@ -266,12 +276,14 @@ bool ensureJava(int version, std::wstring& outPath, std::string* error,
                 const bool* cancelled) {
     std::string localError;
     if (!error) error = &localError;
-    if (findSystemJava(version, outPath)) return true;
+    // Cached runtime first: this is the common reinstall case and avoids
+    // spawning java -version for every JDK found on the machine.
     std::wstring cachedPath;
-    if (findCachedJava(version, cachedPath)) {
+    if (findCachedJava(version, cachedPath) && queryJavaMajor(cachedPath) >= version) {
         outPath = cachedPath;
         return true;
     }
+    if (findSystemJava(version, outPath)) return true;
     if (cancelled && *cancelled) {
         *error = "Cancelled";
         return false;

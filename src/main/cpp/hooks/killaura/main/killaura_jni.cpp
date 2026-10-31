@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "killaura.hpp"
 
 extern "C" {
@@ -14,8 +15,10 @@ Java_ravex_modules_combat_KillAura_nativeCritTiming(
         static_cast<double>(minFall));
     jdoubleArray out = env->NewDoubleArray(3);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     jdouble vals[3] = {w.fire ? 1.0 : 0.0, w.quality, w.serverFall};
     env->SetDoubleArrayRegion(out, 0, 3, vals);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }
 

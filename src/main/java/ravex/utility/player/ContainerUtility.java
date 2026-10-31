@@ -3,12 +3,27 @@ package ravex.utility.player;
 import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.world.inventory.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerData;
+import net.minecraft.world.inventory.DispenserMenu;
+import net.minecraft.world.inventory.HopperMenu;
+import net.minecraft.world.inventory.ShulkerBoxMenu;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipePropertySet;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
+import org.jetbrains.annotations.Nullable;
+import ravex.utility.misc.ScreenUtility;
+import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
@@ -151,5 +166,258 @@ public class ContainerUtility {
             if (remaining <= 0) needed.remove(item);
             else needed.put(item, remaining);
         }
+    }
+
+    // ----- furnace / smoker / brewing stand helpers -----
+
+    private static final int FURNACE_MENU_SLOTS = 39;   // 3 furnace slots + 36 player slots
+    private static final int BREWING_MENU_SLOTS = 41;   // 5 brewing slots + 36 player slots
+
+    private static BlockPos smeltTarget = null;
+    private static int brewTargetX, brewTargetY, brewTargetZ;
+    private static boolean hasBrewTarget = false;
+
+    @Nullable
+    private static AbstractContainerMenu openMenu() {
+        var player = MinecraftWrapper.getWrapper().getPlayer();
+        return player != null ? player.containerMenu : null;
+    }
+
+    // true while a furnace, smoker or blast furnace screen is open
+    public static boolean isFurnaceScreenOpen() {
+        String screen = ScreenUtility.getScreenName(MinecraftWrapper.getWrapper()).toLowerCase();
+        return screen.contains("furnace") || screen.contains("smoker");
+    }
+
+    // true while a brewing stand screen is open
+    public static boolean isBrewingStandOpen() {
+        return ScreenUtility.getScreenName(MinecraftWrapper.getWrapper()).toLowerCase().contains("brewingstand");
+    }
+
+    // true while a furnace-like menu with 39 slots is open
+    public static boolean isFurnaceMenuOpen() {
+        AbstractContainerMenu menu = openMenu();
+        return menu != null && menu.slots.size() == FURNACE_MENU_SLOTS;
+    }
+
+    // true while a brewing stand menu with 41 slots is open
+    public static boolean isBrewingMenuOpen() {
+        AbstractContainerMenu menu = openMenu();
+        return menu != null && menu.slots.size() == BREWING_MENU_SLOTS;
+    }
+
+    // remembers the furnace block the crosshair is on, until it is cleared
+    public static void rememberSmeltTarget() {
+        if (smeltTarget != null) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var level = mc.getLevel();
+        if (level == null || !(mc.getHitResult() instanceof BlockHitResult hit)) return;
+        BlockPos pos = hit.getBlockPos();
+        if (isFurnaceBlock(BlockUtility.getState(level, pos))) smeltTarget = pos;
+    }
+
+    // remembers the brewing stand block the crosshair is on, until it is cleared
+    public static void rememberBrewTarget() {
+        if (hasBrewTarget) return;
+        var mc = MinecraftWrapper.getWrapper();
+        var level = mc.getLevel();
+        if (level == null || !(mc.getHitResult() instanceof BlockHitResult hit)) return;
+        BlockPos pos = hit.getBlockPos();
+        if (!BlockUtility.isBlock(BlockUtility.getState(level, pos), "brewing_stand")) return;
+        brewTargetX = pos.getX();
+        brewTargetY = pos.getY();
+        brewTargetZ = pos.getZ();
+        hasBrewTarget = true;
+    }
+
+    // last furnace/smoker that had its screen open, null when unknown
+    @Nullable
+    public static BlockPos getSmeltTarget() {
+        return smeltTarget;
+    }
+
+    public static void clearSmeltTarget() {
+        smeltTarget = null;
+    }
+
+    // last brewing stand that had its screen open, null when unknown
+    @Nullable
+    public static BlockPos getBrewTarget() {
+        return hasBrewTarget ? BlockUtility.pos(brewTargetX, brewTargetY, brewTargetZ) : null;
+    }
+
+    public static void clearBrewTarget() {
+        hasBrewTarget = false;
+    }
+
+    // vanilla burn progress: burned ticks / total ticks
+    public static float furnaceBurnProgress() {
+        AbstractContainerMenu menu = openMenu();
+        if (menu == null) return 0.0f;
+        int burned = menuData(menu, 2);
+        int total = menuData(menu, 3);
+        if (burned == 0 || total == 0) return 0.0f;
+        return Math.min(1.0f, (float) burned / (float) total);
+    }
+
+    // synced brew ticks of the open brewing stand menu, 0 when idle
+    public static int brewTicks() {
+        AbstractContainerMenu menu = openMenu();
+        return menu != null ? menuData(menu, 0) : 0;
+    }
+
+    // takes the furnace result slot (2), true when a stack was moved
+    public static boolean takeFurnaceOutput() {
+        var mc = MinecraftWrapper.getWrapper();
+        AbstractContainerMenu menu = openMenu();
+        if (menu == null || !menu.getSlot(2).hasItem()) return false;
+        InventoryUtility.quickMoveSlot(mc, menu.containerId, 2);
+        return true;
+    }
+
+    // moves a recipe-accepted smelt input into the empty input slot (0)
+    public static boolean putSmeltInput() {
+        var mc = MinecraftWrapper.getWrapper();
+        AbstractContainerMenu menu = openMenu();
+        var level = mc.getLevel();
+        if (menu == null || level == null || menu.getSlot(0).hasItem()) return false;
+        String screen = ScreenUtility.getScreenName(mc).toLowerCase();
+        var accepted = level.recipeAccess().propertySet(
+            screen.contains("blast") ? RecipePropertySet.BLAST_FURNACE_INPUT
+                : screen.contains("smoker") ? RecipePropertySet.SMOKER_INPUT
+                : RecipePropertySet.FURNACE_INPUT);
+        for (Slot slot : getPlayerSlots(menu)) {
+            var stack = slot.getItem();
+            if (stack.isEmpty() || !accepted.test(stack)) continue;
+            InventoryUtility.quickMoveSlot(mc, menu.containerId, slot.index);
+            return true;
+        }
+        int hotbarStart = 3 + 27;
+        for (int i = hotbarStart; i < menu.slots.size(); i++) {
+            var stack = menu.getSlot(i).getItem();
+            if (stack.isEmpty() || !accepted.test(stack)) continue;
+            InventoryUtility.quickMoveSlot(mc, menu.containerId, i);
+            return true;
+        }
+        return false;
+    }
+
+    // moves a fuel stack into the empty furnace fuel slot (1)
+    public static boolean putFurnaceFuel() {
+        var mc = MinecraftWrapper.getWrapper();
+        AbstractContainerMenu menu = openMenu();
+        var level = mc.getLevel();
+        if (menu == null || level == null || menu.getSlot(1).hasItem()) return false;
+        for (Slot slot : getPlayerSlots(menu)) {
+            var stack = slot.getItem();
+            if (stack.isEmpty()) continue;
+            if (level.fuelValues().isFuel(stack)) {
+                InventoryUtility.quickMoveSlot(mc, menu.containerId, slot.index);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // moves blaze powder into the fuel slot when the stand is empty
+    public static boolean putBrewingFuel() {
+        var mc = MinecraftWrapper.getWrapper();
+        AbstractContainerMenu menu = openMenu();
+        if (menu == null || menuData(menu, 1) > 0 || menu.getSlot(4).hasItem()) return false;
+        for (Slot slot : getPlayerSlots(menu)) {
+            if (InventoryUtility.isItem(slot.getItem(), "blaze_powder")) {
+                InventoryUtility.quickMoveSlot(mc, menu.containerId, slot.index);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // takes the finished potions, true when a stack moved
+    public static boolean takeFinishedPotions() {
+        var mc = MinecraftWrapper.getWrapper();
+        AbstractContainerMenu menu = openMenu();
+        if (menu == null) return false;
+        for (int slot = 0; slot <= 2; slot++) {
+            var stack = menu.getSlot(slot).getItem();
+            if (!stack.isEmpty() && !InventoryUtility.isItem(stack, "glass_bottle")) {
+                InventoryUtility.quickMoveSlot(mc, menu.containerId, slot);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // moves a brewing ingredient into the empty ingredient slot (3)
+    public static boolean putBrewIngredient() {
+        var mc = MinecraftWrapper.getWrapper();
+        AbstractContainerMenu menu = openMenu();
+        if (menu == null || menu.getSlot(3).hasItem()) return false;
+        for (Slot slot : getPlayerSlots(menu)) {
+            var stack = slot.getItem();
+            if (stack.isEmpty() || !isBrewIngredient(stack)) continue;
+            InventoryUtility.quickMoveSlot(mc, menu.containerId, slot.index);
+            return true;
+        }
+        int hotbarStart = 5 + 27;
+        for (int i = hotbarStart; i < menu.slots.size(); i++) {
+            var stack = menu.getSlot(i).getItem();
+            if (stack.isEmpty() || !isBrewIngredient(stack)) continue;
+            InventoryUtility.quickMoveSlot(mc, menu.containerId, i);
+            return true;
+        }
+        return false;
+    }
+
+    // moves a glass bottle into the first empty bottle slot (0..2)
+    public static boolean putGlassBottle() {
+        var mc = MinecraftWrapper.getWrapper();
+        AbstractContainerMenu menu = openMenu();
+        if (menu == null) return false;
+        for (int slot = 0; slot <= 2; slot++) {
+            if (menu.getSlot(slot).hasItem()) continue;
+            for (Slot invSlot : getPlayerSlots(menu)) {
+                if (InventoryUtility.isItem(invSlot.getItem(), "glass_bottle")) {
+                    InventoryUtility.quickMoveSlot(mc, menu.containerId, invSlot.index);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean isBrewIngredient(ItemStack stack) {
+        return InventoryUtility.isItem(stack, "nether_wart") || InventoryUtility.isItem(stack, "glowstone_dust")
+            || InventoryUtility.isItem(stack, "redstone") || InventoryUtility.isItem(stack, "gunpowder")
+            || InventoryUtility.isItem(stack, "fermented_spider_eye") || InventoryUtility.isItem(stack, "blaze_powder")
+            || InventoryUtility.isItem(stack, "ghast_tear") || InventoryUtility.isItem(stack, "magma_cream")
+            || InventoryUtility.isItem(stack, "sugar") || InventoryUtility.isItem(stack, "rabbit_foot")
+            || InventoryUtility.isItem(stack, "glistering_melon_slice") || InventoryUtility.isItem(stack, "golden_carrot")
+            || InventoryUtility.isItem(stack, "spider_eye") || InventoryUtility.isItem(stack, "pufferfish")
+            || InventoryUtility.isItem(stack, "phantom_membrane") || InventoryUtility.isItem(stack, "dragon_breath")
+            || InventoryUtility.isItem(stack, "turtle_helmet");
+    }
+
+    private static boolean isFurnaceBlock(BlockState state) {
+        return BlockUtility.isBlock(state, "furnace")
+            || BlockUtility.isBlock(state, "blast_furnace")
+            || BlockUtility.isBlock(state, "smoker");
+    }
+
+    // progress is only in private synced menu data
+    private static int menuData(AbstractContainerMenu menu, int index) {
+        for (Class<?> type = menu.getClass(); type != null; type = type.getSuperclass()) {
+            for (Field field : type.getDeclaredFields()) {
+                if (!ContainerData.class.isAssignableFrom(field.getType())) continue;
+                try {
+                    field.setAccessible(true);
+                    ContainerData data = (ContainerData) field.get(menu);
+                    return data != null ? data.get(index) : 0;
+                } catch (Exception ignored) {
+                    return 0;
+                }
+            }
+        }
+        return 0;
     }
 }

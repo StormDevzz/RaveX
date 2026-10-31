@@ -3,9 +3,9 @@ import ravex.event.network.PacketEvent;
 import ravex.event.Subscribe;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.world.entity.vehicle.boat.Boat;
 import java.util.ArrayList;
 import ravex.mcwrapper.MinecraftWrapper;
+import ravex.utility.misc.EntityUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.modules.Modules;
 
@@ -76,7 +76,7 @@ public class BoatFly {
     public void onPacket(PacketEvent event) {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getPlayer().getVehicle() == null) return;
-        if (!(mc.getPlayer().getVehicle() instanceof Boat)) return;
+        if (!EntityUtility.isBoat(mc.getPlayer().getVehicle())) return;
 
         if (event.isSend()) {
             var packet = event.getPacket();
@@ -109,7 +109,7 @@ public class BoatFly {
         updateScale();
 
         net.minecraft.world.entity.Entity vehicle = mc.getPlayer().getVehicle();
-        if (vehicle == null || !(vehicle instanceof Boat)) {
+        if (vehicle == null || !EntityUtility.isBoat(vehicle)) {
             if (autoMount) mountToNearestBoat();
             return;
         }
@@ -157,7 +157,7 @@ public class BoatFly {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
         for (net.minecraft.world.entity.Entity entity : mc.getLevel().entitiesForRendering()) {
-            if (entity instanceof Boat && mc.getPlayer().distanceTo(entity) < 5.0) {
+            if (EntityUtility.isBoat(entity) && mc.getPlayer().distanceTo(entity) < 5.0) {
                 mc.getGameMode().interact(mc.getPlayer(), entity, net.minecraft.world.InteractionHand.MAIN_HAND);
                 break;
             }

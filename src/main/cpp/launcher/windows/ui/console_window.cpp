@@ -59,7 +59,7 @@ void drawKillButton(ConsoleData& data, DRAWITEMSTRUCT* ds) {
     } else {
         bg = RGB(120, 30, 30);
     }
-    COLORREF fg = disabled ? RGB(100, 100, 100) : RGB(255, 255, 255);
+    COLORREF fg = disabled ? themeMutedText(data.theme.text, bg) : RGB(255, 255, 255);
     HBRUSH br = CreateSolidBrush(bg);
     FillRect(ds->hDC, &ds->rcItem, br);
     DeleteObject(br);
@@ -160,13 +160,13 @@ LRESULT CALLBACK ConsoleProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
         case WM_CTLCOLORBTN: {
             HDC dc = reinterpret_cast<HDC>(wParam);
             SetBkColor(dc, data->theme.bg);
-            SetTextColor(dc, RGB(255,255,255));
+            SetTextColor(dc, data->theme.text);
             return reinterpret_cast<LRESULT>(data->bgBrush);
         }
         case WM_CTLCOLOREDIT: {
             HDC dc = reinterpret_cast<HDC>(wParam);
             SetBkColor(dc, data->theme.panel);
-            SetTextColor(dc, RGB(255,255,255));
+            SetTextColor(dc, data->theme.text);
             return reinterpret_cast<LRESULT>(data->panelBrush);
         }
         case WM_ERASEBKGND: {

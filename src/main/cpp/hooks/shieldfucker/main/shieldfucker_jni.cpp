@@ -1,6 +1,7 @@
 #include "shieldfucker_jni.hpp"
 #include "shieldfucker.hpp"
 #include "shieldfucker_math.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
 #include <vector>
 #include <cstring>
@@ -11,11 +12,14 @@ static std::vector<TargetInfo> parseEntityData(JNIEnv* env, jdoubleArray arr) {
     std::vector<TargetInfo> result;
     if (!arr) return result;
     jsize len = env->GetArrayLength(arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
     if (len < 7) return result;
 
-    jdouble* data = env->GetDoubleArrayElements(arr, nullptr);
-    if (!data) return result;
+    JniDoubleElements guard(env, arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
+    if (!guard) return result;
 
+    const jdouble* data = guard.get();
     for (jsize i = 0; i + 6 < len; i += 7) {
         TargetInfo t;
         t.entityId     = static_cast<int>(data[i]);
@@ -30,8 +34,6 @@ static std::vector<TargetInfo> parseEntityData(JNIEnv* env, jdoubleArray arr) {
         t.isPlayer     = true;
         result.push_back(t);
     }
-
-    env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
     return result;
 }
 
@@ -64,7 +66,10 @@ Java_ravex_modules_combat_ShieldFucker_nativeTick(
     config.targetMonsters = (targetMonsters == JNI_TRUE);
     config.onlyAxe = (onlyAxe == JNI_TRUE);
 
-    const char* itemStr = currentItem ? env->GetStringUTFChars(currentItem, nullptr) : nullptr;
+    JniStringUtfChars itemGuard(env, currentItem);
+    if (currentItem && !itemGuard) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    const char* itemStr = itemGuard.get();
 
     BreakAction action = tick(
         playerPos, pYaw, pPitch,
@@ -73,15 +78,15 @@ Java_ravex_modules_combat_ShieldFucker_nativeTick(
         itemStr, static_cast<int>(currentSlot)
     );
 
-    if (currentItem) env->ReleaseStringUTFChars(currentItem, itemStr);
-
     jclass actionClass = env->FindClass("ravex/modules/combat/ShieldFucker$BreakAction");
     if (!actionClass) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     jmethodID ctor = env->GetMethodID(actionClass, "<init>", "(IFFZZI)V");
     if (!ctor) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
-    return env->NewObject(actionClass, ctor,
+    jobject result = env->NewObject(actionClass, ctor,
         action.targetId,
         action.yaw,
         action.pitch,
@@ -89,6 +94,8 @@ Java_ravex_modules_combat_ShieldFucker_nativeTick(
         action.shouldSwitch ? JNI_TRUE : JNI_FALSE,
         action.switchSlot
     );
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    return result;
 }
 
 JNIEXPORT void JNICALL
@@ -97,5 +104,6 @@ Java_ravex_modules_combat_ShieldFucker_nativeReset(
 {
     (void)env;
     (void)cls;
+    if (ravex::jni::checkAndClearException(env)) return;
     trackerReset();
 }

@@ -9,8 +9,6 @@ import ravex.mcwrapper.MinecraftWrapper;
 public class LagNotify {
     @Parameter(name = "ThresholdTPS", min = 5.0, max = 20.0, step = 1.0)
     public double threshold = 15.0;
-    @Parameter(name = "Sound")
-    public boolean sound = true;
     private long lastRealTime = 0;
     private long lastGameTick = -1;
     private float smoothedTPS = 20.0f;
@@ -36,15 +34,14 @@ public class LagNotify {
             boolean isLagging = smoothedTPS < tpsThreshold;
             if (isLagging && !wasLagging) {
                 String tps = String.format("%.1f", smoothedTPS);
-                ravex.manager.NotificationManager.add(
-                        ravex.utility.misc.LanguageUtility.t("lag_notify", tps), 0xFFFFCC33, 3000);
-                if (sound) {
-                    EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.FAILURE));
-                }
+                ravex.manager.NotificationManager.addToast(
+                        ravex.utility.misc.LanguageUtility.t("lag_notify", tps), 0xFFFFCC33,
+                        ravex.manager.NotificationManager.ToastType.INFO);
             } else if (!isLagging && wasLagging) {
                 String tps = String.format("%.1f", smoothedTPS);
-                ravex.manager.NotificationManager.add(
-                        ravex.utility.misc.LanguageUtility.t("lag_recovered", tps), 0xFF44FF88, 2500);
+                ravex.manager.NotificationManager.addToast(
+                        ravex.utility.misc.LanguageUtility.t("lag_recovered", tps), 0xFF44FF88,
+                        ravex.manager.NotificationManager.ToastType.INFO);
             }
             wasLagging = isLagging;
         }

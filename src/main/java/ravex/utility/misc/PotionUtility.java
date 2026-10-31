@@ -117,4 +117,9 @@ public class PotionUtility {
     public static int getArmorDefense(ItemAttributeModifiers modifiers, EquipmentSlot slot) {
         return modifiers != null ? (int) modifiers.compute(Attributes.ARMOR, 0.0, slot) : 0;
     }
+
+    public static int getArmorDefense(ItemStack stack, EquipmentSlot slot) {
+        if (stack == null || stack.isEmpty()) return 0;
+        return getArmorDefense(stack.get(net.minecraft.core.component.DataComponents.ATTRIBUTE_MODIFIERS), slot);
+    }
 }

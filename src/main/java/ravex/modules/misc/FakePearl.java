@@ -6,7 +6,6 @@ import net.minecraft.network.protocol.game.ServerboundUseItemPacket;
 import net.minecraft.world.item.Items;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.SwingUtility;
 import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownEnderpearl;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -21,7 +20,6 @@ public class FakePearl {
     public double gravity = 0.03;
     @Parameter(name = "Sound")
     public boolean sound = true;
-    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_fakepearl");
 
     @Subscribe
     public void onPacket(PacketEvent event) {
@@ -61,15 +59,7 @@ public class FakePearl {
         double yaw = player.getYRot();
         double pitch = player.getXRot();
         double[] vel = new double[3];
-        if (NATIVE.isLoaded()) {
-            try {
-                nativeCalculateVelocity(yaw, pitch, speed, vel);
-            } catch (UnsatisfiedLinkError | Exception e) {
-                javaCalculateVelocity(yaw, pitch, speed, vel);
-            }
-        } else {
-            javaCalculateVelocity(yaw, pitch, speed, vel);
-        }
+        javaCalculateVelocity(yaw, pitch, speed, vel);
         ThrownEnderpearl pearl = new ThrownEnderpearl(level, player, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.ENDER_PEARL)) {
             protected double getDefaultGravity() {
                 return gravity;
@@ -92,5 +82,4 @@ public class FakePearl {
         outVel[1] = -Math.sin(pitchRad) * speed;
         outVel[2] = Math.cos(yawRad) * Math.cos(pitchRad) * speed;
     }
-    private static native void nativeCalculateVelocity(double yaw, double pitch, double speed, double[] outVel);
 }

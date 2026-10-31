@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "fastexp.hpp"
 
 static ravex::FastXp fastXp;
@@ -17,8 +18,7 @@ Java_ravex_modules_player_MiddleClick_nativeStartFastXp(
 {
     if (fastXp.isRunning()) return;
     jmethodID mid = env->GetStaticMethodID(cls, "fastXpCallback", "()V");
-    if (!mid || env->ExceptionCheck()) {
-        env->ExceptionClear();
+    if (!mid || ravex::jni::checkAndClearException(env)) {
         return;
     }
     fastXp.start(cachedJvm, cls, mid);
@@ -28,6 +28,7 @@ JNIEXPORT void JNICALL
 Java_ravex_modules_player_MiddleClick_nativeStopFastXp(
     JNIEnv* env, jclass)
 {
+    if (ravex::jni::checkAndClearException(env)) return;
     fastXp.stop(env);
 }
 

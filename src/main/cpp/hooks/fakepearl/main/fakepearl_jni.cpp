@@ -1,5 +1,6 @@
 #include "fakepearl_jni.hpp"
 #include "fakepearl.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
 JNIEXPORT void JNICALL
 Java_ravex_modules_exploit_FakePearl_nativeCalculateVelocity(
@@ -14,4 +15,5 @@ Java_ravex_modules_exploit_FakePearl_nativeCalculateVelocity(
 
     jdouble temp[3] = { vel[0], vel[1], vel[2] };
     env->SetDoubleArrayRegion(outVel, 0, 3, temp);
+    if (ravex::jni::checkAndClearException(env)) return;
 }

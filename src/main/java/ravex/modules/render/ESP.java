@@ -1,17 +1,12 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import java.util.ArrayList;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 
-
-
-
 @Module(name = "ESP", category = "Render")
 public class ESP {
-    @Parameter(name = "Mode", modes = {"Outline", "Box2D", "Tunnels", "Holes", "Void"})
+    @Parameter(name = "Mode", modes = {"Outline", "Box2D"})
     public String mode = "Outline";
     @Parameter(name = "Players")
     public boolean players = true;
@@ -35,148 +30,11 @@ public class ESP {
     public int itemColor = 0xFFFFFF33;
     @Parameter(name = "FrameColor", color = true, visible = "frames")
     public int frameColor = 0xFFFF9933;
-    @Parameter(name = "TunnelRange", min = 8, max = 64, step = 4, visible = "mode=Tunnels")
-    public double tunnelRange = 32;
-    @Parameter(name = "TunnelMaxY", min = 5, max = 60, step = 5, visible = "mode=Tunnels")
-    public double tunnelMaxY = 40;
-    @Parameter(name = "TunnelMinY", min = 1, max = 30, step = 1, visible = "mode=Tunnels")
-    public double tunnelMinY = 5;
-    @Parameter(name = "TunnelColor", color = true, visible = "mode=Tunnels")
-    public int tunnelColor = 0x44FFFF00;
-    @Parameter(name = "TunnelFilled", visible = "mode=Tunnels")
-    public boolean tunnelFilled = false;
-    @Parameter(name = "TunnelWireframe", visible = "mode=Tunnels")
-    public boolean tunnelWireframe = true;
-    @Parameter(name = "TunnelUpdate", min = 5, max = 100, step = 5, visible = "mode=Tunnels")
-    public double tunnelUpdateInterval = 20;
-    @Parameter(name = "HoleRange", min = 4, max = 24, step = 2, visible = "mode=Holes")
-    public double holeRange = 8;
-    @Parameter(name = "SafeColor", color = true, visible = "mode=Holes")
-    public int safeColor = 0xAA00FF00;
-    @Parameter(name = "HoleFilled", visible = "mode=Holes")
-    public boolean holeFilled = true;
-    @Parameter(name = "HoleWireframe", visible = "mode=Holes")
-    public boolean holeWireframe = true;
-    @Parameter(name = "VoidRange", min = 8, max = 64, step = 4, visible = "mode=Void")
-    public double voidRange = 32;
-    @Parameter(name = "VoidHeight", min = 2, max = 30, step = 2, visible = "mode=Void")
-    public double voidHeight = 10;
-    @Parameter(name = "VoidColor", color = true, visible = "mode=Void")
-    public int voidColor = 0x66FF0000;
-    @Parameter(name = "VoidFilled", visible = "mode=Void")
-    public boolean voidFilled = true;
-    @Parameter(name = "VoidWireframe", visible = "mode=Void")
-    public boolean voidWireframe = true;
-    @Parameter(name = "VoidFloorOnly", visible = "mode=Void")
-    public boolean voidFloorOnly = true;
-    @Parameter(name = "VoidUpdate", min = 5, max = 100, step = 5, visible = "mode=Void")
-    public double voidUpdateInterval = 20;
-    private List<net.minecraft.core.BlockPos> tunnelBlocks = new ArrayList<>();
-    private long lastTunnelScan = 0;
-    private final List<net.minecraft.core.BlockPos> holes = new ArrayList<>();
-    private int holeTick = 0;
-    private List<net.minecraft.core.BlockPos> voidBlocks = new ArrayList<>();
-    private long lastVoidScan = 0;
-    public void onTick() {
-        String m = mode;
-        if (m.equals("Tunnels")) scanTunnels();
-        else if (m.equals("Holes")) scanHoles();
-        else if (m.equals("Void")) scanVoid();
-    }
-    private void scanTunnels() {
-        var mc = MinecraftWrapper.getWrapper();
-        if (mc.getPlayer() == null || mc.getLevel() == null) return;
-        long now = System.currentTimeMillis();
-        if (now - lastTunnelScan < (int) tunnelUpdateInterval * 50) return;
-        lastTunnelScan = now;
-        List<net.minecraft.core.BlockPos> result = new ArrayList<>();
-        net.minecraft.core.BlockPos center = mc.getPlayer().blockPosition();
-        int r = (int) tunnelRange;
-        int my = (int) tunnelMaxY;
-        int ny = (int) tunnelMinY;
-        for (int x = -r; x <= r; x++) {
-            for (int z = -r; z <= r; z++) {
-                for (int y = ny; y <= my; y++) {
-                    net.minecraft.core.BlockPos pos = center.offset(x, y, z);
-                    if (!mc.getLevel().getBlockState(pos).isAir()) continue;
-                    if (!mc.getLevel().getBlockState(pos.above()).isAir()) continue;
-                    if (mc.getLevel().getBlockState(pos.below()).isAir()) continue;
-                    if (mc.getLevel().getBlockState(pos.above(2)).isAir()) continue;
-                    net.minecraft.world.level.block.state.BlockState west = mc.getLevel().getBlockState(pos.west());
-                    net.minecraft.world.level.block.state.BlockState east = mc.getLevel().getBlockState(pos.east());
-                    net.minecraft.world.level.block.state.BlockState north = mc.getLevel().getBlockState(pos.north());
-                    net.minecraft.world.level.block.state.BlockState south = mc.getLevel().getBlockState(pos.south());
-                    boolean wallsEW = !west.isAir() && !east.isAir();
-                    boolean wallsNS = !north.isAir() && !south.isAir();
-                    if (wallsEW || wallsNS) {
-                        result.add(pos);
-                        result.add(pos.above());
-                    }
-                }
-            }
-        }
-        tunnelBlocks = result;
-    }
-    private void scanHoles() {
-        var mc = MinecraftWrapper.getWrapper();
-        if (mc.getPlayer() == null || mc.getLevel() == null) return;
-        if (++holeTick % 5 != 0) return;
-        holeTick = 0;
-        holes.clear();
-        net.minecraft.core.BlockPos center = mc.getPlayer().blockPosition();
-        int r = (int) holeRange;
-        for (int x = -r; x <= r; x++) {
-            for (int z = -r; z <= r; z++) {
-                for (int y = -4; y <= 2; y++) {
-                    net.minecraft.core.BlockPos pos = center.offset(x, y, z);
-                    if (!mc.getLevel().getBlockState(pos).isAir()) continue;
-                    if (isSafeHole(mc, pos)) holes.add(pos);
-                }
-            }
-        }
-    }
-    private boolean isSafeHole(MinecraftWrapper mc, net.minecraft.core.BlockPos pos) {
-        if (!mc.getLevel().getBlockState(pos.below()).isSolid()) return false;
-        net.minecraft.core.BlockPos[] sides = {
-            pos.east(), pos.west(), pos.south(), pos.north()
-        };
-        for (net.minecraft.core.BlockPos side : sides) {
-            net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(side);
-            if (state.isAir() || !state.isSolid()) return false;
-        }
-        return true;
-    }
-    private void scanVoid() {
-        var mc = MinecraftWrapper.getWrapper();
-        if (mc.getPlayer() == null || mc.getLevel() == null) return;
-        long now = System.currentTimeMillis();
-        if (now - lastVoidScan < (int) voidUpdateInterval * 50) return;
-        lastVoidScan = now;
-        List<net.minecraft.core.BlockPos> result = new ArrayList<>();
-        net.minecraft.core.BlockPos center = mc.getPlayer().blockPosition();
-        int r = (int) voidRange;
-        int h = (int) voidHeight;
-        int floorH = voidFloorOnly ? 1 : h;
-        for (int x = -r; x <= r; x++) {
-            for (int z = -r; z <= r; z++) {
-                for (int y = 1; y <= floorH; y++) {
-                    if (center.getY() - y <= mc.getLevel().getMinY()) continue;
-                    net.minecraft.core.BlockPos pos = center.offset(x, -y, z);
-                    if (mc.getLevel().getBlockState(pos).isAir()) {
-                        boolean hasFloor = false;
-                        for (int checkY = pos.getY() + 1; checkY <= mc.getLevel().getMaxY(); checkY++) {
-                            if (!mc.getLevel().getBlockState(new net.minecraft.core.BlockPos(pos.getX(), checkY, pos.getZ())).isAir()) {
-                                hasFloor = true;
-                                break;
-                            }
-                        }
-                        if (!hasFloor) result.add(pos);
-                    }
-                }
-            }
-        }
-        voidBlocks = result;
-    }
+    @Parameter(name = "BoxWidth", min = 1.0, max = 5.0, step = 1.0, visible = "mode=Box2D")
+    public double boxWidth = 3.0;
+    @Parameter(name = "DistScale", visible = "mode=Box2D")
+    public boolean distScale = true;
+
     public static boolean shouldGlow(net.minecraft.world.entity.Entity entity) {
         ESP $ = Modules.get(ESP.class);
         if ($ == null || !Modules.enabled(ESP.class) || !$.mode.equals("Outline")) return false;
@@ -190,13 +48,4 @@ public class ESP {
         if (entity instanceof net.minecraft.world.entity.decoration.ItemFrame && $.frames) return true;
         return false;
     }
-
-    public List<net.minecraft.core.BlockPos> getTunnelBlocks() { return tunnelBlocks; }
-    public List<net.minecraft.core.BlockPos> getHoles() { return holes; }
-    public List<net.minecraft.core.BlockPos> getVoidBlocks() { return voidBlocks; }
-
-
-
-
-
 }

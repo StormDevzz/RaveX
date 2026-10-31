@@ -38,6 +38,14 @@ public class MixinGameRenderer {
         ravex.manager.ShaderManager.INSTANCE.setProjectionMatrix(cir.getReturnValue());
     }
 
+    @Inject(method = "bobHurt", at = @At("HEAD"), cancellable = true)
+    private void ravex$noDamageShake(com.mojang.blaze3d.vertex.PoseStack poseStack, float partialTicks, CallbackInfo ci) {
+        if (Modules.enabled(ravex.modules.render.NoRender.class)
+                && Modules.get(ravex.modules.render.NoRender.class).damageShake) {
+            ci.cancel();
+        }
+    }
+
     @Inject(method = "getFov", at = @At("RETURN"), cancellable = true)
     private void onGetFov(net.minecraft.client.Camera camera, float f, boolean bl, org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Float> cir) {
         if (!Modules.enabled(ravex.modules.render.Zoom.class)) return;

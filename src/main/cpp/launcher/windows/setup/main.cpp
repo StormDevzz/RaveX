@@ -7,16 +7,6 @@
 #include <objbase.h>
 #include <string>
 #include "setup/include/setup_window.hpp"
-bool isAdmin() {
-    BOOL admin = FALSE;
-    PSID adminGroup = nullptr;
-    SID_IDENTIFIER_AUTHORITY ntAuth = SECURITY_NT_AUTHORITY;
-    if (AllocateAndInitializeSid(&ntAuth, 2, SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS, 0,0,0,0,0,0, &adminGroup)) {
-        CheckTokenMembership(nullptr, adminGroup, &admin);
-        FreeSid(adminGroup);
-    }
-    return admin == TRUE;
-}
 bool isUninstallCmd() {
     int argc = 0;
     LPWSTR* argv = CommandLineToArgvW(GetCommandLineW(), &argc);
@@ -33,7 +23,7 @@ bool isUninstallCmd() {
 int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
     CoInitializeEx(nullptr, COINIT_APARTMENTTHREADED);
     {
-        // windows 10 1607+ only API: resolve dynamically to stay loadable on Windows 7/8.1.
+        // win10 1607+ only API, resolved dynamically for win7/8.1
         bool dpiSet = false;
         if (HMODULE u32 = GetModuleHandleW(L"user32.dll")) {
             using SetDpiAwarenessContextFn = BOOL(WINAPI*)(HANDLE);
@@ -43,11 +33,12 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         }
         if (!dpiSet) SetProcessDPIAware();
     }
-    if (!isAdmin() && !isUninstallCmd()) {
-        wchar_t exe[MAX_PATH]; GetModuleFileNameW(nullptr, exe, MAX_PATH);
-        SHELLEXECUTEINFOW sei{}; sei.cbSize=sizeof(sei); sei.lpVerb=L"runas"; sei.lpFile=exe; sei.nShow=SW_SHOWNORMAL;
-        if (ShellExecuteExW(&sei)) return 0;
-    }
+    // The default install lives in %LOCALAPPDATA%\KickX, so setup must not ask
+    // for elevation up front. Protected folders are rejected later with a
+    // clear message, which keeps the common path fast and closable.
+    // Windows 7/8.1 use the dynamically resolved DPI API above. Windows 10/11,
+    // including future 26H2 builds, share the same version and compatibility
+    // GUID, so no build-number gate is needed here.
     INITCOMMONCONTROLSEX icc{}; icc.dwSize = sizeof(icc); icc.dwICC = ICC_STANDARD_CLASSES; InitCommonControlsEx(&icc);
     if (isUninstallCmd()) {
         return ravex::setup::runUninstallWindow(hInstance) ? 0 : 1;

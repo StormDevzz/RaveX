@@ -90,10 +90,12 @@ public class AutoTotem {
         }
     }
     private void swapToOffhand(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer p, int invSlot) {
-        int containerSlot = invSlot < 9 ? invSlot + 36 : invSlot;
-        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, p);
-        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, 45, 0, InventoryUtility.PICKUP, p);
-        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, p);
+        // only plain inventory, container slots would be hit
+        if (p.containerMenu != p.inventoryMenu) return;
+        int containerSlot = InventoryUtility.inventorySlotToContainerSlot(invSlot);
+        if (containerSlot == -1) return;
+        // one vanilla swap packet, like pressing F
+        mc.getGameMode().handleInventoryMouseClick(p.containerMenu.containerId, containerSlot, 40, InventoryUtility.SWAP, p);
     }
     private int findSwordSlot() {
         var mc = MinecraftWrapper.getWrapper();

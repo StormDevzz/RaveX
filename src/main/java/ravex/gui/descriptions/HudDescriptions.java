@@ -20,9 +20,20 @@ public class HudDescriptions {
         DESCRIPTIONS.put("Currency", "Renders custom live/simulated currency exchange rates for CIS & NATO countries + BTC.");
         DESCRIPTIONS.put("ServerBrand", "Displays the server implementation brand using C++ JNI formatting.");
         DESCRIPTIONS.put("TargetHud", "Displays target player statistics, health, armor, and hand items.");
+        DESCRIPTIONS.put("BindListHud", "List of the modules that have a keybind.");
+        DESCRIPTIONS.put("ArmorHud", "Modern armor pieces with durability bars.");
+        DESCRIPTIONS.put("ChestCounterHud", "Counts nearby single and double chests.");
+        DESCRIPTIONS.put("RamHud", "Memory usage bar with history graph.");
+        DESCRIPTIONS.put("StaffBoardHud", "Detects staff and admins on popular servers.");
+        DESCRIPTIONS.put("HotbarHud", "Replaces the vanilla hotbar with a clean modern one.");
+        DESCRIPTIONS.put("Radar", "Minimap with entity dots.");
     }
 
     public static String getDescription(String moduleName) {
-        return DESCRIPTIONS.getOrDefault(moduleName, "No HUD module description available.");
+        String desc = DESCRIPTIONS.get(moduleName);
+        if (desc == null && moduleName.endsWith("Hud")) {
+            desc = DESCRIPTIONS.get(moduleName.substring(0, moduleName.length() - 3));
+        }
+        return desc != null ? desc : "No HUD module description available.";
     }
 }

@@ -36,25 +36,6 @@ public abstract class MixinEntity {
             boolean lockYaw = Modules.get(ViewLock.class).shouldLockYaw(yRot, xRot);
             boolean lockPitch = Modules.get(ViewLock.class).shouldLockPitch(yRot, xRot);
 
-            if (Modules.get(ViewLock.class).isSmoothMode()) {
-                if (lockYaw) {
-                    float current = self.getYRot();
-                    float target = Modules.get(ViewLock.class).getTargetYaw();
-                    float speed = Modules.get(ViewLock.class).getSmoothSpeed();
-                    float diff = ((target - current + 540) % 360) - 180;
-                    self.setYRot(current + diff * speed);
-                }
-                if (lockPitch) {
-                    float current = self.getXRot();
-                    float target = Modules.get(ViewLock.class).getTargetPitch();
-                    float speed = Modules.get(ViewLock.class).getSmoothSpeed();
-                    float diff = target - current;
-                    self.setXRot(current + diff * speed);
-                }
-                ci.cancel();
-                return;
-            }
-
             if (lockYaw && lockPitch) {
                 ci.cancel();
             } else {
@@ -83,7 +64,7 @@ public abstract class MixinEntity {
         }
 
         if (Modules.enabled(ravex.modules.world.Scaffold.class)
-                && Modules.get(ravex.modules.world.Scaffold.class).noRotate
+                && ravex.modules.world.Scaffold.noRotateView()
                 && ravex.modules.world.Scaffold.capturingView) {
             ravex.modules.world.Scaffold.viewYaw += (float) (yRot * 0.15);
             ravex.modules.world.Scaffold.viewPitch += (float) (xRot * 0.15);
@@ -244,7 +225,7 @@ public abstract class MixinEntity {
         if (Modules.enabled(NoPush.class)) {
             Entity self = (Entity)(Object)this;
             if (self instanceof net.minecraft.client.player.LocalPlayer) {
-                if (Modules.get(NoPush.class).water) {
+                if (Modules.get(NoPush.class).liquid) {
                     ci.cancel();
                 }
             }

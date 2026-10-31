@@ -10,13 +10,28 @@ import net.minecraft.world.entity.ambient.AmbientCreature;
 import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.npc.villager.AbstractVillager;
+import net.minecraft.world.entity.projectile.FireworkRocketEntity;
+import net.minecraft.world.entity.projectile.Projectile;
+import net.minecraft.world.entity.projectile.ThrowableProjectile;
+import net.minecraft.world.entity.projectile.arrow.AbstractArrow;
+import net.minecraft.world.entity.projectile.arrow.ThrownTrident;
+import net.minecraft.world.entity.projectile.hurtingprojectile.AbstractHurtingProjectile;
+import net.minecraft.world.entity.projectile.hurtingprojectile.windcharge.AbstractWindCharge;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.AbstractThrownPotion;
+import net.minecraft.world.entity.projectile.throwableitemprojectile.ThrownExperienceBottle;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.player.PlayerUtility;
 import ravex.utility.player.InventoryUtility;
+import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.joml.Vector3d;
 
 public class EntityUtility {
     public static boolean isHostile(LivingEntity entity) {
@@ -264,6 +279,154 @@ public class EntityUtility {
             }
         }
         return new Vec3(entry[0], entry[1], entry[2]);
+    }
+
+    public static boolean isItem(Entity entity) {
+        return entity instanceof net.minecraft.world.entity.item.ItemEntity;
+    }
+
+    public static boolean isBoat(Entity entity) {
+        return entity instanceof net.minecraft.world.entity.vehicle.boat.Boat;
+    }
+
+    public enum ProjectileKind {
+        NONE, POTION, EXPERIENCE_BOTTLE, THROWABLE, TRIDENT, ARROW, FIREWORK, WIND_CHARGE, FIREBALL, GENERIC
+    }
+
+    // order matters, tridents are arrows and wind charges are hurting projectiles
+    @NotNull
+    public static ProjectileKind projectileKind(@Nullable Object entity) {
+        if (!(entity instanceof Entity e)) return ProjectileKind.NONE;
+        if (e instanceof AbstractThrownPotion) return ProjectileKind.POTION;
+        if (e instanceof ThrownExperienceBottle) return ProjectileKind.EXPERIENCE_BOTTLE;
+        if (e instanceof ThrowableProjectile) return ProjectileKind.THROWABLE;
+        if (e instanceof ThrownTrident) return ProjectileKind.TRIDENT;
+        if (e instanceof AbstractArrow) return ProjectileKind.ARROW;
+        if (e instanceof FireworkRocketEntity) return ProjectileKind.FIREWORK;
+        if (e instanceof AbstractWindCharge) return ProjectileKind.WIND_CHARGE;
+        if (e instanceof AbstractHurtingProjectile) return ProjectileKind.FIREBALL;
+        if (e instanceof Projectile) return ProjectileKind.GENERIC;
+        return ProjectileKind.NONE;
+    }
+
+    @NotNull
+    public static Vector3d position(@Nullable Object entity) {
+        if (!(entity instanceof Entity e)) return new Vector3d();
+        return new Vector3d(e.getX(), e.getY(), e.getZ());
+    }
+
+    @NotNull
+    public static Vector3d eyePosition(@Nullable Object entity) {
+        if (!(entity instanceof Entity e)) return new Vector3d();
+        Vec3 eye = e.getEyePosition();
+        return new Vector3d(eye.x, eye.y, eye.z);
+    }
+
+    @NotNull
+    public static Vector3d deltaMovement(@Nullable Object entity) {
+        if (!(entity instanceof Entity e)) return new Vector3d();
+        Vec3 motion = e.getDeltaMovement();
+        return new Vector3d(motion.x, motion.y, motion.z);
+    }
+
+    public static Iterable<Entity> entitiesForRendering() {
+        var level = MinecraftWrapper.getWrapper().getLevel();
+        return level != null ? level.entitiesForRendering() : List.of();
+    }
+
+    // axis aligned box that keeps minecraft types out of callers
+    public static final class Box {
+        public final double minX, minY, minZ, maxX, maxY, maxZ;
+
+        public Box(double minX, double minY, double minZ, double maxX, double maxY, double maxZ) {
+            this.minX = minX;
+            this.minY = minY;
+            this.minZ = minZ;
+            this.maxX = maxX;
+            this.maxY = maxY;
+            this.maxZ = maxZ;
+        }
+
+        public double sizeX() { return maxX - minX; }
+        public double sizeY() { return maxY - minY; }
+        public double sizeZ() { return maxZ - minZ; }
+    }
+
+    public static final class ProjectileHit {
+        public final double x, y, z;
+        public final int segment;
+        public final Box box;
+
+        private ProjectileHit(double x, double y, double z, int segment, Box box) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.segment = segment;
+            this.box = box;
+        }
+    }
+
+    public static boolean canBeHitByProjectile(Entity entity, @Nullable Entity owner) {
+        return entity != owner && entity.isAlive() && entity.isPickable() && entity.canBeHitByProjectile();
+    }
+
+    // first entity crossed by the simulated path, landing point included
+    @Nullable
+    public static ProjectileHit findProjectileHit(@Nullable Object owner, double startX, double startY, double startZ,
+            List<Vector3d> points, boolean hasLanding, double landingX, double landingY, double landingZ,
+            boolean inflateBox, double inflation) {
+        var level = MinecraftWrapper.getWrapper().getLevel();
+        if (level == null) return null;
+
+        List<Vector3d> ends = new ArrayList<>(points.size() + 1);
+        ends.addAll(points);
+        if (hasLanding) ends.add(new Vector3d(landingX, landingY, landingZ));
+        if (ends.isEmpty()) return null;
+
+        AABB bounds = new AABB(startX, startY, startZ, startX, startY, startZ);
+        Vec3 prev = new Vec3(startX, startY, startZ);
+        for (Vector3d end : ends) {
+            Vec3 cur = new Vec3(end.x, end.y, end.z);
+            bounds = bounds.minmax(new AABB(prev, cur));
+            prev = cur;
+        }
+
+        Entity ownerEntity = owner instanceof Entity e ? e : null;
+        Entity bestEntity = null;
+        Vec3 bestHit = null;
+        int bestSegment = -1;
+        double bestDistance = Double.MAX_VALUE;
+
+        for (Entity entity : level.entitiesForRendering()) {
+            if (!canBeHitByProjectile(entity, ownerEntity)) continue;
+            // throwables hit 0.3 blocks early
+            AABB box = inflateBox ? entity.getBoundingBox().inflate(inflation) : entity.getBoundingBox();
+            if (!box.intersects(bounds)) continue;
+
+            prev = new Vec3(startX, startY, startZ);
+            double travelled = 0.0;
+            for (int i = 0; i < ends.size(); i++) {
+                Vec3 cur = new Vec3(ends.get(i).x, ends.get(i).y, ends.get(i).z);
+                Optional<Vec3> hit = box.clip(prev, cur);
+                if (hit.isPresent()) {
+                    double distance = travelled + hit.get().distanceTo(prev);
+                    if (distance < bestDistance) {
+                        bestDistance = distance;
+                        bestEntity = entity;
+                        bestHit = hit.get();
+                        bestSegment = i;
+                    }
+                    break;
+                }
+                travelled += prev.distanceTo(cur);
+                prev = cur;
+            }
+        }
+
+        if (bestEntity == null || bestHit == null) return null;
+        AABB box = bestEntity.getBoundingBox();
+        return new ProjectileHit(bestHit.x, bestHit.y, bestHit.z, bestSegment,
+                new Box(box.minX, box.minY, box.minZ, box.maxX, box.maxY, box.maxZ));
     }
 
 }

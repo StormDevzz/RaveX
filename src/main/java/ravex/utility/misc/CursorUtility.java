@@ -6,6 +6,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 public final class CursorUtility {
     private static long handCursor;
     private static long crosshairCursor;
+    private static long ibeamCursor;
     private static long activeCursor;
 
     private CursorUtility() {}
@@ -18,6 +19,11 @@ public final class CursorUtility {
     public static void setCrosshair() {
         if (crosshairCursor == 0) crosshairCursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_CROSSHAIR_CURSOR);
         apply(crosshairCursor);
+    }
+
+    public static void setIbeam() {
+        if (ibeamCursor == 0) ibeamCursor = GLFW.glfwCreateStandardCursor(GLFW.GLFW_IBEAM_CURSOR);
+        apply(ibeamCursor);
     }
 
     public static void reset() {

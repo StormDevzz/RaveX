@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "calculator.hpp"
 #include <gtk/gtk.h>
 #include <string>
@@ -358,10 +359,13 @@ Java_ravex_modules_client_Calculator_closeCalculator(JNIEnv* env, jclass cls) {
 
 JNIEXPORT jstring JNICALL
 Java_ravex_modules_client_Calculator_nativeEvaluate(JNIEnv* env, jclass cls, jstring expr) {
-    const char* e = env->GetStringUTFChars(expr, nullptr);
-    std::string result = ravex::MathParser::evaluate(std::string(e));
-    env->ReleaseStringUTFChars(expr, e);
-    return env->NewStringUTF(result.c_str());
+    JniStringUtfChars eGuard(env, expr);
+    if (!eGuard) return env->NewStringUTF("");
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    std::string result = ravex::MathParser::evaluate(std::string(eGuard.get()));
+    jstring out = env->NewStringUTF(result.c_str());
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    return out;
 }
 
 }

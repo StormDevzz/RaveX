@@ -1,58 +1,65 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.network.chat.Component;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.ItemStack;
 import ravex.utility.player.InventoryUtility;
 
-import java.util.ArrayList;
-import java.util.List;
 @Module(name = "ToolTips", category = "Render")
 public class ToolTips {
-    @Parameter(name = "ShowShulker")
-    public boolean showShulker = true;
-    @Parameter(name = "ShowFood")
-    public boolean showFood = false;
-    @Parameter(name = "ShowEnchants")
-    public boolean showEnchants = false;
-    @Parameter(name = "MaxLines", min = 2, max = 30, step = 1)
-    public double maxLines = 10;
+    @Parameter(name = "ShulkerReGear")
+    public boolean shulkerRegear = true;
+    @Parameter(name = "MiddleClickOpen")
+    public boolean middleClickOpen = true;
+    @Parameter(name = "ShowMaps")
+    public boolean showMaps = true;
+    @Parameter(name = "ShowBooks")
+    public boolean showBooks = true;
+    @Parameter(name = "ShowStorage")
+    public boolean showStorage = true;
+    @Parameter(name = "ShowId")
+    public boolean showId = false;
     public net.minecraft.world.item.ItemStack lastStack = net.minecraft.world.item.ItemStack.EMPTY;
     public int lastX;
     public int lastY;
 
-    public List<Component> getTooltip(net.minecraft.world.item.ItemStack stack) {
-        List<Component> lines = new ArrayList<>();
-        if (stack.isEmpty()) return lines;
-        int max = (int) maxLines;
-        int count = 0;
-        if (showFood) {
-            var food = InventoryUtility.getFoodProperties(stack);
-            if (food != null) {
-                if (count < max) {
-                    lines.add(Component.literal("§cFood: §f" + food.nutrition() + " hunger, " + String.format("%.1f", food.saturation() * 2.0f) + " sat"));
-                    count++;
-                }
-            }
-        }
-        if (showEnchants) {
-            var ench = InventoryUtility.getEnchantments(stack);
-            if (ench != null && ench.entrySet() != null) {
-                for (var entry : ench.entrySet()) {
-                    if (count >= max) break;
-                    String name = entry.getKey().getRegisteredName().replace("minecraft:", "");
-                    lines.add(Component.literal("§d" + name + " " + entry.getIntValue()));
-                    count++;
-                }
-            }
-        }
-        return lines;
-    }
     public boolean isShulker(net.minecraft.world.item.ItemStack stack) {
-        return InventoryUtility.isShulkerBox(stack) || stack.has(net.minecraft.core.component.DataComponents.CONTAINER);
+        return InventoryUtility.isShulkerBox(stack) || stack.has(DataComponents.CONTAINER);
+    }
+    public boolean hasItems(net.minecraft.world.item.ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return false;
+        var contents = stack.get(DataComponents.CONTAINER);
+        if (contents == null) return false;
+        for (ItemStack item : contents.nonEmptyItems()) {
+            if (!item.isEmpty()) return true;
+        }
+        return false;
+    }
+    public boolean isMap(net.minecraft.world.item.ItemStack stack) {
+        return stack.is(net.minecraft.world.item.Items.FILLED_MAP);
+    }
+    public boolean isBook(net.minecraft.world.item.ItemStack stack) {
+        return stack.is(net.minecraft.world.item.Items.WRITTEN_BOOK) || stack.is(net.minecraft.world.item.Items.WRITABLE_BOOK);
+    }
+    public boolean isBundle(net.minecraft.world.item.ItemStack stack) {
+        return stack.has(net.minecraft.core.component.DataComponents.BUNDLE_CONTENTS);
     }
 
+    public boolean onMouseClicked(AbstractContainerScreen<?> screen, int mouseX, int mouseY, int button) { return false; }
+    public boolean onMiddleClick(AbstractContainerScreen<?> screen, int mouseX, int mouseY) { return false; }
 
+    public static int getBoxColor(net.minecraft.world.item.ItemStack stack) {
+        if (stack.getItem() instanceof net.minecraft.world.item.BlockItem bi && bi.getBlock() instanceof net.minecraft.world.level.block.ShulkerBoxBlock sb && sb.getColor() != null) {
+            int[] dye = {0xFFF0F0F0,0xFFF9801D,0xFFE87DFA,0xFF3AB3DA,0xFFFED83D,0xFF80C71F,0xFFF38BAA,0xFF474F52,0xFF9D9D97,0xFF169C9C,0xFF8932B8,0xFF3C44AA,0xFF835432,0xFF5E7C16,0xFFB02E26,0xFF1D1D21};
+            return dye[sb.getColor().ordinal()];
+        }
+        return 0xFF9C7BB8;
+    }
+    public String idSuffix(net.minecraft.world.item.ItemStack stack) {
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(stack.getItem()).toString();
+    }
 
-
-
+    public void onRenderContainer(AbstractContainerScreen<?> screen, GuiGraphics graphics, int mouseX, int mouseY) { }
 }

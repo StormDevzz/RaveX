@@ -58,6 +58,7 @@ public class MixinFontManager {
         RAVEX_INJECTED_PROVIDERS.clear();
         injectInterFont(sets, RAVEX_INTER, "inter.ttf");
         injectInterFont(sets, RAVEX_INTER_BOLD, "inter_bold.ttf");
+        ravex.RaveX.LOGGER.info("[RaveX/font] registered font sets: {}", sets.keySet());
     }
 
     @Unique

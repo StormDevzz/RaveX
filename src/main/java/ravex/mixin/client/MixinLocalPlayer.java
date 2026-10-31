@@ -21,6 +21,9 @@ import ravex.modules.player.AntiAim;
 import ravex.modules.combat.BowAim;
 import ravex.modules.combat.Quiver;
 import ravex.modules.world.Scaffold;
+import ravex.modules.world.nuker.Nuker;
+import ravex.modules.movement.NoFall;
+import ravex.modules.movement.HighJump;
 import ravex.modules.Modules;
 
 @Mixin(LocalPlayer.class)
@@ -111,6 +114,21 @@ public class MixinLocalPlayer {
             ravexSavedPitch = player.getXRot();
             player.setYRot(ShieldFucker.silentRotation.yaw);
             player.setXRot(ShieldFucker.silentRotation.pitch);
+        } else if (Modules.enabled(NoFall.class) && NoFall.hasSilentRotations()) {
+            ravexSavedYaw = player.getYRot();
+            ravexSavedPitch = player.getXRot();
+            player.setYRot(NoFall.silentRotation.yaw);
+            player.setXRot(NoFall.silentRotation.pitch);
+        } else if (Modules.enabled(HighJump.class) && HighJump.hasSilentRotations()) {
+            ravexSavedYaw = player.getYRot();
+            ravexSavedPitch = player.getXRot();
+            player.setYRot(HighJump.silentRotation.yaw);
+            player.setXRot(HighJump.silentRotation.pitch);
+        } else if (Modules.enabled(Nuker.class) && Nuker.silentRotation.hasRotation) {
+            ravexSavedYaw = player.getYRot();
+            ravexSavedPitch = player.getXRot();
+            player.setYRot(Nuker.silentRotation.yaw);
+            player.setXRot(Nuker.silentRotation.pitch);
         }
         ravexSpoofed = player.getYRot() != preYaw || player.getXRot() != prePitch;
     }

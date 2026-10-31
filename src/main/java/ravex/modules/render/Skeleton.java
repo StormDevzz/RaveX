@@ -13,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
 @Module(name = "Skeleton", category = "Render")
 public class Skeleton {
     @Parameter(name = "Color", color = true)
-    public int color = 0xFFFFFFFF;
+    public int color = 0xFF40A9F8;
     @Parameter(name = "LineWidth", min = 0.5, max = 3.0, step = 0.1)
     public double lineWidth = 1.0;
     @Parameter(name = "ThroughWalls")
@@ -172,11 +172,14 @@ public class Skeleton {
         org.joml.Vector3f legRTip = rotatedLimb(legR, rightLegX, rightLegY, rightLegZ, legLen);
         seg(segments, rightLegX, rightLegY, rightLegZ, legRTip.x, legRTip.y, legRTip.z);
         if (dick) {
-            float tipY = midHipY + 11f * scale;
-            seg(segments, midHipX, midHipY, midHipZ, midHipX, tipY, midHipZ);
-            float ball = 2.2f * scale;
-            seg(segments, midHipX - ball, tipY, midHipZ, midHipX + ball, tipY, midHipZ);
-            seg(segments, midHipX, tipY - ball, midHipZ, midHipX, tipY + ball, midHipZ);
+            // model space forward is -Z, so sign flips
+            float yaw = model.body != null ? model.body.yRot : 0f;
+            float len = 11f * scale;
+            float fx = (float) Math.sin(yaw) * len;
+            float fz = (float) -Math.cos(yaw) * len;
+            float tipX = midHipX + fx;
+            float tipZ = midHipZ + fz;
+            seg(segments, midHipX, midHipY, midHipZ, tipX, midHipY, tipZ);
         }
         collectSegments(entityId, segments, new Matrix4f(poseStack.last().pose()), colorVal, lineWidth, throughWalls, glow);
     }

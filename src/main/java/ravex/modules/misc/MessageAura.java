@@ -1,8 +1,7 @@
 package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.network.chat.Component;
-
+import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "MessageAura", category = "Misc")
@@ -16,18 +15,21 @@ public class MessageAura {
 
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
-        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        if (mc.getPlayer() == null || mc.getLevel() == null || mc.getConnection() == null) return;
+        if (message == null || message.isEmpty()) return;
 
         if (System.currentTimeMillis() - lastMessageTime >= interval * 1000) {
-            mc.getPlayer().displayClientMessage(Component.literal(message), false);
+            // a real packet, other players see it too
+            if (message.startsWith("/")) {
+                NetworkUtility.sendCommand(message.substring(1));
+            } else {
+                NetworkUtility.sendChat(message);
+            }
             lastMessageTime = System.currentTimeMillis();
         }
     }
+
     public void onEnable() {
         lastMessageTime = System.currentTimeMillis();
     }
-
-
-
-
 }

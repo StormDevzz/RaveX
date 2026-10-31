@@ -20,6 +20,11 @@ public abstract class MixinSpeed {
     private static int ssTicks = 0;
     private static boolean ssWasMoving = false;
 
+    // own state, both strafe modes stay independent
+    private static int stStage = 0;
+    private static double stSpeed = 0.2873;
+    private static long stLimitTimer = 0L;
+
     private static float getForward() {
         var mc = MinecraftWrapper.getInstance();
         float f = 0;
@@ -41,10 +46,32 @@ public abstract class MixinSpeed {
     }
 
     private static double getMoveYaw(LocalPlayer player) {
-        if (KillAura.hasSilentRotations()) {
+        if (Modules.enabled(KillAura.class) && KillAura.hasSilentRotations()) {
             return Math.toRadians(KillAura.silentRotation.yaw);
         }
         return Math.toRadians(player.getYRot());
+    }
+
+    private static double getHop(LocalPlayer player, double height) {
+        var jumpBoost = player.getEffect(net.minecraft.world.effect.MobEffects.JUMP_BOOST);
+        if (jumpBoost != null) {
+            height += (jumpBoost.getAmplifier() + 1) * 0.1;
+        }
+        return height;
+    }
+
+    // velocity points along the input direction
+    private static double[] transformStrafe(LocalPlayer player, double speed, float forward, float strafe) {
+        float f = Math.signum(forward);
+        float s = Math.signum(strafe);
+        if (f == 0.0f && s == 0.0f) return new double[]{0.0, 0.0};
+        double yaw = Math.toDegrees(getMoveYaw(player));
+        double angle = 90.0 * s;
+        if (f != 0.0f) angle *= f * 0.5;
+        yaw -= angle;
+        if (f < 0.0f) yaw -= 180.0;
+        double rad = Math.toRadians(yaw);
+        return new double[]{-Math.sin(rad) * speed, Math.cos(rad) * speed};
     }
 
     private static void applySpeedLimit(LocalPlayer player, double limit) {
@@ -87,14 +114,14 @@ public abstract class MixinSpeed {
                 if (forward == 0 && strafe == 0) return;
 
                 double speedVal = baseSpeed * 0.15;
-                double yaw = getMoveYaw(player);
-                double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
+                double[] dir = transformStrafe(player, speedVal, forward, strafe);
+                double velX = dir[0];
+                double velZ = dir[1];
 
                 if (player.onGround()) {
                     player.setDeltaMovement(velX, motion.y, velZ);
                 } else {
-                    double factor = 0.8;
+                    double factor = (Modules.enabled(KillAura.class) && KillAura.hasSilentRotations()) ? 0.35 : 0.8;
                     player.setDeltaMovement(
                         motion.x * factor + velX * (1 - factor),
                         motion.y,
@@ -104,83 +131,144 @@ public abstract class MixinSpeed {
                 applySpeedLimit(player, globalLimit);
             }
             case "Strafe" -> {
+                // speed rebuilt from the distance walked
+                float forward = getForward();
+                float strafe = getStrafe();
+                if (forward == 0 && strafe == 0) {
+                    // crisp stop, packet forced out now
+                    if (stStage > 0) {
+                        player.setDeltaMovement(0.0, player.getDeltaMovement().y, 0.0);
+                        player.hurtMarked = true;
+                    }
+                    stStage = 0;
+                    stSpeed = 0.2873;
+                    return;
+                }
+                if (player.isFallFlying() || player.onClimbable() || player.getVehicle() != null
+                        || player.isShiftKeyDown() || player.isInWater() || player.isInLava()) {
+                    return;
+                }
+
+                double defSpeed = 0.2873;
+                if (PotionUtility.hasSpeed(player)) {
+                    int amp = PotionUtility.getSpeedAmplifier(player);
+                    defSpeed *= 1.0 + 0.2 * (amp + 1);
+                }
+                if (PotionUtility.hasSlowness(player)) {
+                    int amp = PotionUtility.getSlownessAmplifier(player);
+                    defSpeed /= 1.0 + 0.2 * (amp + 1);
+                }
+
+                double distance = Math.sqrt((player.getX() - player.xo) * (player.getX() - player.xo)
+                    + (player.getZ() - player.zo) * (player.getZ() - player.zo));
+
+                if (player.onGround() && stStage >= 3) {
+                    stStage = 0;
+                }
+
+                switch (stStage) {
+                    case 0 -> { // reset: wind up and hop immediately if on ground
+                        stSpeed = 1.18 * defSpeed - 0.01;
+                        if (player.onGround()) {
+                            player.setDeltaMovement(player.getDeltaMovement().x, getHop(player, 0.40123128), player.getDeltaMovement().z);
+                            stSpeed *= Modules.get(Speed.class).strafeSpeed;
+                            stStage = 2;
+                        } else if (player.getDeltaMovement().y > 0.2) {
+                            stSpeed *= Modules.get(Speed.class).strafeSpeed;
+                            stStage = 2;
+                        } else {
+                            stStage = 1;
+                        }
+                    }
+                    case 1 -> { // hop
+                        if (player.onGround()) {
+                            player.setDeltaMovement(player.getDeltaMovement().x, getHop(player, 0.40123128), player.getDeltaMovement().z);
+                            stSpeed *= Modules.get(Speed.class).strafeSpeed;
+                            stStage = 2;
+                        } else if (player.getDeltaMovement().y > 0.2) {
+                            stSpeed *= Modules.get(Speed.class).strafeSpeed;
+                            stStage = 2;
+                        }
+                    }
+                    case 2 -> { // slowdown after the hop, predicted from distance
+                        stSpeed = distance - 0.76 * (distance - defSpeed);
+                        stStage = 3;
+                    }
+                    default -> { // decay, reset on collision
+                        if (!player.level().noCollision(player.getBoundingBox().move(0.0, player.getDeltaMovement().y, 0.0))
+                                || player.verticalCollision || player.onGround()) {
+                            stStage = 0;
+                        }
+                        stSpeed = distance - (distance / 159.0);
+                    }
+                }
+
+                stSpeed = Math.max(stSpeed, defSpeed);
+
+                if (Modules.get(Speed.class).strafeLimit) {
+                    long now = System.currentTimeMillis();
+                    if (now - stLimitTimer > 2500L) {
+                        stLimitTimer = now;
+                    }
+                    stSpeed = Math.min(stSpeed, now - stLimitTimer > 1250L ? 0.44 : 0.43);
+                }
+
+                double[] change = transformStrafe(player, stSpeed, forward, strafe);
+                player.setDeltaMovement(change[0], player.getDeltaMovement().y, change[1]);
+            }
+            case "NCP" -> {
                 float forward = getForward();
                 float strafe = getStrafe();
                 if (forward == 0 && strafe == 0) return;
 
-                double yaw = getMoveYaw(player);
-                double inputX = -Math.sin(yaw) * forward + Math.cos(yaw) * strafe;
-                double inputZ = Math.cos(yaw) * forward + Math.sin(yaw) * strafe;
-                double inputLen = Math.sqrt(inputX * inputX + inputZ * inputZ);
-                if (inputLen < 1.0E-4) return;
-                inputX /= inputLen;
-                inputZ /= inputLen;
-
-                double currentHorizontal = Math.sqrt(motion.x * motion.x + motion.z * motion.z);
-                double target = baseSpeed * (player.onGround() ? 0.16 : 0.12);
-                double sharp = Math.max(currentHorizontal, target);
-
-                player.setDeltaMovement(inputX * sharp, motion.y, inputZ * sharp);
-                applySpeedLimit(player, globalLimit);
-            }
-            case "NCP" -> {
                 if (player.onGround()) {
-                    float forward = getForward();
-                    float strafe = getStrafe();
-                    if (forward == 0 && strafe == 0) return;
-
                     double speedVal = baseSpeed * 0.10;
-                    double yaw = getMoveYaw(player);
-                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
-
-                    player.setDeltaMovement(velX, motion.y, velZ);
+                    double[] dir = transformStrafe(player, speedVal, forward, strafe);
+                    player.setDeltaMovement(dir[0], motion.y, dir[1]);
                     if (isJumping()) {
                         player.setDeltaMovement(player.getDeltaMovement().x, Modules.get(Speed.class).ncpJump, player.getDeltaMovement().z);
                     }
+                } else if (Modules.enabled(KillAura.class) && KillAura.hasSilentRotations()) {
+                    double horiz = Math.hypot(motion.x, motion.z);
+                    double boost = player.getDeltaMovement().y < 0 ? baseSpeed * 0.03 : 0.0;
+                    double targetSpd = Math.max(horiz * 0.96 + boost, 0.24);
+                    double[] dir = transformStrafe(player, targetSpd, forward, strafe);
+                    player.setDeltaMovement(dir[0], motion.y, dir[1]);
                 } else if (player.getDeltaMovement().y < 0) {
                     double speedVal = baseSpeed * 0.06;
-                    float forward = getForward();
-                    float strafe = getStrafe();
-                    double yaw = getMoveYaw(player);
-                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
-
+                    double[] dir = transformStrafe(player, speedVal, forward, strafe);
                     player.setDeltaMovement(
-                        motion.x * 0.91 + velX * 0.5,
+                        motion.x * 0.91 + dir[0] * 0.5,
                         motion.y,
-                        motion.z * 0.91 + velZ * 0.5
+                        motion.z * 0.91 + dir[1] * 0.5
                     );
                 }
                 applySpeedLimit(player, globalLimit);
             }
             case "NCPStrict" -> {
+                float forward = getForward();
+                float strafe = getStrafe();
+                if (forward == 0 && strafe == 0) return;
+
                 if (player.onGround()) {
-                    float forward = getForward();
-                    float strafe = getStrafe();
-                    if (forward == 0 && strafe == 0) return;
-
                     double speedVal = baseSpeed * 0.08;
-                    double yaw = getMoveYaw(player);
-                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
-
-                    player.setDeltaMovement(velX, motion.y, velZ);
+                    double[] dir = transformStrafe(player, speedVal, forward, strafe);
+                    player.setDeltaMovement(dir[0], motion.y, dir[1]);
                     if (isJumping()) {
                         player.setDeltaMovement(player.getDeltaMovement().x, Modules.get(Speed.class).strictJump, player.getDeltaMovement().z);
                     }
+                } else if (Modules.enabled(KillAura.class) && KillAura.hasSilentRotations()) {
+                    double horiz = Math.hypot(motion.x, motion.z);
+                    double targetSpd = Math.max(horiz * 0.96, 0.20);
+                    double[] dir = transformStrafe(player, targetSpd, forward, strafe);
+                    player.setDeltaMovement(dir[0], motion.y, dir[1]);
                 } else if (player.getDeltaMovement().y < 0) {
                     double speedVal = baseSpeed * 0.04;
-                    float forward = getForward();
-                    float strafe = getStrafe();
-                    double yaw = getMoveYaw(player);
-                    double velX = (-Math.sin(yaw) * forward + Math.cos(yaw) * strafe) * speedVal;
-                    double velZ = (Math.cos(yaw) * forward + Math.sin(yaw) * strafe) * speedVal;
-
+                    double[] dir = transformStrafe(player, speedVal, forward, strafe);
                     player.setDeltaMovement(
-                        motion.x * 0.91 + velX * 0.3,
+                        motion.x * 0.91 + dir[0] * 0.3,
                         motion.y,
-                        motion.z * 0.91 + velZ * 0.3
+                        motion.z * 0.91 + dir[1] * 0.3
                     );
                 }
                 applySpeedLimit(player, Math.min(globalLimit, 0.22));

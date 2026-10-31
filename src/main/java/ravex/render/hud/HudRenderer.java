@@ -266,7 +266,7 @@ public final class HudRenderer {
                             String displayName = livingTarget.getDisplayName().getString();
                             int health = (int) Math.ceil(livingTarget.getHealth());
                             int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
-                            String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
+                            String tagText = displayName + " " + healthColor(health, maxHealth) + health + "§7/" + healthColor(health, maxHealth) + maxHealth;
                             tw = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.getFont().width(tagText);
                             showArmor = ModuleManager.get(NameTags.class).armor;
                             showHands = ModuleManager.get(NameTags.class).handItems;
@@ -421,7 +421,7 @@ public final class HudRenderer {
                 String displayName = livingTarget.getDisplayName().getString();
                 int health = (int) Math.ceil(livingTarget.getHealth());
                 int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
-                String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
+                String tagText = displayName + " " + healthColor(health, maxHealth) + health + "§7/" + healthColor(health, maxHealth) + maxHealth;
                 double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.getFont().width(tagText)) : 0.0;
                 double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.getFont().width("Owner: " + ownerName)) : 0.0;
 
@@ -474,7 +474,19 @@ public final class HudRenderer {
             : ModuleManager.get(ESP.class).frameColor)));
 
         if ("Box2D".equals(mode)) {
-            Render2DUtility.drawBorder(context, boxX, y, boxW, boxH, 1, espColor);
+            int w = Math.max(1, (int) ModuleManager.get(ESP.class).boxWidth);
+            int bx = boxX, by = y, bw = boxW, bh = boxH;
+            if (ModuleManager.get(ESP.class).distScale && mc.getPlayer() != null) {
+                double dist = mc.getPlayer().position().distanceTo(target.position());
+                float k = (float) (1.0 + dist / 64.0);
+                int cx = bx + bw / 2;
+                int cy = by + bh / 2;
+                bw = Math.max(2, Math.round(bw * k));
+                bh = Math.max(2, Math.round(bh * k));
+                bx = cx - bw / 2;
+                by = cy - bh / 2;
+            }
+            Render2DUtility.drawBorder(context, bx, by, bw, bh, w, espColor);
         }
     }
 
@@ -483,7 +495,7 @@ public final class HudRenderer {
         String displayName = livingTarget.getDisplayName().getString();
         int health = (int) Math.ceil(livingTarget.getHealth());
         int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
-        String tagText = displayName + " §a" + health + "§7/§a" + maxHealth;
+        String tagText = displayName + " " + healthColor(health, maxHealth) + health + "§7/" + healthColor(health, maxHealth) + maxHealth;
         double tw = drawNametags ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.getFont().width(tagText)) : 0.0;
         double ow = hasOwner ? (ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.getFont().width("Owner: " + ownerName)) : 0.0;
         boolean showArmor = drawNametags && ModuleManager.get(NameTags.class).armor;
@@ -730,8 +742,7 @@ public final class HudRenderer {
             }
         }
 
-        AutoCrystal acModule = Modules.get(AutoCrystal.class);
-        boolean rotActive = Modules.enabled(AutoCrystal.class) && acModule.visualRotate && AutoCrystal.currentRotationTarget != null;
+        boolean rotActive = Modules.enabled(AutoCrystal.class) && AutoCrystal.currentRotationTarget != null;
         if (rotActive) {
             Vec3 target = AutoCrystal.currentRotationTarget;
             if (rotAlpha <= 0.01f) {
@@ -760,9 +771,9 @@ public final class HudRenderer {
         }
 
         PVEUtils asm = Modules.get(PVEUtils.class);
-        if (Modules.enabled(PVEUtils.class) && asm.mode.equals("AutoSmelt") && asm.smeltRender && PVEUtils.smeltTarget != null) {
-            BlockPos p = PVEUtils.smeltTarget;
-            Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
+        BlockPos smeltPos = ravex.utility.player.ContainerUtility.getSmeltTarget();
+        if (Modules.enabled(PVEUtils.class) && asm.mode.equals("AutoSmelt") && asm.smeltRender && smeltPos != null) {
+            Vec3 pos3d = new Vec3(smeltPos.getX() + 0.5, smeltPos.getY() + 1.5, smeltPos.getZ() + 0.5);
             Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
             if (proj != null) {
                 Vec3 dir = pos3d.subtract(cameraPos).normalize();
@@ -785,7 +796,7 @@ public final class HudRenderer {
         }
 
         if (Modules.enabled(PVEUtils.class) && asm.mode.equals("AutoBrew") && asm.brewRender) {
-            BlockPos p = PVEUtils.getBrewTarget();
+            BlockPos p = ravex.utility.player.ContainerUtility.getBrewTarget();
             if (p != null) {
                 Vec3 pos3d = new Vec3(p.getX() + 0.5, p.getY() + 1.5, p.getZ() + 0.5);
                 Vec3 proj = mc.getGameRenderer().projectPointToScreen(pos3d);
@@ -931,7 +942,16 @@ public final class HudRenderer {
         }
     }
 
+    // green healthy, yellow hurt, red low
+    private static String healthColor(int health, int maxHealth) {
+        if (maxHealth <= 0) return "§a";
+        float ratio = health / (float) maxHealth;
+        if (ratio > 0.6f) return "§a";
+        if (ratio > 0.3f) return "§e";
+        return "§c";
+    }
     private void renderHud(GuiGraphics context, DeltaTracker tickCounter) {
+        ravex.utility.render.KawaseBlur.onFrameStart();
         List<Module> hudModules = ModuleManager.INSTANCE.getHudModules();
         GuiOptimizerUtility.optimizeHudAnimations(hudModules);
 
@@ -953,7 +973,7 @@ public final class HudRenderer {
 
         for (Module hud : hudModules) {
             float animProgress = hud.getHudAnimProgress();
-            if (!hud.getEnabled() && animProgress < 0.005f) continue;
+            if (!hud.getEnabled() && animProgress < 0.02f) continue;
 
             float userScale = hud.getUserScale();
             float entryScale = hud.getHudScale();

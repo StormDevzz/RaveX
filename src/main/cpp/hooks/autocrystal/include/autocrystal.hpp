@@ -63,6 +63,7 @@ struct AutoCrystalConfig {
     double breakWallRange   = 3.5;
     double minTargetDamage  = 4.0;
     double maxSelfDamage    = 8.0;
+    double antiSuicideMinHealth = 4.0;
     double selfDamageWeight = 1.2;
     double placeDelay       = 100.0;
     double breakDelay       = 50.0;

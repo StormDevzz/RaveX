@@ -7,6 +7,7 @@ import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
 import ravex.modules.client.ClickGui;
+import ravex.gui.clickgui.ParameterElement;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.TextureLoaderUtility;
@@ -23,6 +24,7 @@ import java.util.Set;
 public class HudPanel {
     public static final int PANEL_W = 130;
     public static final int HEADER_H = 18;
+    private final Map<Module, Long> shakeStartNs = new HashMap<>();
     private int panelX;
     private int panelY;
     private boolean panelDragging;
@@ -33,17 +35,27 @@ public class HudPanel {
     private float renderY;
     private float rotation;
     private float lastRenderX;
+    // drag follow and tilt run on springs
+    private final AnimationUtility.SpringAnimation posSpringX = new AnimationUtility.SpringAnimation(0f);
+    private final AnimationUtility.SpringAnimation posSpringY = new AnimationUtility.SpringAnimation(0f);
+    private final AnimationUtility.SpringAnimation rotSpring = new AnimationUtility.SpringAnimation(0f);
+    private long lastAnimNanos = System.nanoTime();
     private long lastGearTick = System.currentTimeMillis();
     private long lastExpandNanos = System.nanoTime();
     private final Set<Module> expandedModules = new HashSet<>();
     private final Map<Module, Float> expandAnimMap = new HashMap<>();
     private final List<HudModuleEntry> entries = new ArrayList<>();
+    // the entry under the cursor, the description panel follows it
+    private Module hoveredModule = null;
+    private int lastPanelHeight = 0;
 
     public HudPanel() {
         panelX = -1;
         panelY = 10;
         renderX = panelX;
         renderY = panelY;
+        posSpringX.setValue(renderX);
+        posSpringY.setValue(renderY);
         rebuildEntries();
     }
 
@@ -61,6 +73,8 @@ public class HudPanel {
         if (panelX < 0) {
             panelX = (screenWidth - PANEL_W) / 2;
             renderX = panelX;
+            posSpringX.setValue(renderX);
+            posSpringY.setValue(renderY);
         }
     }
 
@@ -74,7 +88,8 @@ public class HudPanel {
     }
 
     public boolean isPanelDragging() { return panelDragging; }
-    public int getDragOffX() { return panelDragOffX; }
+    public Module getHoveredModule() { return hoveredModule; }
+    public int getPanelHeight() { return lastPanelHeight; }    public int getDragOffX() { return panelDragOffX; }
     public int getDragOffY() { return panelDragOffY; }
 
     public void dragTo(int mx, int my, int screenW, int screenH) {
@@ -128,19 +143,20 @@ public class HudPanel {
         if (targetY + ph > screenH) targetY = screenH - ph - 4;
         if (targetY < 0) targetY = 4;
 
-        double dragLerp = 0.12;
-        float dragFactor = (float) Math.min(1.0, dragLerp * 0.85);
+        long animNanos = System.nanoTime();
+        float animDt = Math.min(50f, (animNanos - lastAnimNanos) / 1_000_000f);
+        lastAnimNanos = animNanos;
 
-        if (Math.abs(targetX - renderX) > 0.05f) {
-            renderX += (targetX - renderX) * dragFactor;
-        } else {
-            renderX = targetX;
-        }
-        if (Math.abs(targetY - renderY) > 0.05f) {
-            renderY += (targetY - renderY) * dragFactor;
-        } else {
-            renderY = targetY;
-        }
+        // critically damped follow, the panel settles without a snap
+        float followStiffness = 220f;
+        posSpringX.stiffness(followStiffness).damping(2f * (float) Math.sqrt(followStiffness)).mass(1f);
+        posSpringY.stiffness(followStiffness).damping(2f * (float) Math.sqrt(followStiffness)).mass(1f);
+        posSpringX.setTarget(targetX);
+        posSpringY.setTarget(targetY);
+        posSpringX.update(animDt);
+        posSpringY.update(animDt);
+        renderX = posSpringX.getValue();
+        renderY = posSpringY.getValue();
 
         float deltaX = renderX - lastRenderX;
         float rotTargetDeg;
@@ -151,15 +167,20 @@ public class HudPanel {
         } else {
             rotTargetDeg = 0;
         }
-        float rotSpeed = panelDragging ? 0.92f : 0.85f;
+        // the tilt follows on a spring too
+        float rotSpeed = panelDragging ? 150f : 110f;
         float rotTargetRad = rotTargetDeg * 0.017453292f;
-        rotation = rotation * (1f - rotSpeed) + rotTargetRad * rotSpeed;
+        rotSpring.stiffness(rotSpeed).damping(2f * (float) Math.sqrt(rotSpeed)).mass(1f);
+        rotSpring.setTarget(rotTargetRad);
+        rotSpring.update(animDt);
+        rotation = rotSpring.getValue();
         if (!panelDragging && Math.abs(rotation) < 0.0002f) {
             rotation = 0;
         }
         lastRenderX = renderX;
         int px = Math.round(renderX);
         int py = Math.round(renderY);
+        lastPanelHeight = ph;
         int centerX = px + pw / 2;
         int centerY = py + ph / 2;
         float animAlpha = alpha / 255f;
@@ -203,8 +224,8 @@ public class HudPanel {
         Render2DUtility.drawRound(g, px, py, pw, ph, cornerRadius, bodyColor);
 
         if (ModuleManager.get(ClickGui.class).outlines) {
-            int borderColor = ColorUtility.withAlpha(ModuleManager.get(ClickGui.class).outlineColor, (int) (255 * animAlpha));
-            Render2DUtility.drawRoundBorder(g, px, py, pw, ph, cornerRadius, 1, borderColor);
+            int borderColor = ColorUtility.applyAlpha(ModuleManager.get(ClickGui.class).outlineColor, animAlpha);
+            Render2DUtility.drawSmoothRoundOutline(g, px, py, pw, ph, cornerRadius, 1, borderColor);
         }
 
         boolean headerHov = mx >= px && mx <= px + pw && my >= py && my <= py + headerH;
@@ -239,6 +260,7 @@ public class HudPanel {
 
         int cy = py + headerH + 2;
         int drawn = 0;
+        hoveredModule = null;
         int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
         long nowNanos = System.nanoTime();
         float expandDt = Math.min(0.05f, (nowNanos - lastExpandNanos) / 1_000_000_000f);
@@ -248,6 +270,7 @@ public class HudPanel {
             HudModuleEntry entry = entries.get(i);
             Module hud = entry.getModule();
             boolean hovered = mx >= px + 2 && mx <= px + pw - 2 && my >= cy && my <= cy + btnH;
+            if (hovered) hoveredModule = hud;
             boolean enabled = hud.getEnabled();
             boolean expanded = expandedModules.contains(hud);
             float expandAnim = expandAnimMap.getOrDefault(hud, 0f);
@@ -259,16 +282,16 @@ public class HudPanel {
             }
             if (Math.abs(targetExpand - expandAnim) < 0.004f) expandAnim = targetExpand;
             expandAnimMap.put(hud, expandAnim);
-            entry.render(g, px + 2, cy, pw - 4, hovered, enabled, alpha, accentColor, mx, my, expanded, expandAnim);
+            entry.render(g, px + 2 + Math.round(shakeOf(hud)), cy, pw - 4, hovered, enabled, alpha, accentColor, mx, my, expanded, expandAnim);
             cy += rowH;
             drawn++;
             if (expandAnim > 0.005f) {
                 int totalParamH = 0;
                 int rowCount = 0;
-                List<HudParameterEntry> params = entry.getParamEntries();
-                for (HudParameterEntry pe : params) {
-                    pe.update(expanded);
-                    if (!pe.getParam().isVisible()) continue;
+                List<ParameterElement> params = entry.getParamEntries();
+                for (ParameterElement pe : params) {
+                    pe.updateAnimations();
+                    if (!pe.getParameter().isVisible()) continue;
                     int ph2 = pe.getHeight();
                     if (ph2 <= 0) continue;
                     totalParamH += ph2;
@@ -277,38 +300,37 @@ public class HudPanel {
                 float easedExpand = AnimationUtility.Easing.QUINT_OUT.apply(expandAnim);
                 int actualH = (int) (totalParamH * easedExpand);
                 if (actualH > 0) {
-                    int paramX = px + 4;
+                    // the parameter block sits inside the row, same offsets as the click gui
+                    int paramX = px + 5;
                     int paramY = cy;
-                    int panelW2 = pw - 8;
-                    int bgAlpha = (int) (Math.max(Math.min(pAlpha, 255) / 2, 40) * easedExpand * animAlpha);
-                    if (bgAlpha > 0) {
-                        Render2DUtility.drawRound(g, paramX, paramY, panelW2, actualH, 6,
-                            ColorUtility.withAlpha(0x0A0A14, bgAlpha));
+                    int paramW = pw - 10;
+                    int btnAlpha = (int) ModuleManager.get(ClickGui.class).buttonOpacity;
+                    int btnRadius = Math.min((int) ModuleManager.get(ClickGui.class).cornerRadius, btnH / 2);
+                    int bgAlpha = (int) (Math.max(btnAlpha / 2, 24) * animAlpha);
+                    Render2DUtility.drawRound(g, paramX, paramY, paramW, actualH,
+                        Math.max(4, btnRadius - 2), ColorUtility.withAlpha(0x0A0A14, bgAlpha));
+
+                    int accentH = (int) (actualH * AnimationUtility.Easing.CUBIC_OUT.apply(expandAnim));
+                    if (accentH > 1) {
+                        int barColor = ColorUtility.withAlpha(accentColor, (int) (expandAnim * 150 * animAlpha));
+                        Render2DUtility.drawRound(g, paramX + 2, paramY + 1, 2, accentH, 1, barColor);
                     }
-                    int wipeW = (int) (panelW2 * easedExpand);
-                    if (wipeW > 2) {
-                        int lineAlpha = (int) (220f * easedExpand * animAlpha);
-                        Render2DUtility.drawRound(g, paramX, paramY, wipeW, 2, 1,
-                            ColorUtility.withAlpha(accentColor, lineAlpha));
-                    }
+
                     float lastDelay = rowCount > 1 ? (rowCount - 1) * 0.06f : 0f;
                     float delayScale = lastDelay > 0.9f ? 0.9f / lastDelay : 1f;
                     float rowSpan = Math.max(0.1f, 1f - lastDelay * delayScale);
-                    Render2DUtility.pushScissor(g, paramX, paramY, panelW2, actualH);
+                    Render2DUtility.pushScissor(g, paramX, paramY, paramW, actualH);
                     int pcy = paramY;
                     int rowIdx = 0;
-                    for (HudParameterEntry pe : params) {
-                        if (!pe.getParam().isVisible()) continue;
+                    for (ParameterElement pe : params) {
+                        if (!pe.getParameter().isVisible()) continue;
                         int ph2 = pe.getHeight();
                         if (ph2 <= 0) continue;
                         float delay = rowIdx * 0.06f * delayScale;
                         float rowT = AnimationUtility.clamp((expandAnim - delay) / rowSpan, 0f, 1f);
                         float rowEased = AnimationUtility.Easing.QUINT_OUT.apply(rowT);
-                        int rowAlpha = (int) (alpha * rowEased);
-                        if (rowAlpha > 0) {
-                            int slide = (int) ((1f - rowEased) * 6f);
-                            pe.render(g, paramX, pcy + slide, panelW2, rowAlpha, accentColor, mx, my);
-                        }
+                        int slide = (int) ((1f - rowEased) * 6f);
+                        pe.render(g, paramX + 2, pcy + slide, paramW, ph2, mx, my);
                         pcy += ph2;
                         rowIdx++;
                     }
@@ -344,8 +366,8 @@ public class HudPanel {
             float anim = expandAnimMap.getOrDefault(m, 0f);
             if (anim > 0.01f) {
                 int totalParamH = 0;
-                for (HudParameterEntry pe : entry.getParamEntries()) {
-                    if (!pe.getParam().isVisible()) continue;
+                for (ParameterElement pe : entry.getParamEntries()) {
+                    if (!pe.getParameter().isVisible()) continue;
                     totalParamH += pe.getHeight();
                 }
                 h += (int) (totalParamH * AnimationUtility.Easing.QUINT_OUT.apply(anim));
@@ -380,7 +402,12 @@ public class HudPanel {
                         return true;
                     }
                     if (btn == 1) {
-                        toggleExpanded(hud);
+                        if (hud.getParameters().isEmpty()) {
+                            ravex.utility.sound.SoundUtility.playNoSettings();
+                            shakeStartNs.put(hud, System.nanoTime());
+                        } else {
+                            toggleExpanded(hud);
+                        }
                         return true;
                     }
                     return true;
@@ -388,12 +415,12 @@ public class HudPanel {
                 cy += rowH;
                 boolean expanded = expandedModules.contains(hud);
                 if (expanded) {
-                    for (HudParameterEntry pe : entry.getParamEntries()) {
-                        if (!pe.getParam().isVisible()) continue;
+                    for (ParameterElement pe : entry.getParamEntries()) {
+                        if (!pe.getParameter().isVisible()) continue;
                         int ph = pe.getHeight();
                         if (ph <= 0) continue;
                         if (my >= cy && my <= cy + ph) {
-                            if (pe.mouseClicked(mx, my, px + 4, cy, pw - 8, btn)) {
+                            if (pe.mouseClicked(mx, my, btn, px + 7, cy, pw - 10, ph)) {
                                 return true;
                             }
                         }
@@ -408,5 +435,17 @@ public class HudPanel {
 
     public void mouseReleased() {
         panelDragging = false;
+    }
+
+    // wobble for a right click with no settings
+    private float shakeOf(Module m) {
+        Long start = shakeStartNs.get(m);
+        if (start == null) return 0f;
+        float t = (System.nanoTime() - start) / 240_000_000f;
+        if (t >= 1f) {
+            shakeStartNs.remove(m);
+            return 0f;
+        }
+        return (float) Math.sin(t * Math.PI * 6.0) * 3.5f * (1f - t);
     }
 }

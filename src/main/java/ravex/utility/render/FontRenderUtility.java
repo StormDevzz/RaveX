@@ -39,8 +39,13 @@ public class FontRenderUtility {
         SF_MEDIUM, SF_BOLD, COMFORTAA, INTER, INTER_BOLD, VANILLA
     }
 
+    // the size follows the module, a disabled module keeps vanilla
+    private static double activeFontSize() {
+        if (!ravex.modules.Modules.enabled(ravex.modules.client.Fonts.class)) return 1.0;
+        return ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
+    }
     public static FontType getCurrentFontType() {
-        if (!ModuleManager.get(ravex.modules.client.Fonts.class).p_enabled) {
+        if (!ravex.modules.Modules.enabled(ravex.modules.client.Fonts.class)) {
             return FontType.VANILLA;
         }
         String font = ModuleManager.get(ravex.modules.client.Fonts.class).fontType;
@@ -58,7 +63,7 @@ public class FontRenderUtility {
         if (text == null) return Component.empty();
 
         FontType actualType = fontType;
-        boolean customFontActive = ModuleManager.get(ravex.modules.client.Fonts.class).p_enabled;
+        boolean customFontActive = ravex.modules.Modules.enabled(ravex.modules.client.Fonts.class);
 
         if (actualType != FontType.VANILLA && !customFontActive) {
             actualType = FontType.VANILLA;
@@ -112,16 +117,12 @@ public class FontRenderUtility {
     }
 
     private static Component applyFont(Component component, FontDescription desc) {
+        // chat components carry minecraft:default, replace that font
         if (component.getSiblings().isEmpty()) {
-            if (component.getStyle().getFont() != null) return component;
             return component.copy().withStyle(component.getStyle().withFont(desc));
         }
-        net.minecraft.network.chat.MutableComponent result;
-        if (component.getStyle().getFont() == null) {
-            result = component.copy().withStyle(component.getStyle().withFont(desc));
-        } else {
-            result = component.copy();
-        }
+        net.minecraft.network.chat.MutableComponent result =
+            component.copy().withStyle(component.getStyle().withFont(desc));
         result.getSiblings().clear();
         for (Component sib : component.getSiblings()) {
             result.append(applyFont(sib, desc));
@@ -134,7 +135,7 @@ public class FontRenderUtility {
     }
 
     public static void drawString(GuiGraphics graphics, FontType fontType, String text, int x, int y, int color, boolean shadow) {
-        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
+        double scale = activeFontSize();
         Component component = getFontComponent(fontType, text);
 
         if (!renderOnce) {
@@ -170,7 +171,7 @@ public class FontRenderUtility {
     }
 
     public static FitText fitText(FontType fontType, String text, int maxWidth) {
-        double base = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
+        double base = activeFontSize();
         float baseScale = (float) base;
         if (text == null) text = "";
         var font = MinecraftWrapper.getWrapper().getFont();
@@ -192,7 +193,7 @@ public class FontRenderUtility {
     }
 
     public static void drawScaled(GuiGraphics graphics, FontType fontType, String text, int x, int y, float scale, int color, boolean shadow) {
-        double base = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
+        double base = activeFontSize();
         Component component = getFontComponent(fontType, text);
         var font = MinecraftWrapper.getWrapper().getFont();
         if (Math.abs(scale - base) < 0.001) {
@@ -212,12 +213,12 @@ public class FontRenderUtility {
     }
 
     public static int getStringWidth(FontType fontType, String text) {
-        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
+        double scale = activeFontSize();
         return (int) (MinecraftWrapper.getWrapper().getFont().width(getFontComponent(fontType, text)) * scale);
     }
 
     public static int getFontHeight() {
-        double scale = ModuleManager.get(ravex.modules.client.Fonts.class).fontSize;
+        double scale = activeFontSize();
         return (int) (MinecraftWrapper.getWrapper().getFont().lineHeight * scale);
     }
 }

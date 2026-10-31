@@ -1,30 +1,12 @@
 package ravex.modules.world;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.EntityUtility;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.player.ContainerUtility;
 import ravex.utility.player.InventoryUtility;
-import net.minecraft.client.gui.screens.inventory.BlastFurnaceScreen;
-import net.minecraft.client.gui.screens.inventory.BrewingStandScreen;
-import net.minecraft.client.gui.screens.inventory.FurnaceScreen;
-import net.minecraft.client.gui.screens.inventory.SmokerScreen;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.world.entity.animal.equine.Llama;
-import net.minecraft.world.entity.animal.feline.Cat;
-import net.minecraft.world.entity.animal.wolf.Wolf;
-import net.minecraft.world.inventory.AbstractFurnaceMenu;
-import net.minecraft.world.inventory.BrewingStandMenu;
-import net.minecraft.world.level.block.AbstractFurnaceBlock;
-import net.minecraft.world.level.block.BrewingStandBlock;
-import net.minecraft.world.phys.AABB;
-import java.util.List;
-import ravex.mcwrapper.MinecraftWrapper;
-import org.jetbrains.annotations.Nullable;
-
-
-
-
 
 @Module(name = "PVEUtils", category = "World")
 public class PVEUtils {
@@ -52,9 +34,6 @@ public class PVEUtils {
     public double lightDelay = 500;
     @Parameter(name = "SilentSwap")
     public boolean silent = true;
-    public static net.minecraft.core.BlockPos smeltTarget = null;
-    private static int brewTargetX, brewTargetY, brewTargetZ;
-    private static boolean hasBrewTarget;
     private long lastLightPlace = 0;
     public void onTick() {
         switch (mode) {
@@ -67,91 +46,47 @@ public class PVEUtils {
     private void tickSmelt() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
-        if (!(mc.getCurrentScreen() instanceof FurnaceScreen)
-            && !(mc.getCurrentScreen() instanceof BlastFurnaceScreen)
-            && !(mc.getCurrentScreen() instanceof SmokerScreen)) {
-            smeltTarget = null;
+        if (!ContainerUtility.isFurnaceScreenOpen()) {
+            ContainerUtility.clearSmeltTarget();
             return;
         }
-        if (smeltTarget == null) {
-            if (mc.getHitResult() != null && mc.getHitResult().getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-                net.minecraft.core.BlockPos pos = ((net.minecraft.world.phys.BlockHitResult) mc.getHitResult()).getBlockPos();
-                net.minecraft.world.level.block.state.BlockState st = mc.getLevel().getBlockState(pos);
-                if (st.getBlock() instanceof AbstractFurnaceBlock) {
-                    smeltTarget = pos;
-                }
-            }
-        }
-        if (!(mc.getPlayer().containerMenu instanceof AbstractFurnaceMenu furnace)) {
-            smeltTarget = null;
+        ContainerUtility.rememberSmeltTarget();
+        if (!ContainerUtility.isFurnaceMenuOpen()) {
+            ContainerUtility.clearSmeltTarget();
             return;
         }
-        int containerId = furnace.containerId;
-        int playerInvStart = 3;
-        int hotbarStart = playerInvStart + 27;
-        if (furnace.getSlot(2).hasItem()) {
-            mc.getGameMode().handleInventoryMouseClick(containerId, 2, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-            return;
-        }
-        if (furnace.getBurnProgress() > 0.01f) return;
-        if (!furnace.getSlot(0).hasItem()) {
-            for (int i = playerInvStart; i < furnace.slots.size(); i++) {
-                var stack = furnace.slots.get(i).getItem();
-                if (stack.isEmpty()) continue;
-                if (furnace.canSmelt(stack)) {
-                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-                    return;
-                }
-            }
-            for (int i = hotbarStart; i < furnace.slots.size(); i++) {
-                var stack = furnace.slots.get(i).getItem();
-                if (stack.isEmpty()) continue;
-                if (furnace.canSmelt(stack)) {
-                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-                    return;
-                }
-            }
-        }
-        if (autoFuel && !furnace.getSlot(1).hasItem()) {
-            for (int i = playerInvStart; i < furnace.slots.size(); i++) {
-                var stack = furnace.slots.get(i).getItem();
-                if (stack.isEmpty()) continue;
-                if (furnace.isFuel(stack)) {
-                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-                    return;
-                }
-            }
-        }
+        if (ContainerUtility.takeFurnaceOutput()) return;
+        if (ContainerUtility.furnaceBurnProgress() > 0.01f) return;
+        if (ContainerUtility.putSmeltInput()) return;
+        if (autoFuel && ContainerUtility.putFurnaceFuel()) return;
     }
     private void tickTame() {
         var mc = MinecraftWrapper.getWrapper();
-        net.minecraft.client.player.LocalPlayer p = mc.getPlayer();
-        if (p == null || mc.getLevel() == null) return;
+        var p = mc.getPlayer();
+        if (p == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         double r = range;
-        AABB box = p.getBoundingBox().inflate(r);
-        List<net.minecraft.world.entity.Entity> entities = mc.getLevel().getEntities(p, box, e -> isTameTarget(e) && e.isAlive());
-        for (net.minecraft.world.entity.Entity e : entities) {
+        for (var e : mc.getLevel().entitiesForRendering()) {
+            if (!e.isAlive()) continue;
+            boolean tameable = switch (tameAnimal) {
+                case "Wolf" -> EntityUtility.isWolf(e);
+                case "Cat" -> EntityUtility.isCat(e);
+                case "Llama" -> EntityUtility.isLlama(e);
+                default -> false;
+            };
+            if (!tameable || p.distanceToSqr(e) > r * r) continue;
             var target = EntityUtility.asLivingEntity(e);
-            if (!p.getItemInHand(net.minecraft.world.InteractionHand.MAIN_HAND).isEmpty()) {
-                mc.getGameMode().interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
+            if (!InventoryUtility.getMainHand(p).isEmpty()) {
+                EntityUtility.interact(mc, target);
                 break;
             } else if (autoSwitch) {
                 int slot = findTameItem();
                 if (slot != -1) {
                     InventoryUtility.selectSlot(p, slot);
-                    mc.getGameMode().interact(p, target, net.minecraft.world.InteractionHand.MAIN_HAND);
+                    EntityUtility.interact(mc, target);
                     break;
                 }
             }
         }
-    }
-    private boolean isTameTarget(net.minecraft.world.entity.Entity e) {
-        return switch (tameAnimal) {
-            case "Wolf" -> e instanceof Wolf;
-            case "Cat" -> e instanceof Cat;
-            case "Llama" -> e instanceof Llama;
-            default -> false;
-        };
     }
     private int findTameItem() {
         var mc = MinecraftWrapper.getWrapper();
@@ -173,89 +108,20 @@ public class PVEUtils {
     private void tickBrew() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
-        if (!(mc.getCurrentScreen() instanceof BrewingStandScreen)) {
-            hasBrewTarget = false;
+        if (!ContainerUtility.isBrewingStandOpen()) {
+            ContainerUtility.clearBrewTarget();
             return;
         }
-        if (!hasBrewTarget) {
-            if (mc.getHitResult() != null && mc.getHitResult().getType() == net.minecraft.world.phys.HitResult.Type.BLOCK) {
-                var pos = ((net.minecraft.world.phys.BlockHitResult) mc.getHitResult()).getBlockPos();
-                var st = mc.getLevel().getBlockState(pos);
-                if (st.getBlock() instanceof BrewingStandBlock) {
-                    brewTargetX = pos.getX(); brewTargetY = pos.getY(); brewTargetZ = pos.getZ();
-                    hasBrewTarget = true;
-                }
-            }
-        }
-        if (!(mc.getPlayer().containerMenu instanceof BrewingStandMenu brew)) {
-            hasBrewTarget = false;
+        ContainerUtility.rememberBrewTarget();
+        if (!ContainerUtility.isBrewingMenuOpen()) {
+            ContainerUtility.clearBrewTarget();
             return;
         }
-        int containerId = brew.containerId;
-        int playerInvStart = 5;
-        int hotbarStart = playerInvStart + 27;
-        if (autoFuel && brew.getFuel() <= 0) {
-            if (!brew.getSlot(4).hasItem()) {
-                for (int i = playerInvStart; i < brew.slots.size(); i++) {
-                    var stack = brew.slots.get(i).getItem();
-                    if (InventoryUtility.isItem(stack, "blaze_powder")) {
-                        mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-                        return;
-                    }
-                }
-            }
-        }
-        if (brew.getBrewingTicks() > 0) return;
-        for (int slot = 0; slot <= 2; slot++) {
-            var stack = brew.getSlot(slot).getItem();
-            if (!stack.isEmpty() && !InventoryUtility.isItem(stack, "glass_bottle")) {
-                mc.getGameMode().handleInventoryMouseClick(containerId, slot, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-                return;
-            }
-        }
-        if (!brew.getSlot(3).hasItem()) {
-            for (int i = playerInvStart; i < brew.slots.size(); i++) {
-                var stack = brew.slots.get(i).getItem();
-                if (stack.isEmpty()) continue;
-                if (isBrewIngredient(stack)) {
-                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-                    return;
-                }
-            }
-            for (int i = hotbarStart; i < brew.slots.size(); i++) {
-                var stack = brew.slots.get(i).getItem();
-                if (stack.isEmpty()) continue;
-                if (isBrewIngredient(stack)) {
-                    mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-                    return;
-                }
-            }
-        }
-        for (int slot = 0; slot <= 2; slot++) {
-            if (!brew.getSlot(slot).hasItem()) {
-                for (int i = playerInvStart; i < brew.slots.size(); i++) {
-                    var stack = brew.slots.get(i).getItem();
-                    if (InventoryUtility.isItem(stack, "glass_bottle")) {
-                        mc.getGameMode().handleInventoryMouseClick(containerId, i, 0, InventoryUtility.QUICK_MOVE, mc.getPlayer());
-                        return;
-                    }
-                }
-            }
-        }
-    }
-    private static boolean isBrewIngredient(net.minecraft.world.item.ItemStack stack) {
-        String name = BuiltInRegistries.ITEM.getKey(stack.getItem()).getPath();
-        return name.equals("nether_wart") || name.equals("glowstone_dust") || name.equals("redstone")
-            || name.equals("gunpowder") || name.equals("fermented_spider_eye") || name.equals("blaze_powder")
-            || name.equals("ghast_tear") || name.equals("magma_cream") || name.equals("sugar")
-            || name.equals("rabbit_foot") || name.equals("glistering_melon_slice") || name.equals("golden_carrot")
-            || name.equals("spider_eye") || name.equals("pufferfish") || name.equals("phantom_membrane")
-            || name.equals("dragon_breath") || name.equals("turtle_helmet");
-    }
-    @Nullable
-    public static net.minecraft.core.BlockPos getBrewTarget() {
-        if (!hasBrewTarget) return null;
-        return BlockUtility.pos(brewTargetX, brewTargetY, brewTargetZ);
+        if (autoFuel && ContainerUtility.putBrewingFuel()) return;
+        if (ContainerUtility.brewTicks() > 0) return;
+        if (ContainerUtility.takeFinishedPotions()) return;
+        if (ContainerUtility.putBrewIngredient()) return;
+        if (ContainerUtility.putGlassBottle()) return;
     }
     private void tickLight() {
         var mc = MinecraftWrapper.getWrapper();
@@ -284,18 +150,18 @@ public class PVEUtils {
             for (int y = minY; y <= maxY; y++) {
                 for (int z = minZ; z <= maxZ; z++) {
                     var pos = BlockUtility.pos(x, y, z);
-                    var state = mc.getLevel().getBlockState(pos);
+                    var state = BlockUtility.getState(mc.getLevel(), pos);
                     if (state.isAir()) continue;
                     if (mc.getLevel().getMaxLocalRawBrightness(pos) > targetLight) continue;
                     int aboveY = BlockUtility.aboveY(y);
                     var placeOn = BlockUtility.pos(x, aboveY, z);
-                    if (!mc.getLevel().getBlockState(placeOn).isAir()) continue;
+                    if (!BlockUtility.isAir(mc.getLevel(), placeOn)) continue;
                     if (state.getShape(mc.getLevel(), pos).isEmpty()) continue;
                     var center = PhysicUtility.centerOf(placeOn);
                     if (center.distanceToSqr(mc.getPlayer().getEyePosition()) > r * r) continue;
                     int prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
                     InventoryUtility.selectSlot(mc.getPlayer(), torchSlot);
-                    BlockUtility.useItemOn(ravex.mcwrapper.MinecraftWrapper.getWrapper(), new net.minecraft.world.phys.BlockHitResult(PhysicUtility.centerOf(pos), net.minecraft.core.Direction.UP, pos, false));
+                    BlockUtility.useItemOn(mc, BlockUtility.placeOnTop(mc, pos));
                     if (silent) {
                         InventoryUtility.selectSlot(mc.getPlayer(), prevSlot);
                     }
@@ -306,12 +172,7 @@ public class PVEUtils {
         }
     }
     public void onDisable() {
-        smeltTarget = null;
-        hasBrewTarget = false;
+        ContainerUtility.clearSmeltTarget();
+        ContainerUtility.clearBrewTarget();
     }
-
-
-
-
-
 }

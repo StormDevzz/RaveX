@@ -9,10 +9,4 @@ public class FastItem {
     public long getDelayMs() {
         return (long) delay;
     }
-
-
-
-
-
-
 }

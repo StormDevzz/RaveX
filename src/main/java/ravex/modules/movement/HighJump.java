@@ -7,23 +7,34 @@ import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.movement.MoveUtility;
 import ravex.utility.misc.block.BlockUtility;
+import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.player.rotation.SilentRotationUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 @Module(name = "HighJump", category = "Movement")
 public class HighJump {
     @Parameter(name = "Mode", modes = {"Vanilla", "GrimShulker", "NCP", "UNCP"})
     public String mode = "Vanilla";
-    @Parameter(name = "Height", min = 0.5, max = 10.0, step = 0.1)
+    @Parameter(name = "Height", min = 0.5, max = 10.0, step = 0.1, visible = "mode=Vanilla||mode=NCP||mode=UNCP")
     public double height = 2.0;
+    // lid boost per tick, 1.0 is the safe value
+    @Parameter(name = "ShulkerBoost", min = 0.5, max = 2.0, step = 0.1, visible = "mode=GrimShulker")
+    public double shulkerBoost = 1.0;
     @Parameter(name = "NCPDelay", min = 1, max = 10, step = 1, visible = "mode=NCP")
     public int ncpDelay = 3;
     @Parameter(name = "UNCPDelay", min = 1, max = 10, step = 1, visible = "mode=UNCP")
     public int uncpDelay = 2;
     @Parameter(name = "BoostMode", modes = {"Strict", "Fast"}, visible = "mode=UNCP")
     public String boostMode = "Strict";
+    // highlight the opened shulker
+    @Parameter(name = "Highlight", visible = "mode=GrimShulker")
+    public boolean highlight = true;
+    @Parameter(name = "HighlightColor", color = true, visible = "mode=GrimShulker && highlight")
+    public int highlightColor = 0xFFFFFFFF;
+
+    public static volatile net.minecraft.core.BlockPos shulkerHighlightPos;
+    public static volatile long shulkerHighlightMs;
+    public static SilentRotationUtility silentRotation = new SilentRotationUtility();
 
     private final Random random = new Random();
     private int ncpJumpTicks = 0;
@@ -33,24 +44,27 @@ public class HighJump {
     private boolean uncpJumping = false;
     private double uncpStartY = 0.0;
     private int shulkerCooldown = 0;
-    private int airBoostTicks = 0;
-    private boolean forcedJump = false;
+    private int silentRotationHold = 0;
     private static final double INTERACT_REACH = 4.5;
     private net.minecraft.core.BlockPos worldShulkerPos;
     private int shulkerScanCooldown = 0;
-    private boolean pendingBoost = false;
-    private int openWaitTicks = 0;
+    private int lidScanCooldown = 0;
+    private boolean shulkerGuiClosed = false;
 
-    private Vec3 shulkerCenter(net.minecraft.core.BlockPos pos) {
-        return new Vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
+    public static boolean hasSilentRotations() {
+        return silentRotation.hasRotation;
+    }
+
+    private net.minecraft.world.phys.Vec3 shulkerCenter(net.minecraft.core.BlockPos pos) {
+        return PhysicUtility.vec3(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5);
     }
 
     private boolean shulkerAccessible(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player, net.minecraft.core.BlockPos pos) {
         var eye = player.getEyePosition();
         var center = shulkerCenter(pos);
         if (eye.distanceTo(center) > INTERACT_REACH) return false;
-        var hit = mc.getLevel().clip(new ClipContext(eye, center, ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, player));
-        return hit.getType() == HitResult.Type.BLOCK && hit.getBlockPos().equals(pos);
+        var hit = PhysicUtility.raycast(eye, center);
+        return hit != null && hit.getBlockPos().equals(pos);
     }
 
     private void selectSlotSync(net.minecraft.client.player.LocalPlayer player, int slot) {
@@ -58,43 +72,14 @@ public class HighJump {
         NetworkUtility.sendPacket(new net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket(slot));
     }
 
-    private void forceJumpKey(MinecraftWrapper mc, boolean down) {
-        if (mc.getOptions() == null) return;
-        mc.getOptions().keyJump.setDown(down);
-    }
-
-    private void boostJump(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
-        var delta = PlayerUtility.getDeltaMovement();
-        if (PlayerUtility.isOnGround()) {
-            MoveUtility.setMotion(delta.x, height, delta.z);
-        } else if (delta.y < height) {
-            MoveUtility.setMotion(delta.x, Math.min(height, delta.y + 0.5), delta.z);
-        }
-        forceJumpKey(mc, true);
-    }
-
-    private void airBoost(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
-        if (airBoostTicks <= 0) return;
-        airBoostTicks--;
-        var delta = PlayerUtility.getDeltaMovement();
-        if (!PlayerUtility.isOnGround() && delta.y < height) {
-            MoveUtility.setMotion(delta.x, Math.min(height, delta.y + 0.4), delta.z);
-        }
-    }
-
-    private void resetShulkerState() {
-        shulkerCooldown = 0;
-        airBoostTicks = 0;
-        pendingBoost = false;
-        openWaitTicks = 0;
-        worldShulkerPos = null;
-        shulkerScanCooldown = 0;
-    }
-
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null || mc.getLevel() == null) return;
+
+        if (silentRotationHold > 0 && --silentRotationHold == 0) {
+            silentRotation.reset();
+        }
 
         String modeVal = mode;
 
@@ -109,11 +94,6 @@ public class HighJump {
             handleGrimShulker(mc, player);
             return;
         }
-        if (forcedJump) {
-            forceJumpKey(mc, false);
-            forcedJump = false;
-            resetShulkerState();
-        }
 
         if ("NCP".equals(modeVal)) {
             handleNCP();
@@ -124,6 +104,83 @@ public class HighJump {
             handleUNCP();
             return;
         }
+    }
+
+    // grim exempts motion next to an animating lid,
+    // so a plain rise keeps lifting without flags
+    private void handleGrimShulker(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
+        // close the gui once per cycle, the lid still animates
+        if (mc.getCurrentScreen() instanceof net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen) {
+            if (!shulkerGuiClosed) {
+                shulkerGuiClosed = true;
+                player.closeContainer();
+                if (shulkerCooldown < 2) shulkerCooldown = 2;
+            }
+        } else {
+            shulkerGuiClosed = false;
+        }
+        if (shulkerCooldown > 0) shulkerCooldown--;
+
+        var lid = findLidAnimating(mc, player);
+        if (lid != null) {
+            var motion = PlayerUtility.getDeltaMovement(player);
+            MoveUtility.setMotion(motion.x, Math.min(shulkerBoost, 2.0), motion.z);
+            return;
+        }
+
+        if (shulkerCooldown > 0) return;
+        // open even in the air, never miss a fresh lid
+        var shulker = findWorldShulker(mc, player);
+        if (shulker == null) return;
+        if (!shulkerAccessible(mc, player, shulker)) {
+            worldShulkerPos = null;
+            return;
+        }
+        openShulker(mc, player, shulker);
+        shulkerCooldown = 5;
+    }
+
+    // remember the shulker, we rise out of a fresh search
+    private net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity findLidAnimating(MinecraftWrapper mc,
+            net.minecraft.client.player.LocalPlayer player) {
+        var level = mc.getLevel();
+        if (level == null) return null;
+
+        if (worldShulkerPos != null) {
+            var tracked = level.getBlockEntity(worldShulkerPos);
+            if (tracked instanceof net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity shulker
+                    && lidBoosting(player, worldShulkerPos, shulker)) {
+                return shulker;
+            }
+        }
+
+        if (lidScanCooldown > 0) {
+            lidScanCooldown--;
+            return null;
+        }
+        lidScanCooldown = 2;
+
+        var bp = player.blockPosition();
+        for (var pos : net.minecraft.core.BlockPos.betweenClosed(bp.offset(-4, -4, -4), bp.offset(4, 4, 4))) {
+            if (worldShulkerPos != null && worldShulkerPos.equals(pos)) continue;
+            if (!(level.getBlockEntity(pos) instanceof net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity shulker)) continue;
+            if (lidBoosting(player, pos, shulker)) return shulker;
+        }
+        return null;
+    }
+
+    private boolean lidBoosting(net.minecraft.client.player.LocalPlayer player, net.minecraft.core.BlockPos pos,
+            net.minecraft.world.level.block.entity.ShulkerBoxBlockEntity shulker) {
+        float progress = shulker.getProgress(1.0f);
+        if (progress <= 0.0f || progress >= 1.0f) return false;
+        double dist = Math.sqrt(Math.pow(player.getX() - (pos.getX() + 0.5), 2)
+            + Math.pow(player.getZ() - (pos.getZ() + 0.5), 2));
+        // standing on it or next to it works
+        if (dist > 3.0) return false;
+        double dy = player.getY() - (pos.getY() + 0.5);
+        // only cap the height while not rising
+        if (player.getDeltaMovement().y <= 1.0 && Math.abs(dy) > 4.5) return false;
+        return true;
     }
 
     private void handleNCP() {
@@ -174,6 +231,10 @@ public class HighJump {
         }
 
         if (!uncpJumping) return;
+        climbTick(mc, player);
+    }
+
+    private void climbTick(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
         uncpTicks++;
 
         double currentHeight = player.getY() - uncpStartY;
@@ -216,7 +277,7 @@ public class HighJump {
             shulkerScanCooldown--;
             return null;
         }
-        shulkerScanCooldown = 10;
+        shulkerScanCooldown = 4;
         var eye = player.getEyePosition();
         var bp = player.blockPosition();
         int r = (int) Math.ceil(INTERACT_REACH);
@@ -240,44 +301,12 @@ public class HighJump {
         return best;
     }
 
-    private void handleGrimShulker(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player) {
-        if (!forcedJump) {
-            forceJumpKey(mc, true);
-            forcedJump = true;
-        }
-        airBoost(mc, player);
-        if (pendingBoost) {
-            if (mc.getCurrentScreen() instanceof net.minecraft.client.gui.screens.inventory.ShulkerBoxScreen) {
-                pendingBoost = false;
-                openWaitTicks = 0;
-                boostJump(mc, player);
-                airBoostTicks = 10;
-                shulkerCooldown = 6;
-            } else if (++openWaitTicks > 5) {
-                pendingBoost = false;
-                openWaitTicks = 0;
-                shulkerCooldown = 4;
-            }
-            return;
-        }
-        if (shulkerCooldown > 0) {
-            shulkerCooldown--;
-            return;
-        }
-        if (!PlayerUtility.isOnGround()) return;
-        var shulker = findWorldShulker(mc, player);
-        if (shulker == null) return;
-        if (!shulkerAccessible(mc, player, shulker)) return;
-        openShulker(mc, player, shulker);
-        pendingBoost = true;
-        openWaitTicks = 0;
-    }
-
     private void openShulker(MinecraftWrapper mc, net.minecraft.client.player.LocalPlayer player, net.minecraft.core.BlockPos pos) {
         var center = shulkerCenter(pos);
         float[] ang = RotationUtility.anglesTo(player.getEyePosition(), center);
-        player.setYRot(ang[0]);
-        player.setXRot(ang[1]);
+        // silent rotation, camera stays still
+        silentRotation.set(ang[0], ang[1]);
+        silentRotationHold = 6;
         NetworkUtility.sendRot(ang[0], ang[1], player.onGround(), player.horizontalCollision);
         int oldSlot = InventoryUtility.getSelectedSlot(player);
         int safeSlot = -1;
@@ -292,18 +321,24 @@ public class HighJump {
         }
         if (safeSlot != -1) selectSlotSync(player, safeSlot);
         var openHit = new net.minecraft.world.phys.BlockHitResult(center, net.minecraft.core.Direction.UP, pos, false);
-        NetworkUtility.sendUseItemOn(net.minecraft.world.InteractionHand.MAIN_HAND, openHit);
+        BlockUtility.useItemOn(mc, openHit);
         BlockUtility.swing(mc);
         if (safeSlot != -1) selectSlotSync(player, oldSlot);
+        if (highlight) {
+            shulkerHighlightPos = pos;
+            shulkerHighlightMs = System.currentTimeMillis();
+        }
     }
 
     public void onDisable() {
         ncpJumping = false;
         uncpJumping = false;
-        if (forcedJump) {
-            forceJumpKey(MinecraftWrapper.getWrapper(), false);
-            forcedJump = false;
-        }
-        resetShulkerState();
+        shulkerCooldown = 0;
+        worldShulkerPos = null;
+        shulkerScanCooldown = 0;
+        lidScanCooldown = 0;
+        shulkerGuiClosed = false;
+        silentRotationHold = 0;
+        silentRotation.reset();
     }
 }

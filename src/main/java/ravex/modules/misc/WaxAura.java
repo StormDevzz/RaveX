@@ -13,10 +13,8 @@ public class WaxAura {
     public double range = 4.5;
     @Parameter(name = "Delay", min = 0.0, max = 20.0, step = 1.0)
     public double delay = 2.0;
-    @Parameter(name = "AutoSwap")
-    public boolean autoSwap = true;
-    @Parameter(name = "Silent")
-    public boolean silent = true;
+    @Parameter(name = "Swap", modes = {"Normal", "Silent", "None"})
+    public String swapMode = "Silent";
     private int delayTimer = 0;
     public void onEnable() {
         delayTimer = 0;
@@ -60,7 +58,9 @@ public class WaxAura {
         }
         if (targetPos != null) {
             int prevSlot = InventoryUtility.getSelectedSlot(p);
-            if (autoSwap && honeycombSlot != prevSlot) {
+            boolean swap = !"None".equals(swapMode) && honeycombSlot != prevSlot;
+            boolean backSwap = "Silent".equals(swapMode);
+            if (swap) {
                 InventoryUtility.selectSlot(p, honeycombSlot);
             }
             var hitVec = PhysicUtility.centerOf(targetPos);
@@ -68,7 +68,7 @@ public class WaxAura {
             var gm = mc.getGameMode();
             if (gm != null) gm.useItemOn(p, net.minecraft.world.InteractionHand.MAIN_HAND, blockHit);
             SwingUtility.swing(p, net.minecraft.world.InteractionHand.MAIN_HAND);
-            if (autoSwap && silent && honeycombSlot != prevSlot) {
+            if (swap && backSwap) {
                 InventoryUtility.selectSlot(p, prevSlot);
             }
             delayTimer = (int) delay;

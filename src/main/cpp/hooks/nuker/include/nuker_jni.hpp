@@ -7,7 +7,7 @@ extern "C" {
 #include <jni.h>
 
 JNIEXPORT jintArray JNICALL
-Java_ravex_modules_world_Nuker_nativeFindBlocks(
+Java_ravex_modules_world_nuker_Nuker_nativeFindBlocks(
     JNIEnv* env, jclass cls,
     jdouble px, jdouble py, jdouble pz,
     jdouble range,

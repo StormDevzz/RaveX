@@ -2,7 +2,9 @@ package ravex.modules.misc;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
@@ -24,10 +26,12 @@ public class AutoPortal {
     public double portalsToBuild = 2.0;
     @Parameter(name = "AutoDisable")
     public boolean autoDisable = true;
+    @Parameter(name = "PlaceDelay", min = 0, max = 200, step = 5)
+    public double placeDelay = 40;
     @Parameter(name = "Render")
     public boolean render = true;
     @Parameter(name = "Color", color = true)
-    public int color = 0x3FAA00FF;
+    public int color = 0x3F40A9F8;
     private enum State { IDLE, FIND, BUILDING, RETRY, VERIFY, LIGHTING, DONE }
     private State state = State.IDLE;
     private int baseX, baseY, baseZ;
@@ -49,6 +53,14 @@ public class AutoPortal {
         {3, 1}, {3, 2}, {3, 3},
         {0, 4}, {1, 4}, {2, 4}, {3, 4},
     };
+    private boolean frameAlongX = true;
+
+    // the frame is a vertical 4x5 rectangle, offsets are {dx, dy}
+    private int[] framePos(int index) {
+        int[] off = FRAME_OFFSETS[index];
+        if (frameAlongX) return new int[]{baseX + off[0], baseY + off[1], baseZ};
+        return new int[]{baseX, baseY + off[1], baseZ + off[0]};
+    }
 
     @Nullable
     public static net.minecraft.core.BlockPos getCurrentTarget() {
@@ -56,7 +68,8 @@ public class AutoPortal {
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
     public void onEnable() {
-        state = State.IDLE;
+        state = State.FIND;
+        lastActionTime = 0;
         hasBase = false;
         frameIndex = 0;
         retries = 0;
@@ -77,12 +90,18 @@ public class AutoPortal {
         long now = System.currentTimeMillis();
         switch (state) {
             case IDLE -> state = State.FIND;
-            case FIND -> doFind(mc);
+            case FIND -> {
+                doFind(mc);
+                if (state == State.BUILDING) tryPlaceNext(mc, now);
+            }
             case BUILDING -> tryPlaceNext(mc, now);
             case RETRY -> retryPlace(mc, now);
             case VERIFY -> doVerify(mc, now);
             case LIGHTING -> doLight(mc, now);
-            case DONE -> doDone(mc);
+            case DONE -> {
+                doDone(mc);
+                if (state == State.FIND) doFind(mc);
+            }
         }
     }
     private void doFind(MinecraftWrapper mc) {
@@ -118,12 +137,17 @@ public class AutoPortal {
         }
         if (groundY == -1) return;
         int gx = (int) Math.round(px), gz = (int) Math.round(pz);
+        // plane faces the player, approach axis decides the span
+        boolean alongX = Math.abs(mc.getPlayer().getX() - (gx + 0.5)) <= Math.abs(mc.getPlayer().getZ() - (gz + 0.5));
         for (int[] off : FRAME_OFFSETS) {
-            int ox = gx + off[0], oz = gz + off[1];
-            if (!BlockUtility.isAir(mc.getLevel(), ox, groundY + off[1], oz)
-                && !BlockUtility.isBlock(mc.getLevel(), BlockUtility.pos(ox, groundY + off[1], oz), "obsidian")) return;
+            int ox = alongX ? gx + off[0] : gx;
+            int oz = alongX ? gz : gz + off[0];
+            int oy = groundY + off[1];
+            if (!BlockUtility.isAir(mc.getLevel(), ox, oy, oz)
+                && !BlockUtility.isBlock(mc.getLevel(), BlockUtility.pos(ox, oy, oz), "obsidian")) return;
         }
         baseX = gx; baseY = groundY; baseZ = gz;
+        frameAlongX = alongX;
         hasBase = true;
         if (!hasFirstBase) { firstBaseX = gx; firstBaseY = groundY; firstBaseZ = gz; hasFirstBase = true; }
         frameIndex = 0;
@@ -131,15 +155,15 @@ public class AutoPortal {
         state = build ? State.BUILDING : State.VERIFY;
     }
     private void tryPlaceNext(MinecraftWrapper mc, long now) {
-        if (now - lastActionTime < 100) return;
+        if (now - lastActionTime < (long) placeDelay) return;
         lastActionTime = now;
         if (!hasBase) { state = State.IDLE; return; }
         if (frameIndex >= FRAME_OFFSETS.length) {
             state = State.VERIFY;
             return;
         }
-        int[] off = FRAME_OFFSETS[frameIndex];
-        int tx = baseX + off[0], ty = baseY + off[1], tz = baseZ + off[2];
+        int[] fp = framePos(frameIndex);
+        int tx = fp[0], ty = fp[1], tz = fp[2];
         targetX = tx; targetY = ty; targetZ = tz; hasRenderTarget = true;
         var existing = BlockUtility.getState(mc.getLevel(), tx, ty, tz);
         if (BlockUtility.isBlock(existing, "obsidian")
@@ -165,6 +189,8 @@ public class AutoPortal {
             state = State.RETRY;
             return;
         }
+        // look before using, anticheats check the rotation
+        lookAt(mc, hit.getLocation());
         BlockUtility.useItemOn(mc, hit);
         BlockUtility.swing(mc);
         InventoryUtility.selectSlot(mc.getPlayer(), prev);
@@ -205,16 +231,25 @@ public class AutoPortal {
             InventoryUtility.selectSlot(mc.getPlayer(), prev);
             return;
         }
+        lookAt(mc, hit.getLocation());
         BlockUtility.useItemOn(mc, hit);
         BlockUtility.swing(mc);
         InventoryUtility.selectSlot(mc.getPlayer(), prev);
     }
+    // server gets the aim, camera turns too
+    private void lookAt(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
+        var player = mc.getPlayer();
+        float[] ang = RotationUtility.anglesTo(player.getEyePosition(), target);
+        player.setYRot(ang[0]);
+        player.setXRot(ang[1]);
+        NetworkUtility.sendRot(ang[0], ang[1], player.onGround(), player.horizontalCollision);
+    }
     private void doVerify(MinecraftWrapper mc, long now) {
         if (!hasBase) { state = State.IDLE; return; }
         boolean allPlaced = true;
-        for (int[] off : FRAME_OFFSETS) {
-            int ox = baseX + off[0], oy = baseY + off[1], oz = baseZ + off[2];
-            if (!BlockUtility.isBlock(mc.getLevel(), BlockUtility.pos(ox, oy, oz), "obsidian")) {
+        for (int i = 0; i < FRAME_OFFSETS.length; i++) {
+            int[] fp = framePos(i);
+            if (!BlockUtility.isBlock(mc.getLevel(), BlockUtility.pos(fp[0], fp[1], fp[2]), "obsidian")) {
                 allPlaced = false;
                 break;
             }
@@ -230,8 +265,12 @@ public class AutoPortal {
         if (now - lastActionTime < 100) return;
         lastActionTime = now;
         if (!hasBase) { state = State.IDLE; return; }
-        int ix = baseX + 1, iy = baseY + 1, iz = baseZ + 0;
-        targetX = ix; targetY = iy; targetZ = iz; hasRenderTarget = true;
+        // flint on the bottom frame block, fire lands inside
+        int cbx = frameAlongX ? baseX + 1 : baseX;
+        int cby = baseY;
+        int cbz = frameAlongX ? baseZ : baseZ + 1;
+        var clickedPos = BlockUtility.pos(cbx, cby, cbz);
+        targetX = cbx; targetY = cby + 1; targetZ = cbz; hasRenderTarget = true;
         int slot = findFlintOrFireChargeSlot(mc);
         if (slot == -1) {
             state = State.DONE;
@@ -239,9 +278,10 @@ public class AutoPortal {
         }
         int prev = InventoryUtility.getSelectedSlot(mc.getPlayer());
         InventoryUtility.selectSlot(mc.getPlayer(), slot);
-        var interiorPos = BlockUtility.pos(ix, iy, iz);
+        var hitVec = PhysicUtility.centerOf(clickedPos).add(0.0, 0.5, 0.0);
+        lookAt(mc, hitVec);
         BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
-            PhysicUtility.centerOf(interiorPos), net.minecraft.core.Direction.UP, interiorPos, false));
+            hitVec, net.minecraft.core.Direction.UP, clickedPos, false));
         BlockUtility.swing(mc);
         InventoryUtility.selectSlot(mc.getPlayer(), prev);
         state = State.DONE;

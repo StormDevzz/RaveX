@@ -3,8 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.player.SwingUtility;
 import ravex.utility.misc.EntityUtility;
-
-import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "AutoClicker", category = "Combat")
@@ -23,7 +21,6 @@ public class AutoClicker {
     public boolean randomize = true;
     @Parameter(name = "Jitter", min = 0.0, max = 2.0, step = 0.1)
     public double jitterStrength = 0.0;
-    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_autoclicker");
     private long nextClick = 0;
     private long lastClickTime = 0;
     private boolean holding = false;
@@ -39,9 +36,9 @@ public class AutoClicker {
         }
         boolean targetValid = false;
         if (onlyOnTarget) {
-            if (EntityUtility.asLivingEntity(mc.getCrosshairPickEntity()) != null) {
-                targetValid = true;
-            }
+            // blocks count too, else left click never mines
+            var hit = mc.getHitResult();
+            targetValid = hit != null && hit.getType() != net.minecraft.world.phys.HitResult.Type.MISS;
         } else {
             targetValid = true;
         }
@@ -54,13 +51,8 @@ public class AutoClicker {
         }
         double cpsMin = minCps;
         double cpsMax = Math.max(cpsMin, maxCps);
-        long delay;
-        if (NATIVE.isLoaded()) {
-            delay = nativeCalculateDelay(cpsMin, cpsMax, randomize);
-        } else {
-            double cps = randomize ? cpsMin + rng.nextDouble() * (cpsMax - cpsMin) : (cpsMin + cpsMax) / 2.0;
-            delay = (long)(1000.0 / cps);
-        }
+        double cps = randomize ? cpsMin + rng.nextDouble() * (cpsMax - cpsMin) : (cpsMin + cpsMax) / 2.0;
+        long delay = (long)(1000.0 / cps);
         if (now >= nextClick) {
             String m = mode;
             if (m.equals("Left") || m.equals("Both")) {
@@ -75,12 +67,10 @@ public class AutoClicker {
         }
     }
     private void clickLeft(MinecraftWrapper mc) {
-        mc.getOptions().keyAttack.setDown(true);
-        if (mc.getHitResult() instanceof net.minecraft.world.phys.EntityHitResult hit && EntityUtility.asLivingEntity(hit.getEntity()) != null) {
-            mc.getGameMode().attack(mc.getPlayer(), hit.getEntity());
-        }
-        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
-        mc.getOptions().keyAttack.setDown(false);
+        var raw = mc.getRaw();
+        if (raw == null) return;
+        // vanilla attack, hits entities and starts mining
+        ((ravex.mixin.client.AccessorMinecraft) raw).invokeStartAttack();
         if (jitterStrength > 0 && mc.getPlayer() != null) {
             double str = jitterStrength;
             mc.getPlayer().setYRot((float)(mc.getPlayer().getYRot() + (rng.nextFloat() - 0.5) * str));
@@ -88,11 +78,9 @@ public class AutoClicker {
         }
     }
     private void clickRight(MinecraftWrapper mc) {
-        mc.getOptions().keyUse.setDown(true);
-        if (mc.getGameMode() != null) {
-            mc.getGameMode().useItem(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
-        }
-        mc.getOptions().keyUse.setDown(false);
+        var raw = mc.getRaw();
+        if (raw == null) return;
+        ((ravex.mixin.client.AccessorMinecraft) raw).invokeStartUseItem();
     }
     private void releaseClick(MinecraftWrapper mc) {
         mc.getOptions().keyAttack.setDown(false);
@@ -106,9 +94,4 @@ public class AutoClicker {
         holding = false;
         nextClick = 0;
     }
-    private static native long nativeCalculateDelay(double minCps, double maxCps, boolean randomize);
-
-
-
-
 }

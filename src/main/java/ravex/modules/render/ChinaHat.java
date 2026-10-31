@@ -12,7 +12,7 @@ public class ChinaHat {
 public static final ChinaHat INSTANCE = new ChinaHat();
 
     @Parameter(name = "Color", color = true)
-    public int color = 0xFFFFFFFF;
+    public int color = 0xFF40A9F8;
     @Parameter(name = "Self")
     public boolean self = true;
     @Parameter(name = "Friends")
@@ -53,9 +53,17 @@ public static final ChinaHat INSTANCE = new ChinaHat();
             double tx = player.xo + (player.getX() - player.xo) * partialTick;
             double ty = player.yo + (player.getY() - player.yo) * partialTick;
             double tz = player.zo + (player.getZ() - player.zo) * partialTick;
-            double headY = ty + player.getBbHeight();
+            // follow the rendered size, including Animations scale
+            float effScale = player.getScale();
+            ravex.modules.render.Animations an = Modules.get(ravex.modules.render.Animations.class);
+            if (an != null && Modules.enabled(ravex.modules.render.Animations.class)
+                    && an.playerScale && Math.abs(an.playerScaleValue - 1.0) > 0.001) {
+                boolean self = player == selfPlayer;
+                if (!an.scaleSelfOnly || self) effScale *= (float) an.playerScaleValue;
+            }
+            double headY = ty + player.getBbHeight() * effScale;
 
-            HatUtility.renderHat(modelViewMatrix, camPos.x, camPos.y, camPos.z, tx, headY, tz, ch.color);
+            HatUtility.renderHat(modelViewMatrix, camPos.x, camPos.y, camPos.z, tx, headY, tz, ch.color, effScale);
         }
     }
 }

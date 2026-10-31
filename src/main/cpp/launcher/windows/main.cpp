@@ -95,9 +95,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE, LPSTR, int) {
         MessageBoxW(nullptr, L"Уже есть версия для Linux! Зачем ты пробуешь запустить Windows версию разбойник?", L"RaveX", MB_OK | MB_ICONWARNING);
         return 0;
     }
-    // SetProcessDpiAwarenessContext exists only on Windows 10 1607+. Resolve it
-    // dynamically so the launcher still *loads* on Windows 7/8.1 (a static import
-    // would fail at process start with "entry point not found").
+    // win10 1607+ API, resolved at runtime for win7/8.1
     {
         bool dpiSet = false;
         if (HMODULE u32 = GetModuleHandleW(L"user32.dll")) {

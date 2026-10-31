@@ -23,8 +23,9 @@ public class MixinFlight {
         LocalPlayer player = (LocalPlayer)(Object)this;
         var mc = MinecraftWrapper.getInstance();
 
-        double hSpeed = flight.speed;
-        double vSpeed = flight.verticalSpeed;
+        // 1.0 = vanilla creative flight speed
+        double hSpeed = flight.horSpeed * 0.5;
+        double vSpeed = flight.verSpeed * 0.5;
         double glide = flight.glide;
 
         double[] vel = Flight.calculateVelocity(
@@ -33,14 +34,14 @@ public class MixinFlight {
             mc.options.keyJump.isDown(), mc.options.keyShift.isDown()
         );
 
-        double currentFriction = Flight.handleAirFriction(
-            mode,
-            Math.sqrt(player.getDeltaMovement().x * player.getDeltaMovement().x + player.getDeltaMovement().z * player.getDeltaMovement().z),
-            flight.acceleration,
-            0.5
-        );
-
-        player.setDeltaMovement(vel[0] * currentFriction, vel[1], vel[2] * currentFriction);
+        double nx = vel[0];
+        double nz = vel[2];
+        if (flight.acceleration > 1.05) {
+            double blend = 1.0 - 1.0 / Math.min(5.0, flight.acceleration);
+            nx = player.getDeltaMovement().x + (vel[0] - player.getDeltaMovement().x) * blend;
+            nz = player.getDeltaMovement().z + (vel[2] - player.getDeltaMovement().z) * blend;
+        }
+        player.setDeltaMovement(nx, vel[1], nz);
 
         if ("Creative".equals(mode) || "Vanilla".equals(mode)) {
             player.getAbilities().flying = true;

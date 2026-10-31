@@ -11,6 +11,8 @@ public class AutoEat {
     public boolean priority = true;
     @Parameter(name = "Gapple")
     public boolean gapple = true;
+    @Parameter(name = "EGapple", visible = "gapple")
+    public boolean enchantedGapple = true;
     @Parameter(name = "MinHealth", min = 1.0, max = 20.0, step = 0.5, visible = "gapple")
     public double minHealth = 10.0;
     @Parameter(name = "Swap", modes = {"None", "Normal", "Silent"})
@@ -26,7 +28,8 @@ public class AutoEat {
         }
         if (player.isUsingItem()) return;
         if (gapple && player.getHealth() <= (float) minHealth) {
-            FoodUtility.Data apple = FoodUtility.findEnchantedApple();
+            FoodUtility.Data apple = null;
+            if (enchantedGapple) apple = FoodUtility.findEnchantedApple();
             if (apple == null) apple = FoodUtility.findApple("Golden");
             if (apple != null) {
                 FoodUtility.INSTANCE.tryEatData(apple);

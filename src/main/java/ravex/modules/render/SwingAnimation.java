@@ -15,7 +15,6 @@ public class SwingAnimation {
     public double speed = 1.0;
 
     public void applyFourteen(PoseStack poseStack, float swingProgress, float equipProgress) {
-        // как в thunderhack fourteen: тупо по swingProgress
         if (swingProgress > 0) {
             float g = Mth.sin(Mth.sqrt(swingProgress) * (float) Math.PI);
             float y = Mth.lerp(g, -0.52F + equipProgress * -0.6F, equipProgress * -0.2f - 0.5F);
@@ -26,13 +25,12 @@ public class SwingAnimation {
             poseStack.translate(g * -0.1F, g * 0.28F, g * 0.2F);
             poseStack.mulPose(Axis.XP.rotationDegrees(g * -85.0F));
         } else {
-            // idle - обычная позиция
             poseStack.translate(0.56F, -0.52F + equipProgress * -0.6F, -0.72F);
         }
     }
 
     public void applySwipe(PoseStack poseStack, float swingProgress, float equipProgress) {
-        // как в thunderhack nine: equipProgress = 0
+        // как в thunderhack nine: equipProgress не используется
         float g = Mth.sin(Mth.sqrt(swingProgress) * (float) Math.PI);
         poseStack.translate(0.56F, -0.52F, -0.72F);
         poseStack.mulPose(Axis.XP.rotationDegrees(50f));

@@ -23,6 +23,7 @@ import ravex.utility.render.Render3DUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 import ravex.utility.misc.CombatUtility;
+import ravex.utility.misc.GameModeUtility;
 
 @Module(name = "AutoCrystal", category = "Combat")
 public class AutoCrystal {
@@ -40,7 +41,7 @@ public class AutoCrystal {
     public double maxSelfDmg = 9.0;
     @Parameter(name = "AntiSuicide")
     public boolean antiSuicide = true;
-    @Parameter(name = "SuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
+    @Parameter(name = "AntiSuicideMinHP", min = 1.0, max = 20.0, step = 0.5, visible = "antiSuicide")
     public double antiSuicideMinHp = 4.0;
     @Parameter(name = "RotateMode", modes = {"None", "Grim", "Strict"})
     public String rotate = "None";
@@ -64,10 +65,10 @@ public class AutoCrystal {
     public boolean spawnBreak = true;
     @Parameter(name = "TargetESP")
     public boolean targetEsp = true;
-    @Parameter(name = "TargetESPMode", modes = {"Circle", "Square", "RaveXV1"})
+    @Parameter(name = "TargetESPMode", modes = {"Circle", "Square", "RaveXV1"}, visible = "targetEsp")
     public String targetEspMode = "Circle";
-    @Parameter(name = "TargetESPColor", color = true)
-    public int targetEspColor = 0xFFFF2255;
+    @Parameter(name = "TargetESPColor", color = true, visible = "targetEsp")
+    public int targetEspColor = 0xFF40A9F8;
     @Parameter(name = "TotemDetection")
     public boolean totemDetection = true;
     @Parameter(name = "PlaceMode", modes = {"Strict", "NCPStrict", "Grim"})
@@ -76,8 +77,6 @@ public class AutoCrystal {
     public double rotateSpeed = 180.0;
     @Parameter(name = "RotateRandomize", min = 0.0, max = 3.0, step = 0.1)
     public double rotateRandomize = 0.0;
-    @Parameter(name = "VisualRotate")
-    public boolean visualRotate = true;
     @Parameter(name = "SafeBreak")
     public boolean antiSuicideCheckBreaking = true;
     @Parameter(name = "TotemBypass")
@@ -132,7 +131,7 @@ public class AutoCrystal {
             double[] crystalData,
             double placeRange, double placeWallRange,
             double breakRange, double breakWallRange,
-            double minTargetDmg, double maxSelfDmg,
+            double minTargetDmg, double maxSelfDmg, double antiSuicideMinHp,
             double selfDmgWeight, boolean antiSuicide,
             boolean antiSuicideCheckBreaking, boolean antiSuicideIgnoreWithTotem,
             boolean armorBreaker, double armorPercent,
@@ -223,7 +222,14 @@ public class AutoCrystal {
                 }
             }
         }
-        LivingEntity target = findTarget(mc);
+        if (GameModeUtility.isLocalSpectator()) {
+            currentTarget = null;
+            currentPlacementBlock = null;
+            return;
+        }
+
+        boolean localCreative = GameModeUtility.isLocalCreative();
+        LivingEntity target = suicide ? mc.getPlayer() : findTarget(mc);
         currentTarget = target;
         if (target == null) {
             currentPlacementBlock = null;
@@ -242,7 +248,6 @@ public class AutoCrystal {
             vz = target.getDeltaMovement().z;
         }
         net.minecraft.world.phys.Vec3 targetVelocity = new net.minecraft.world.phys.Vec3(vx, vy, vz);
-        net.minecraft.world.phys.Vec3 predictedTargetPos = targetPos.add(targetVelocity.scale(predictTicks));
         double tHp  = EntityUtility.getHealth(target);
         double tAbs = EntityUtility.getAbsorption(target);
         double[] blockData  = collectValidBlocks(mc, playerPos);
@@ -255,8 +260,13 @@ public class AutoCrystal {
         boolean grimAC = rotate.equals("Grim") || placeMode.equals("Grim");
         boolean ncpBypass = rotate.equals("Strict") || placeMode.equals("Strict");
         double[] result;
-        if (NATIVE.isLoaded()) {
-            result = nativeTick(
+        if (!NATIVE.isLoaded()) {
+            currentPlacementBlock = null;
+            return;
+        }
+
+        boolean effectiveAntiSuicide = antiSuicide && !suicide && !localCreative;
+        result = nativeTick(
                     playerPos.x, playerPos.y, playerPos.z,
                     pHp, pAbs, pStats,
                     targetPos.x, targetPos.y, targetPos.z,
@@ -264,8 +274,9 @@ public class AutoCrystal {
                     blockData, crystalData,
                     placeRange, placeWallRange,
                     breakRange, breakWallRange,
-                    minDamage, maxSelfDmg,
-                    1.2, antiSuicide,
+                    minDamage, localCreative ? Double.MAX_VALUE : maxSelfDmg,
+                    antiSuicideMinHp,
+                    1.2, effectiveAntiSuicide,
                     antiSuicideCheckBreaking, antiSuicideIgnoreWithTotem,
                     armorBreaker, armorPercent,
                     predictTicks, totemDetection,
@@ -274,26 +285,48 @@ public class AutoCrystal {
                     grimAC, ncpBypass,
                     bgBlockScanner, kbPrediction,
                     collateralPop
-            );
-        } else {
-            result = javaFallbackTick(
-                    playerPos, pHp, pAbs,
-                    predictedTargetPos, tHp, tAbs,
-                    blockData, crystalData
-            );
-        }
+        );
         if (result == null || result.length < 12) {
             currentPlacementBlock = null;
             return;
         }
         boolean shouldPlace = result[0] > 0.5;
         boolean shouldBreak = result[6] > 0.5;
-        if (shouldPlace && antiSuicide) {
-            boolean ignoreSuicide = antiSuicideIgnoreWithTotem && pStats[14] > 0.0;
-            if (!ignoreSuicide) {
-                double selfDmg = result[5];
-                if (pHp + pAbs - selfDmg < antiSuicideMinHp) {
-                    shouldPlace = false;
+        boolean ignoreSuicide = antiSuicideIgnoreWithTotem && pStats[14] > 0.0;
+        boolean lowHealth = effectiveAntiSuicide && !ignoreSuicide
+                && pHp + pAbs <= antiSuicideMinHp;
+        if (lowHealth) {
+            shouldPlace = false;
+            if (antiSuicideCheckBreaking) {
+                shouldBreak = false;
+            }
+        }
+        if (shouldPlace && effectiveAntiSuicide && !ignoreSuicide) {
+            double selfDmg = result[5];
+            if (pHp + pAbs - selfDmg <= antiSuicideMinHp) {
+                shouldPlace = false;
+            }
+        }
+        if (shouldPlace && !localCreative && !suicide) {
+            double selfDmg = result[5];
+            if (selfDmg > maxSelfDmg) {
+                shouldPlace = false;
+            }
+        }
+        if (shouldBreak && !localCreative && !suicide) {
+            double breakX = result[8];
+            double breakY = result[9];
+            double breakZ = result[10];
+            double[] selfDmgArr = nativeCalcDamage(breakX, breakY, breakZ, playerPos.x, playerPos.y, playerPos.z, pHp, pAbs, pStats, blockData);
+            if (selfDmgArr != null && selfDmgArr.length > 0) {
+                double breakSelfDmg = selfDmgArr[0];
+                if (breakSelfDmg > maxSelfDmg) {
+                    shouldBreak = false;
+                }
+                if (effectiveAntiSuicide && antiSuicideCheckBreaking && !ignoreSuicide) {
+                    if (pHp + pAbs - breakSelfDmg <= antiSuicideMinHp) {
+                        shouldBreak = false;
+                    }
                 }
             }
         }
@@ -390,11 +423,18 @@ public class AutoCrystal {
             }
         }
         boolean shouldPlace2 = !isStrict && placeMultiPlace && result.length >= 16 && result[12] > 0.5;
-        if (shouldPlace2 && antiSuicide) {
-            boolean ignoreSuicide2 = antiSuicideIgnoreWithTotem && pStats[14] > 0.0;
-            if (!ignoreSuicide2) {
+        if (shouldPlace2) {
+            if (lowHealth) {
+                shouldPlace2 = false;
+            } else if (effectiveAntiSuicide && !ignoreSuicide) {
                 double selfDmg2 = result[17];
-                if (pHp + pAbs - selfDmg2 < antiSuicideMinHp) {
+                if (pHp + pAbs - selfDmg2 <= antiSuicideMinHp) {
+                    shouldPlace2 = false;
+                }
+            }
+            if (shouldPlace2 && !localCreative && !suicide) {
+                double selfDmg2 = result[17];
+                if (selfDmg2 > maxSelfDmg) {
                     shouldPlace2 = false;
                 }
             }
@@ -499,6 +539,10 @@ public class AutoCrystal {
                 if (!EntityUtility.isHostile(le)) continue;
             } else if (typeFilter.equals("Passives")) {
                 if (EntityUtility.isPlayer(le) || EntityUtility.isHostile(le)) continue;
+            }
+            if (le instanceof net.minecraft.world.entity.player.Player player &&
+                    (GameModeUtility.isCreative(player) || GameModeUtility.isSpectator(player))) {
+                continue;
             }
             double vx = le.getX() - le.xOld;
             double vy = le.getY() - le.yOld;
@@ -663,86 +707,6 @@ public class AutoCrystal {
         double impact = Math.max(0, (1.0 - dist / 12.0));
         return (impact * impact + impact) / 2.0 * 84.0 + 1.0;
     }
-    private double[] javaFallbackTick(
-            net.minecraft.world.phys.Vec3 playerPos, double pHp, double pAbs,
-            net.minecraft.world.phys.Vec3 targetPos, double tHp, double tAbs,
-            double[] blockData, double[] crystalData) {
-        double[] result = new double[12];
-        var mc = MinecraftWrapper.getWrapper();
-        if (mc.getLevel() == null) return result;
-        double bestBreakDmg = 0;
-        int bestId = -1;
-        net.minecraft.world.phys.Vec3 bestPos = net.minecraft.world.phys.Vec3.ZERO;
-        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
-            if (!(e instanceof EndCrystal)) continue;
-            double dist = mc.getPlayer().distanceTo(e);
-            if (dist > breakRange) continue;
-            net.minecraft.world.phys.Vec3 cp = e.position();
-            double tdist = cp.distanceTo(targetPos);
-            double sdist = cp.distanceTo(playerPos);
-            if (tdist > 12 || sdist > 12) continue;
-            double tImpact = Math.max(0, (1.0 - tdist / 12.0));
-            double sImpact = Math.max(0, (1.0 - sdist / 12.0));
-            double tDmg = (tImpact * tImpact + tImpact) / 2.0 * 84.0 + 1.0;
-            double sDmg = (sImpact * sImpact + sImpact) / 2.0 * 84.0 + 1.0;
-            if (tDmg < minDamage) continue;
-            if (!suicide) {
-                if (sDmg > maxSelfDmg) continue;
-                if (antiSuicide && pHp + pAbs - sDmg <= 0) continue;
-            }
-            double score = suicide ? (sDmg * 100.0 + tDmg) : tDmg;
-            if (score > bestBreakDmg) {
-                bestBreakDmg = score;
-                bestId = e.getId();
-                bestPos = e.position();
-            }
-        }
-        if (bestId != -1) {
-            result[6] = 1.0;
-            result[7] = bestId;
-            result[8] = bestPos.x;
-            result[9] = bestPos.y;
-            result[10] = bestPos.z;
-            result[11] = bestBreakDmg;
-        }
-
-        double bestPlaceDmg = 0;
-        int bestBx = 0, bestBy = 0, bestBz = 0;
-        for (int i = 0; i < blockData.length; i += 3) {
-            double bx = blockData[i];
-            double by = blockData[i + 1];
-            double bz = blockData[i + 2];
-            net.minecraft.world.phys.Vec3 crystalPos = new net.minecraft.world.phys.Vec3(bx + 0.5, by + 1.0, bz + 0.5);
-            double tdist = crystalPos.distanceTo(targetPos);
-            double sdist = crystalPos.distanceTo(playerPos);
-            if (tdist > 12 || sdist > 12) continue;
-            double tImpact = Math.max(0, (1.0 - tdist / 12.0));
-            double sImpact = Math.max(0, (1.0 - sdist / 12.0));
-            double tDmg = (tImpact * tImpact + tImpact) / 2.0 * 84.0 + 1.0;
-            double sDmg = (sImpact * sImpact + sImpact) / 2.0 * 84.0 + 1.0;
-            if (tDmg < minDamage) continue;
-            if (!suicide) {
-                if (sDmg > maxSelfDmg) continue;
-                if (antiSuicide && pHp + pAbs - sDmg <= 0) continue;
-            }
-            double score = suicide ? (sDmg * 100.0 + tDmg) : tDmg;
-            if (score > bestPlaceDmg) {
-                bestPlaceDmg = score;
-                bestBx = (int) bx;
-                bestBy = (int) by;
-                bestBz = (int) bz;
-            }
-        }
-        if (bestPlaceDmg > 0) {
-            result[0] = 1.0;
-            result[1] = bestBx;
-            result[2] = bestBy;
-            result[3] = bestBz;
-            result[4] = bestPlaceDmg;
-            result[5] = 0.0;
-        }
-        return result;
-    }
     public static boolean isNativeAvailable() {
         return NATIVE.isLoaded();
     }
@@ -768,13 +732,99 @@ public class AutoCrystal {
         if (packet.getType() != EntityType.END_CRYSTAL) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        if (GameModeUtility.isLocalSpectator()) return;
+
+        boolean localCreative = GameModeUtility.isLocalCreative();
         double distSq = mc.getPlayer().distanceToSqr(packet.getX(), packet.getY(), packet.getZ());
-        if (distSq > breakRange * breakRange) return;
+
+        net.minecraft.world.phys.Vec3 crystalVec = new net.minecraft.world.phys.Vec3(packet.getX(), packet.getY(), packet.getZ());
+        net.minecraft.world.phys.Vec3 eyeVec = mc.getPlayer().getEyePosition();
+        double maxBreakRange = breakRange;
+        net.minecraft.world.level.ClipContext clipContext = new net.minecraft.world.level.ClipContext(
+                eyeVec,
+                crystalVec,
+                net.minecraft.world.level.ClipContext.Block.COLLIDER,
+                net.minecraft.world.level.ClipContext.Fluid.NONE,
+                mc.getPlayer()
+        );
+        net.minecraft.world.phys.BlockHitResult hit = mc.getLevel().clip(clipContext);
+        boolean visible = hit.getType() == net.minecraft.world.phys.HitResult.Type.MISS;
+        if (!visible) {
+            maxBreakRange = breakWallRange;
+        }
+        if (distSq > maxBreakRange * maxBreakRange) return;
+
         boolean isStrict = rotate.equals("Strict") || placeMode.equals("Strict");
         if (isStrict) return;
 
+        if (swapNoGap && mc.getPlayer().isUsingItem()) {
+            var usingItem = mc.getPlayer().getUseItem();
+            if (InventoryUtility.isGoldenApple(usingItem) || InventoryUtility.isEnchantedGoldenApple(usingItem)) {
+                return;
+            }
+        }
+
         long now = System.currentTimeMillis();
         if (now - lastBreakTime < (long) breakDelay) return;
+
+        double pHp  = EntityUtility.getHealth(mc.getPlayer());
+        double pAbs = EntityUtility.getAbsorption(mc.getPlayer());
+        double[] pStats = CombatUtility.getEntityStats(mc.getPlayer());
+
+        if (!localCreative && !suicide) {
+            boolean effectiveAntiSuicide = antiSuicide;
+            boolean ignoreSuicide = antiSuicideIgnoreWithTotem && pStats[14] > 0.0;
+            if (effectiveAntiSuicide && antiSuicideCheckBreaking && !ignoreSuicide) {
+                if (pHp + pAbs <= antiSuicideMinHp) {
+                    return;
+                }
+            }
+
+            double[] blockData = collectValidBlocks(mc, mc.getPlayer().position());
+            double selfDmg = 0.0;
+            if (NATIVE.isLoaded()) {
+                double[] calc = nativeCalcDamage(packet.getX(), packet.getY(), packet.getZ(),
+                        mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
+                        pHp, pAbs, pStats, blockData);
+                if (calc != null && calc.length > 0) {
+                    selfDmg = calc[0];
+                }
+            } else {
+                selfDmg = calcQuickDamage(mc, mc.getPlayer());
+            }
+
+            if (selfDmg > maxSelfDmg) {
+                return;
+            }
+
+            if (effectiveAntiSuicide && antiSuicideCheckBreaking && !ignoreSuicide) {
+                if (pHp + pAbs - selfDmg <= antiSuicideMinHp) {
+                    return;
+                }
+            }
+
+            LivingEntity target = currentTarget != null ? currentTarget : findTarget(mc);
+            if (target != null) {
+                double targetEffHp = EntityUtility.getHealthWithAbsorption(target);
+                double[] tStats = CombatUtility.getEntityStats(target);
+                double tDmg = 0.0;
+                if (NATIVE.isLoaded()) {
+                    double[] calcT = nativeCalcDamage(packet.getX(), packet.getY(), packet.getZ(),
+                            target.getX(), target.getY(), target.getZ(),
+                            EntityUtility.getHealth(target), EntityUtility.getAbsorption(target), tStats, blockData);
+                    if (calcT != null && calcT.length > 0) {
+                        tDmg = calcT[0];
+                    }
+                } else {
+                    tDmg = calcQuickDamage(mc, target);
+                }
+                boolean forceArmorBreak = armorBreaker && (tStats[7] <= armorPercent || tStats[8] <= armorPercent || tStats[9] <= armorPercent || tStats[10] <= armorPercent) && targetEffHp <= 28.0;
+                double reqMinDmg = forceArmorBreak ? Math.min(1.0, minDamage) : minDamage;
+                if (tDmg < reqMinDmg) {
+                    return;
+                }
+            }
+        }
 
         var existing = mc.getLevel().getEntity(packet.getId());
         net.minecraft.world.entity.Entity crystal = existing != null ? existing : new EndCrystal(EntityType.END_CRYSTAL, mc.getLevel());
@@ -796,6 +846,7 @@ public class AutoCrystal {
     }
 
     public void render(Matrix4f modelViewMatrix, Camera camera, float tickDelta) {
+        if (!targetEsp) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null) return;
 

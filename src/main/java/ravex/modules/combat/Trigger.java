@@ -27,8 +27,11 @@ public class Trigger {
     @Parameter(name = "Swap", modes = {"Silent", "Normal", "None"})
     public String swapMode = "Silent";
 
-    @Parameter(name = "ClickMode", modes = {"Hold", "Toggle"})
+    @Parameter(name = "ClickMode", modes = {"Hold", "Toggle", "Auto"})
     public String clickMode = "Hold";
+
+    @Parameter(name = "Cooldown")
+    public boolean cooldown = true;
 
     private boolean toggled = false;
     private long lastAttackTime = 0;
@@ -55,6 +58,8 @@ public class Trigger {
         if (clickModeVal.equals("Toggle")) {
             if (mc.getOptions().keyAttack.consumeClick()) toggled = !toggled;
             shouldAttack = toggled;
+        } else if (clickModeVal.equals("Auto")) {
+            shouldAttack = true;
         } else {
             shouldAttack = mc.getOptions().keyAttack.isDown();
         }
@@ -93,10 +98,11 @@ public class Trigger {
 
         currentTarget = target;
 
-        if (smartCrits && !mc.getPlayer().onGround()) {
-            double velY = mc.getPlayer().getDeltaMovement().y;
-            if (velY > -0.08) return;
-        }
+        // smart crits: only swing while falling
+        if (smartCrits && (mc.getPlayer().onGround() || mc.getPlayer().fallDistance <= 0)) return;
+
+        // vanilla cooldown, else every cps tick lands full damage
+        if (cooldown && mc.getPlayer().getAttackStrengthScale(0.5f) < 1.0f) return;
 
         long interval = 1000L / (long) (double) cps;
         if (System.currentTimeMillis() - lastAttackTime < interval) return;
@@ -126,6 +132,7 @@ public class Trigger {
                 }
             }
             InventoryUtility.attackEntity(mc, target, "Server");
+            mc.getRaw().player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
             if (bestSlot != -1 && bestSlot != originalSlot && bestDmg > 1.0) {
                 if (swapMode.equals("Silent")) {
                     NetworkUtility.sendSetCarriedItem(originalSlot);
@@ -135,6 +142,8 @@ public class Trigger {
             }
         } else {
             InventoryUtility.attackEntity(mc, target, "Server");
+            // server packet alone shows no local arm swing
+            mc.getRaw().player.swing(net.minecraft.world.InteractionHand.MAIN_HAND);
         }
     }
 

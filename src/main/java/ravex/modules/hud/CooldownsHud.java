@@ -82,9 +82,9 @@ public class CooldownsHud extends ravex.modules.Module {
         int bx = getX(), by = getY();
 
         if (lines.isEmpty()) {
+            if (!inEditor) return;
             setWidth(120);
             setHeight(28);
-            if (!inEditor) return;
             HudRendererUtility.drawBackground(graphics, bx, by, 120, 28);
             HudRendererUtility.drawIcon(graphics, ICON, bx + 120 - 4 - IS, by + (28 - IS) / 2, ColorUtility.getActiveColor());
             return;

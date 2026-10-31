@@ -85,4 +85,14 @@ public class ScreenUtility {
         var _mc = mc.getRaw();
         _mc.setScreen(null);
     }
+
+    public static boolean isPlayerInventoryScreen(MinecraftWrapper mc) {
+        var _mc = mc.getRaw();
+        return _mc.screen instanceof net.minecraft.client.gui.screens.inventory.InventoryScreen;
+    }
+
+    public static boolean isCreativeInventoryScreen(MinecraftWrapper mc) {
+        var _mc = mc.getRaw();
+        return _mc.screen instanceof net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+    }
 }

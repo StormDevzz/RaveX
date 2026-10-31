@@ -1,6 +1,7 @@
 #include "tntaura_jni.hpp"
 #include "tntaura.hpp"
 #include "damage_calc.hpp"
+#include "../../../common/include/jni_raii.hpp"
 #include <vector>
 
 
@@ -9,11 +10,14 @@ static std::vector<TntBlockPos> parseBlockData(JNIEnv* env, jdoubleArray arr) {
     std::vector<TntBlockPos> result;
     if (!arr) return result;
     jsize len = env->GetArrayLength(arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
     if (len < 3) return result;
 
-    jdouble* data = env->GetDoubleArrayElements(arr, nullptr);
-    if (!data) return result;
+    JniDoubleElements guard(env, arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
+    if (!guard) return result;
 
+    const jdouble* data = guard.get();
     for (jsize i = 0; i + 2 < len; i += 3) {
         result.push_back({
             static_cast<int>(data[i]),
@@ -21,8 +25,6 @@ static std::vector<TntBlockPos> parseBlockData(JNIEnv* env, jdoubleArray arr) {
             static_cast<int>(data[i+2])
         });
     }
-
-    env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
     return result;
 }
 
@@ -46,12 +48,14 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
     bool hasGap = false;
     if (gapPosData) {
         jsize gapLen = env->GetArrayLength(gapPosData);
+        if (ravex::jni::checkAndClearException(env)) return nullptr;
         if (gapLen >= 3) {
-            jdouble* gapData = env->GetDoubleArrayElements(gapPosData, nullptr);
-            if (gapData) {
+            JniDoubleElements gapGuard(env, gapPosData);
+            if (ravex::jni::checkAndClearException(env)) return nullptr;
+            if (gapGuard) {
+                const jdouble* gapData = gapGuard.get();
                 gapPos = {(int)gapData[0], (int)gapData[1], (int)gapData[2]};
                 hasGap = true;
-                env->ReleaseDoubleArrayElements(gapPosData, gapData, JNI_ABORT);
             }
         }
     }
@@ -83,6 +87,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
 
         jdoubleArray out = env->NewDoubleArray(11);
         if (!out) return nullptr;
+        if (ravex::jni::checkAndClearException(env)) return nullptr;
         jdouble buf[11] = {
             placement.valid ? 1.0 : 0.0,
             (double)placement.neighbor.x, (double)placement.neighbor.y, (double)placement.neighbor.z,
@@ -91,11 +96,13 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
             (double)full.gapPos.x, (double)full.gapPos.y, (double)full.gapPos.z
         };
         env->SetDoubleArrayRegion(out, 0, 11, buf);
+        if (ravex::jni::checkAndClearException(env)) return nullptr;
         return out;
     }
 
     jdoubleArray out = env->NewDoubleArray(8);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     jdouble buf[8] = {
         placement.valid ? 1.0 : 0.0,
         (double)placement.neighbor.x, (double)placement.neighbor.y, (double)placement.neighbor.z,
@@ -103,6 +110,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateCage(
         (double)placement.targetBlock.x, (double)placement.targetBlock.y, (double)placement.targetBlock.z
     };
     env->SetDoubleArrayRegion(out, 0, 8, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }
 
@@ -126,6 +134,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateTntSlot(
 
     jdoubleArray out = env->NewDoubleArray(8);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     jdouble buf[8] = {
         p.valid ? 1.0 : 0.0,
         (double)p.neighbor.x, (double)p.neighbor.y, (double)p.neighbor.z,
@@ -133,6 +142,7 @@ Java_ravex_modules_combat_TntAura_nativeCalculateTntSlot(
         (double)p.targetBlock.x, (double)p.targetBlock.y, (double)p.targetBlock.z
     };
     env->SetDoubleArrayRegion(out, 0, 8, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }
 
@@ -162,6 +172,7 @@ Java_ravex_modules_combat_TntAura_nativeEstimateDamage(
 
     jdoubleArray out = env->NewDoubleArray(4);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     jdouble buf[4] = {
         res.rawDamage,
         res.finalDamage,
@@ -169,5 +180,6 @@ Java_ravex_modules_combat_TntAura_nativeEstimateDamage(
         res.lethal ? 1.0 : 0.0
     };
     env->SetDoubleArrayRegion(out, 0, 4, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }

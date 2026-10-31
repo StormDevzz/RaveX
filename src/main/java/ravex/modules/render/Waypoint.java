@@ -15,7 +15,7 @@ public record WaypointData(String name, double x, double y, double z, String dim
 
     public final List<WaypointData> waypoints = new ArrayList<>();
     @Parameter(name = "Color", color = true)
-    public int color = 0xFF33AAFF;
+    public int color = 0xFF40A9F8;
     @Parameter(name = "Size", min = 0.5, max = 5.0, step = 0.5)
     public double markerSize = 2.0;
     @Parameter(name = "Range", min = 16.0, max = 512.0, step = 16.0)

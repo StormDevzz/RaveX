@@ -1,9 +1,9 @@
 package ravex.modules.player.invclean;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.core.registries.BuiltInRegistries;
 
 import ravex.parameter.ActionParameter;
+import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -38,9 +38,8 @@ public class InvClean {
         for (int i = 0; i < 36; i++) {
             var stack = inv.getItem(i);
             if (stack.isEmpty()) continue;
-            var rl = BuiltInRegistries.ITEM.getKey(stack.getItem());
-            if (rl == null) continue;
-            String itemId = rl.toString();
+            String itemId = InventoryUtility.getItemId(stack);
+            if (itemId == null) continue;
             if (InvCleanData.INSTANCE.isSelected(itemId)) {
                 final int fi = i;
                 mc.execute(() -> {
@@ -50,7 +49,7 @@ public class InvClean {
                         if (fi < 9) {
                             int prevSelected = InventoryUtility.getSelectedSlot(mc.getPlayer());
                             NetworkUtility.sendSetCarriedItem(fi);
-                            NetworkUtility.sendDropAll(net.minecraft.core.BlockPos.ZERO, net.minecraft.core.Direction.DOWN);
+                            NetworkUtility.sendDropAll(BlockUtility.pos(0, 0, 0), net.minecraft.core.Direction.DOWN);
                             NetworkUtility.sendSetCarriedItem(prevSelected);
                         }
                     }

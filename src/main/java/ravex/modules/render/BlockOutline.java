@@ -3,16 +3,13 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.parameter.ColorParameter;
 import ravex.manager.ModuleManager;
-import ravex.utility.render.ColorUtility;
 
 @Module(name = "BlockOutline", category = "Render")
 public class BlockOutline {
     @Parameter(name = "Mode", modes = {"Thin", "Thick"})
     public String mode = "Thin";
     @Parameter(name = "Color", color = true)
-    public int color = 0xFFFFFF55;
-    @Parameter(name = "ThemeSync")
-    public boolean themeSync = false;
+    public int color = 0xFF40A9F8;
     @Parameter(name = "Filled")
     public boolean filled = true;
     @Parameter(name = "Smooth")
@@ -23,7 +20,6 @@ public class BlockOutline {
     public double rightBias = 0.6;
 
     public static boolean vanillaOutlineEnabled = true;
-    private boolean lastThemeSync = false;
 
     private ColorParameter colorParam() {
         var mod = ModuleManager.delegate(BlockOutline.class);
@@ -35,21 +31,9 @@ public class BlockOutline {
     }
 
     public int resolveColor() {
-        if (themeSync) return ColorUtility.getActiveColor();
+        // palette owns theme sync, just read its color
         ColorParameter cp = colorParam();
         if (cp != null) return cp.getValue();
         return color;
-    }
-
-    public void onTick() {
-        ColorParameter cp = colorParam();
-        if (cp == null) return;
-        if (themeSync != lastThemeSync) {
-            cp.setThemeSync(themeSync);
-            lastThemeSync = themeSync;
-        } else if (cp.isThemeSync() != themeSync) {
-            themeSync = cp.isThemeSync();
-            lastThemeSync = themeSync;
-        }
     }
 }

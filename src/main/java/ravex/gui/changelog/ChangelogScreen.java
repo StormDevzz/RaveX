@@ -16,10 +16,7 @@ import ravex.utility.misc.LanguageUtility;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Renders the changelog, sourced from {@code .github/RELEASE_NOTES.md} of the repository
- * (bundled into the jar and refreshed from the GitHub Releases API when online).
- */
+// renders the changelog from the bundled release notes
 public class ChangelogScreen extends Screen {
     private static final int BTN_H = 18;
     private static final int PAD = 8;
@@ -96,7 +93,7 @@ public class ChangelogScreen extends Screen {
         scroll = Math.max(0, Math.min(scroll, Math.max(0, contentH - listH)));
     }
 
-    /** Flattens the entries into drawable lines with wrapping. */
+    // flattens the entries into drawable lines with wrapping.
     private void rebuild() {
         rendered = new ArrayList<>();
         maxTextW = listW - PAD * 2 - 12;
@@ -105,7 +102,7 @@ public class ChangelogScreen extends Screen {
             ChangelogManager.Entry entry = entries.get(i);
             if (i > 0) rendered.add(RenderedLine.gap(ENTRY_GAP));
 
-            String heading = "RaveX " + (entry.version == null ? "" : entry.version);
+            String heading = entry.version == null ? "" : entry.version;
             rendered.add(RenderedLine.title(heading, entry.date));
 
             for (ChangelogManager.Line line : entry.lines) {
@@ -291,12 +288,11 @@ public class ChangelogScreen extends Screen {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double scrollY) {
-        if (mouseX >= listX && mouseX <= listX + listW && mouseY >= listY && mouseY <= listY + listH) {
-            scroll = Math.max(0, Math.min(Math.max(0, contentH - listH),
-                    scroll - (int) (scrollY * 20)));
-            return true;
-        }
-        return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        int maxScroll = Math.max(0, contentH - listH);
+        if (maxScroll <= 0) return super.mouseScrolled(mouseX, mouseY, scrollX, scrollY);
+        // wheel works anywhere on the screen, not just the list
+        scroll = Math.max(0, Math.min(maxScroll, scroll - (int) (scrollY * 20)));
+        return true;
     }
 
     @Override

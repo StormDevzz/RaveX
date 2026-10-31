@@ -15,7 +15,7 @@ public class AutoTunnel {
     @Parameter(name = "Height", min = 1, max = 3, step = 1)
     public double height = 2;
     @Parameter(name = "Width", min = 1, max = 3, step = 1)
-    public double width = 2;
+    public double width = 1;
     @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
     public double delay = 200;
     @Parameter(name = "Swap", modes = {"None", "Normal", "Silent"})
@@ -27,9 +27,10 @@ public class AutoTunnel {
     @Parameter(name = "Render")
     public boolean render = true;
     @Parameter(name = "Color", color = true, visible = "render")
-    public int color = 0x3FFFFF00;
+    public int color = 0x3F40A9F8;
     private static int targetX, targetY, targetZ;
     private static boolean hasTarget;
+    private static final List<net.minecraft.core.BlockPos> RENDER_VOLUME = new ArrayList<>();
     private long lastActionTime = 0;
     private int miningX, miningY, miningZ;
     private boolean hasMiningTarget;
@@ -39,13 +40,32 @@ public class AutoTunnel {
         if (!hasTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
+
+    // whole slice, highlight shows the tunnel shape
+    public static List<net.minecraft.core.BlockPos> getRenderVolume() {
+        return RENDER_VOLUME;
+    }
+
+    public static boolean isTarget(net.minecraft.core.BlockPos pos) {
+        return hasTarget && pos.getX() == targetX && pos.getY() == targetY && pos.getZ() == targetZ;
+    }
+
     public void onDisable() {
         var mc = MinecraftWrapper.getWrapper();
         if (hasMiningTarget && mc.getGameMode() != null) {
             mc.getGameMode().stopDestroyBlock();
         }
+        if (autoWalk) {
+            // do not leave the forward key stuck down
+            var opts = mc.getOptions();
+            var window = mc.getWindow();
+            boolean physicallyDown = window != null
+                && com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, org.lwjgl.glfw.GLFW.GLFW_KEY_W);
+            opts.keyUp.setDown(physicallyDown);
+        }
         hasMiningTarget = false;
         hasTarget = false;
+        RENDER_VOLUME.clear();
     }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
@@ -56,7 +76,19 @@ public class AutoTunnel {
             mc.getOptions().keyUp.setDown(true);
         }
         List<Long> blocks = getTunnelBlocks(mc);
-        if (blocks.isEmpty()) return;
+        if (blocks.isEmpty()) {
+            RENDER_VOLUME.clear();
+            if (hasMiningTarget) {
+                mc.getGameMode().stopDestroyBlock();
+                hasMiningTarget = false;
+            }
+            hasTarget = false;
+            return;
+        }
+        RENDER_VOLUME.clear();
+        for (long packed : blocks) {
+            RENDER_VOLUME.add(BlockUtility.fromPacked(packed));
+        }
         if (fillLava) {
             for (long packed : blocks) {
                 int bx = BlockUtility.unpackX(packed), by = BlockUtility.unpackY(packed), bz = BlockUtility.unpackZ(packed);

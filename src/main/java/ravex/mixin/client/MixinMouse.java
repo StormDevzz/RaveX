@@ -5,7 +5,6 @@ import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.gui.screens.ChatScreen;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.input.MouseButtonInfo;
-import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -13,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import ravex.manager.ConfigManager;
 import ravex.manager.ModuleManager;
 import ravex.modules.client.Hud;
+import ravex.modules.hud.Radar;
 import ravex.modules.movement.GuiMove;
 import ravex.modules.render.FreeCam;
 import ravex.modules.render.FreeLook;
@@ -23,11 +23,28 @@ public class MixinMouse {
     @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true)
     private void onScrollHead(long window, double xOffset, double yOffset, CallbackInfo ci) {
         var scrollMc = MinecraftWrapper.getInstance();
+        if (scrollMc.player != null && scrollMc.screen == null && yOffset != 0) {
+            double rx = scrollMc.mouseHandler.xpos() * scrollMc.getWindow().getGuiScaledWidth() / scrollMc.getWindow().getWidth();
+            double ry = scrollMc.mouseHandler.ypos() * scrollMc.getWindow().getGuiScaledHeight() / scrollMc.getWindow().getHeight();
+            for (var hm : ModuleManager.INSTANCE.getHudModules()) {
+                if (!(hm instanceof Radar radar) || !radar.getEnabled()) continue;
+                int w = Math.round(radar.getWidth() * radar.getUserScale());
+                int h = Math.round(radar.getHeight() * radar.getUserScale());
+                if (rx >= radar.getX() && rx <= radar.getX() + w && ry >= radar.getY() && ry <= radar.getY() + h) {
+                    // scroll over the radar zooms it, one notch is 2 blocks
+                    radar.range = Math.max(8, Math.min(32, radar.range + (yOffset > 0 ? -2 : 2)));
+                    ci.cancel();
+                    return;
+                }
+            }
+        }
         if (scrollMc.player != null && scrollMc.screen instanceof ChatScreen) {
             double mx = scrollMc.mouseHandler.xpos() * scrollMc.getWindow().getGuiScaledWidth() / scrollMc.getWindow().getWidth();
             double my = scrollMc.mouseHandler.ypos() * scrollMc.getWindow().getGuiScaledHeight() / scrollMc.getWindow().getHeight();
             for (var hm : ModuleManager.INSTANCE.getHudModules()) {
                 if (!hm.getEnabled()) continue;
+                // the chat scrolls under the wheel, it never resizes
+                if ("ChatHud".equals(hm.getName())) continue;
                 int x1 = hm.getX(), y1 = hm.getY();
                 int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
                 int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
@@ -69,17 +86,14 @@ public class MixinMouse {
     @Inject(method = "onButton", at = @At("HEAD"), cancellable = true)
     private void onMouseButton(long window, MouseButtonInfo buttonInfo, int action, CallbackInfo ci) {
         GuiMove gw = Modules.get(GuiMove.class);
-        if (!Modules.enabled(GuiMove.class) || !"NoClick".equals(gw.mode)) return;
         var mc = MinecraftWrapper.getInstance();
-        if (!(mc.screen instanceof AbstractContainerScreen<?> screen)) return;
-        double mx = mc.mouseHandler.xpos() * mc.getWindow().getGuiScaledWidth() / mc.getWindow().getWidth();
-        double my = mc.mouseHandler.ypos() * mc.getWindow().getGuiScaledHeight() / mc.getWindow().getHeight();
-        for (Slot slot : screen.getMenu().slots) {
-            if (mx >= slot.x && mx < slot.x + 18 && my >= slot.y && my < slot.y + 18) {
-                ci.cancel();
-                return;
-            }
-        }
+        if (!Modules.enabled(GuiMove.class) || !"NoClick".equals(gw.mode)) return;
+        if (!(mc.screen instanceof AbstractContainerScreen<?>)) return;
+        // only while walking
+        if (!mc.options.keyUp.isDown() && !mc.options.keyDown.isDown()
+                && !mc.options.keyLeft.isDown() && !mc.options.keyRight.isDown()) return;
+        // no inventory or container clicking at all while moving
+        ci.cancel();
     }
 
     @Inject(method = "onButton", at = @At("TAIL"))
@@ -95,6 +109,8 @@ public class MixinMouse {
                     double my = mc.mouseHandler.ypos() * mc.getWindow().getGuiScaledHeight() / mc.getWindow().getHeight();
                     for (var hm : ModuleManager.INSTANCE.getHudModules()) {
                         if (!hm.getEnabled()) continue;
+                        // chatHud may only be moved inside the HudEditor
+                        if ("ChatHud".equals(hm.getName())) continue;
                         int w = Math.round(hm.getWidth() * hm.getUserScale());
                         int h = Math.round(hm.getHeight() * hm.getUserScale());
                         if (mx >= hm.getX() && mx <= hm.getX() + w &&

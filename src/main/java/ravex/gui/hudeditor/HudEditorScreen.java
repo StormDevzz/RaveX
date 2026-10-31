@@ -6,18 +6,19 @@ import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.input.KeyEvent;
 import org.lwjgl.glfw.GLFW;
-import ravex.gui.clickgui.ColorPaletteModal;
+import ravex.gui.clickgui.ClickGUI;
 import ravex.utility.render.ColorUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
 import ravex.modules.client.Hud;
-import ravex.parameter.ColorParameter;
 import ravex.utility.misc.GuiOptimizerUtility;
+import ravex.utility.misc.CursorUtility;
 import ravex.utility.render.FontRenderUtility;
-import java.util.HashMap;
+import ravex.utility.render.animate.AnimationUtility;
+import ravex.mcwrapper.MinecraftWrapper;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 public class HudEditorScreen extends Screen {
     private final Screen parentScreen;
     private final long initTime;
@@ -26,11 +27,16 @@ public class HudEditorScreen extends Screen {
     private Module draggingHud;
     private int dragOffsetX;
     private int dragOffsetY;
+    // the dragged element follows the cursor on a spring
+    private AnimationUtility.SpringAnimation dragSpringX;
+    private AnimationUtility.SpringAnimation dragSpringY;
+    private long lastDragNanos = 0L;
+    // the springs keep guiding the element to the drop point
+    private boolean dragReleased = false;
+    private int frozenTargetX;
+    private int frozenTargetY;
     private long savedFlashMs = -1;
     private final HudPanel panel = new HudPanel();
-    private final Map<Module, Float> hoverProgress = new HashMap<>();
-    ColorPaletteModal activeColorPalette = null;
-    ColorParameter activeColorParameter = null;
     public HudEditorScreen(Screen parentScreen) {
         super(Component.literal(ravex.utility.misc.LanguageUtility.t("hud_editor_title")));
         this.parentScreen = parentScreen;
@@ -73,20 +79,51 @@ public class HudEditorScreen extends Screen {
             panel.dragTo(mouseX, mouseY, this.width, this.height);
         }
         if (draggingHud != null) {
-            int nx = mouseX - dragOffsetX;
-            int ny = mouseY - dragOffsetY;
-            nx = Math.max(0, Math.min(this.width - draggingHud.getWidth(), nx));
-            ny = Math.max(0, Math.min(this.height - draggingHud.getHeight(), ny));
-            draggingHud.setX(nx);
-            draggingHud.setY(ny);
-            float follow = 0.5f;
-            float dx = draggingHud.getDisplayX() + (nx - draggingHud.getDisplayX()) * follow;
-            float dy = draggingHud.getDisplayY() + (ny - draggingHud.getDisplayY()) * follow;
-            if (Math.abs(dx - nx) < 0.4f) dx = nx;
-            if (Math.abs(dy - ny) < 0.4f) dy = ny;
-            draggingHud.setDisplayX(dx);
-            draggingHud.setDisplayY(dy);
+            int nx;
+            int ny;
+            if (dragReleased) {
+                // the mouse is gone, finish the move towards the drop point
+                nx = frozenTargetX;
+                ny = frozenTargetY;
+            } else {
+                nx = mouseX - dragOffsetX;
+                ny = mouseY - dragOffsetY;
+                nx = Math.max(0, Math.min(this.width - draggingHud.getWidth(), nx));
+                ny = Math.max(0, Math.min(this.height - draggingHud.getHeight(), ny));
+                draggingHud.setX(nx);
+                draggingHud.setY(ny);
+                frozenTargetX = nx;
+                frozenTargetY = ny;
+            }
+
+            long nowNanos = System.nanoTime();
+            float dragDt = lastDragNanos == 0L ? 16f : Math.min(50f, (nowNanos - lastDragNanos) / 1_000_000f);
+            lastDragNanos = nowNanos;
+            if (dragSpringX == null) {
+                dragSpringX = new AnimationUtility.SpringAnimation(draggingHud.getDisplayX());
+                dragSpringY = new AnimationUtility.SpringAnimation(draggingHud.getDisplayY());
+            }
+            float dragStiffness = 240f;
+            dragSpringX.stiffness(dragStiffness).damping(2f * (float) Math.sqrt(dragStiffness)).mass(1f);
+            dragSpringY.stiffness(dragStiffness).damping(2f * (float) Math.sqrt(dragStiffness)).mass(1f);
+            dragSpringX.setTarget(nx);
+            dragSpringY.setTarget(ny);
+            dragSpringX.update(dragDt);
+            dragSpringY.update(dragDt);
+            draggingHud.setDisplayX(dragSpringX.getValue());
+            draggingHud.setDisplayY(dragSpringY.getValue());
             draggingHud.setHudPositionCustomized(true);
+
+            if (dragReleased && dragSpringX.isSettled() && dragSpringY.isSettled()) {
+                draggingHud.setX(frozenTargetX);
+                draggingHud.setY(frozenTargetY);
+                draggingHud.setDisplayX(frozenTargetX);
+                draggingHud.setDisplayY(frozenTargetY);
+                draggingHud = null;
+                dragReleased = false;
+                dragSpringX = null;
+                dragSpringY = null;
+            }
         }
         List<Module> hudMods = ModuleManager.INSTANCE.getHudModules();
         for (Module hm : hudMods) {
@@ -94,13 +131,6 @@ public class HudEditorScreen extends Screen {
             int x1 = hm.getX(), y1 = hm.getY();
             int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
             int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
-            boolean hov = mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2;
-            boolean dragging = (hm == draggingHud);
-            float hp = hoverProgress.getOrDefault(hm, 0f);
-            float target = (hov || dragging) ? 1f : 0f;
-            hp += (target - hp) * 0.2f;
-            if (Math.abs(hp - target) < 0.005f) hp = target;
-            hoverProgress.put(hm, hp);
 
             var pose = graphics.pose();
             pose.pushMatrix();
@@ -110,59 +140,29 @@ public class HudEditorScreen extends Screen {
             try { hm.render(graphics, 0f); } catch (Throwable ignored) {}
             pose.popMatrix();
 
-            if (hp > 0.01f) {
-                int glowAlpha = (int) (hp * 35);
-                graphics.fill(x1 - 1, y1 - 1, x2 + 1, y2 + 1,
-                    ColorUtility.withAlpha(accentColor, glowAlpha));
-            }
-            int borderAlpha = dragging ? 255 : (int) (60 + hp * 140);
-            int borderCol = ColorUtility.withAlpha(
-                dragging ? accentColor : (hov ? accentColor : 0xFFFFFFFF), borderAlpha);
-            if (dragging) {
-                long phase = now % 2000;
-                float pulse = (float) (Math.sin(phase * Math.PI / 1000.0) * 0.5 + 0.5);
-                for (int s = 1; s <= 3; s++) {
-                    int al = (int) (pulse * 35 / s);
-                    int gc = ColorUtility.withAlpha(accentColor, Math.max(1, al));
-                    graphics.fill(x1 - s - 2, y1 - s - 2, x2 + s + 2, y1 - 2, gc);
-                    graphics.fill(x1 - s - 2, y2 + 2, x2 + s + 2, y2 + s + 2, gc);
-                    graphics.fill(x1 - s - 2, y1 - 2, x1 - 2, y2 + 2, gc);
-                    graphics.fill(x2 + 2, y1 - 2, x2 + s + 2, y2 + 2, gc);
-                }
-                for (int s = 1; s <= 5; s++) {
-                    int al = (int) ((1f - pulse) * 20 / s);
-                    int gc = ColorUtility.withAlpha(0xFFFFFF, Math.max(1, al));
-                    graphics.fill(x1 - s - 3, y1 - s - 3, x2 + s + 3, y1 - 3, gc);
-                    graphics.fill(x1 - s - 3, y2 + 3, x2 + s + 3, y2 + s + 3, gc);
-                    graphics.fill(x1 - s - 3, y1 - 3, x1 - 3, y2 + 3, gc);
-                    graphics.fill(x2 + 3, y1 - 3, x2 + s + 3, y2 + 3, gc);
-                }
-            }
             int pad = 2;
-            Render2DUtility.drawBorder(graphics, x1 - pad, y1 - pad, (x2 + pad) - (x1 - pad), (y2 + pad) - (y1 - pad), 1, borderCol);
-            int cSize = 4;
-            graphics.fill(x1 - pad, y1 - pad, x1 - pad + cSize, y1 - pad + 1, accentColor);
-            graphics.fill(x1 - pad, y1 - pad, x1 - pad + 1, y1 - pad + cSize, accentColor);
-            graphics.fill(x2 + pad - cSize, y2 + pad - 1, x2 + pad, y2 + pad, accentColor);
-            graphics.fill(x2 + pad - 1, y2 + pad - cSize, x2 + pad, y2 + pad, accentColor);
             String name = ravex.utility.misc.LanguageUtility.moduleName(hm.getName());
             String tag = name.endsWith("Hud") ? name.substring(0, name.length() - 3) : name;
             int tagX = x1, tagY = y1 - pad - 11;
             if (tagY < 0) tagY = y2 + pad + 2;
             FontRenderUtility.drawString(graphics, tag, tagX + 1, tagY + 1, 0xBB000000, false);
-            FontRenderUtility.drawString(graphics, tag, tagX, tagY, hov ? accentColor : 0xFFAAAAAA, false);
+            FontRenderUtility.drawString(graphics, tag, tagX, tagY, 0xFFAAAAAA, false);
         }
+        ClickGUI.hoveredDescription = null;
         panel.render(graphics, mouseX, mouseY, this.width, this.height, alpha, accentColor);
-        if (activeColorPalette != null) {
-            activeColorPalette.render(graphics, mouseX, mouseY, this.width, this.height);
+        renderDescription(graphics, mouseX, mouseY, alpha);
+        // the parameter elements are the click gui ones
+        if (ClickGUI.activeColorPalette != null) {
+            ClickGUI.activeColorPalette.render(graphics, mouseX, mouseY, this.width, this.height);
         }
 
         String hint = ravex.utility.misc.LanguageUtility.t("hud_editor_scale_hint");
         int hw = FontRenderUtility.getStringWidth(hint);
         int hx = (this.width - hw) / 2;
         int hy = this.height - 15;
-        graphics.fill(hx - 8, hy - 2, hx + hw + 8, hy + 11, 0xA0080810);
-        Render2DUtility.drawRoundBorder(graphics, hx - 8, hy - 2, hw + 16, 13, 3, 1, ColorUtility.withAlpha(accentColor, 120));
+        Render2DUtility.drawRound(graphics, hx - 8, hy - 2, hw + 16, 13, 3, 0xA0080810);
+        Render2DUtility.drawSmoothRoundOutline(graphics, hx - 8, hy - 2, hw + 16, 13, 3, 1,
+            ColorUtility.applyAlpha(ModuleManager.get(ravex.modules.client.ClickGui.class).outlineColor, alpha / 255f));
         FontRenderUtility.drawString(graphics, hint, hx, hy, 0xFFE0E0F0, true);
 
         super.render(graphics, mouseX, mouseY, partialTicks);
@@ -170,11 +170,11 @@ public class HudEditorScreen extends Screen {
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean handled) {
         if (closing) return true;
-        if (activeColorPalette != null) {
-            boolean result = activeColorPalette.mouseClicked(event.x(), event.y(), event.button());
-            if (!activeColorPalette.isOpen()) {
-                activeColorPalette = null;
-                activeColorParameter = null;
+        if (ClickGUI.activeColorPalette != null) {
+            boolean result = ClickGUI.activeColorPalette.mouseClicked(event.x(), event.y(), event.button());
+            if (!ClickGUI.activeColorPalette.isOpen()) {
+                ClickGUI.activeColorPalette = null;
+                ClickGUI.activeColorParameter = null;
             }
             return true;
         }
@@ -203,6 +203,10 @@ public class HudEditorScreen extends Screen {
                     draggingHud = hm;
                     dragOffsetX = mx - hm.getX();
                     dragOffsetY = my - hm.getY();
+                    // re-seed the follow springs at the spot the element currently sits
+                    dragSpringX = new AnimationUtility.SpringAnimation(hm.getDisplayX());
+                    dragSpringY = new AnimationUtility.SpringAnimation(hm.getDisplayY());
+                    lastDragNanos = System.nanoTime();
                     ravex.utility.misc.CursorUtility.setHand();
                     return true;
                 }
@@ -214,7 +218,10 @@ public class HudEditorScreen extends Screen {
     public boolean mouseReleased(MouseButtonEvent event) {
         if (event.button() == 0) {
             boolean wasDragging = draggingHud != null || panel.isPanelDragging();
-            draggingHud = null;
+            if (draggingHud != null) {
+                // the springs finish the move, so the element does not snap on release
+                dragReleased = true;
+            }
             panel.mouseReleased();
             if (wasDragging) ravex.utility.misc.CursorUtility.reset();
         }
@@ -238,6 +245,12 @@ public class HudEditorScreen extends Screen {
             int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
             int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
             if (mouseX >= x1 && mouseX <= x2 && mouseY >= y1 && mouseY <= y2) {
+                if ("ChatHud".equals(hm.getName())) {
+                    // wheel scrolls the chat, it does not scale it
+                    var chat = MinecraftWrapper.getWrapper().getRaw().gui.getChat();
+                    if (chat != null) chat.scrollChat(verticalAmount > 0 ? 1 : -1);
+                    return true;
+                }
                 float step = 0.05f;
                 float currentScale = hm.getUserScale();
                 float newScale = verticalAmount > 0 ? currentScale + step : currentScale - step;
@@ -249,14 +262,77 @@ public class HudEditorScreen extends Screen {
         }
         return super.mouseScrolled(mouseX, mouseY, horizontalAmount, verticalAmount);
     }
+
+    @Override
+    public void mouseMoved(double mouseX, double mouseY) {
+        int mx = (int) mouseX, my = (int) mouseY;
+        boolean overHud = false;
+        for (Module hm : ModuleManager.INSTANCE.getHudModules()) {
+            if (!hm.getEnabled()) continue;
+            int x1 = hm.getX(), y1 = hm.getY();
+            int x2 = x1 + Math.round(hm.getWidth() * hm.getUserScale());
+            int y2 = y1 + Math.round(hm.getHeight() * hm.getUserScale());
+            if (mx >= x1 && mx <= x2 && my >= y1 && my <= y2) {
+                overHud = true;
+                break;
+            }
+        }
+        if (overHud) {
+            CursorUtility.setHand();
+        } else {
+            CursorUtility.reset();
+        }
+        super.mouseMoved(mouseX, mouseY);
+    }
+
     @Override
     public boolean keyPressed(KeyEvent event) {
         if (closing) return true;
-        if (activeColorPalette != null) {
-            boolean result = activeColorPalette.keyPressed(event.key());
-            if (!activeColorPalette.isOpen()) {
-                activeColorPalette = null;
-                activeColorParameter = null;
+        if (ClickGUI.activeColorPalette != null) {
+            boolean result = ClickGUI.activeColorPalette.keyPressed(event.key());
+            if (!ClickGUI.activeColorPalette.isOpen()) {
+                ClickGUI.activeColorPalette = null;
+                ClickGUI.activeColorParameter = null;
+            }
+            return true;
+        }
+        // the parameter elements are the click gui ones, so the same input states apply
+        if (ClickGUI.activeKeybindElement != null) {
+            ravex.parameter.KeybindParameter kp = (ravex.parameter.KeybindParameter) ClickGUI.activeKeybindElement.getParameter();
+            if (event.key() == GLFW.GLFW_KEY_ESCAPE) {
+                kp.setValue(org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN);
+                ravex.RaveX.suppressKey(GLFW.GLFW_KEY_ESCAPE);
+            } else {
+                kp.setValue(event.key());
+                ravex.RaveX.suppressKey(event.key());
+            }
+            ClickGUI.activeKeybindElement = null;
+            return true;
+        }
+        if (ClickGUI.activeNumberParameterElement != null) {
+            if (event.key() == GLFW.GLFW_KEY_ESCAPE || event.key() == GLFW.GLFW_KEY_ENTER) {
+                ClickGUI.activeNumberParameterElement.applyInput();
+                ClickGUI.activeNumberParameterElement = null;
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
+                ClickGUI.activeNumberParameterElement.removeLastChar();
+                return true;
+            }
+            return true;
+        }
+        if (ClickGUI.activeStringParameterElement != null) {
+            ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) ClickGUI.activeStringParameterElement.getParameter();
+            if (event.key() == GLFW.GLFW_KEY_ESCAPE || event.key() == GLFW.GLFW_KEY_ENTER) {
+                ClickGUI.activeStringParameterElement = null;
+                return true;
+            }
+            if (event.key() == GLFW.GLFW_KEY_BACKSPACE) {
+                String val = sp.getValue();
+                if (!val.isEmpty()) {
+                    sp.setValue(val.substring(0, val.length() - 1));
+                }
+                return true;
             }
             return true;
         }
@@ -267,26 +343,108 @@ public class HudEditorScreen extends Screen {
     @Override
     public boolean charTyped(CharacterEvent event) {
         if (closing) return true;
-        if (activeColorPalette != null) {
+        if (ClickGUI.activeColorPalette != null) {
             String text = event.codepointAsString();
             if (!text.isEmpty()) {
-                boolean result = activeColorPalette.charTyped(text.charAt(0));
-                if (!activeColorPalette.isOpen()) {
-                    activeColorPalette = null;
-                    activeColorParameter = null;
+                boolean result = ClickGUI.activeColorPalette.charTyped(text.charAt(0));
+                if (!ClickGUI.activeColorPalette.isOpen()) {
+                    ClickGUI.activeColorPalette = null;
+                    ClickGUI.activeColorParameter = null;
                 }
                 return true;
             }
             return true;
         }
+        if (ClickGUI.activeKeybindElement != null) {
+            return true;
+        }
+        if (ClickGUI.activeNumberParameterElement != null) {
+            String text = event.codepointAsString();
+            if (!text.isEmpty()) {
+                char ch = text.charAt(0);
+                if ((ch >= '0' && ch <= '9') || ch == '.' || ch == '-') {
+                    ClickGUI.activeNumberParameterElement.appendChar(ch);
+                }
+            }
+            return true;
+        }
+        if (ClickGUI.activeStringParameterElement != null) {
+            ravex.parameter.StringParameter sp = (ravex.parameter.StringParameter) ClickGUI.activeStringParameterElement.getParameter();
+            String text = event.codepointAsString();
+            if (!text.isEmpty() && text.charAt(0) >= 32 && text.charAt(0) < 127) {
+                sp.setValue(sp.getValue() + text);
+            }
+            return true;
+        }
         return super.charTyped(event);
     }
+    // hovered hud module description, follows the mouse like the click gui tooltip
+    private void renderDescription(GuiGraphics graphics, int mouseX, int mouseY, int alpha) {
+        if (ClickGUI.activeColorPalette != null) return;
+        Module hovered = panel.getHoveredModule();
+        if (hovered == null) return;
+        // a hovered mode option describes itself, same as in the click gui
+        String desc = ClickGUI.hoveredDescription != null
+            ? ClickGUI.hoveredDescription : hovered.getDescription();
+        if (desc == null || desc.isEmpty()) return;
+
+        int maxW = 190;
+        List<String> lines = wrapText(desc, maxW);
+        if (lines.isEmpty()) return;
+        int lineH = FontRenderUtility.getFontHeight() + 2;
+        int padX = 8;
+        int padY = 6;
+        int tw = 0;
+        for (String line : lines) {
+            tw = Math.max(tw, FontRenderUtility.getStringWidth(line));
+        }
+        tw = Math.min(tw + padX * 2, maxW + padX * 2);
+        int th = lines.size() * lineH + padY * 2;
+
+        int ox = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetX;
+        int oy = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetY;
+        int dx = mouseX + ox;
+        int dy = mouseY + oy;
+        if (dx + tw > this.width) dx = mouseX - tw - 4;
+        if (dy + th > this.height) dy = mouseY - th - 4;
+        if (dx < 0) dx = 2;
+        if (dy < 0) dy = 2;
+
+        float animAlpha = alpha / 255f;
+        ClickGUI.drawDescriptionBackground(graphics, dx, dy, tw, th, animAlpha);
+
+        int ly = dy + padY;
+        int textAlpha = (int) (alpha * 0.9f);
+        for (String line : lines) {
+            FontRenderUtility.drawString(graphics, line, dx + padX, ly,
+                ColorUtility.setAlpha(0xE0E0E0, textAlpha), true);
+            ly += lineH;
+        }
+    }
+
+    private static List<String> wrapText(String text, int maxWidth) {
+        List<String> lines = new ArrayList<>();
+        if (text == null || text.isEmpty()) return lines;
+        StringBuilder line = new StringBuilder();
+        for (String word : text.split("\\s+")) {
+            if (word.isEmpty()) continue;
+            String candidate = line.length() == 0 ? word : line + " " + word;
+            if (line.length() > 0 && FontRenderUtility.getStringWidth(candidate) > maxWidth) {
+                lines.add(line.toString());
+                line = new StringBuilder(word);
+            } else {
+                line = new StringBuilder(candidate);
+            }
+        }
+        if (line.length() > 0) lines.add(line.toString());
+        return lines;
+    }
+
     private void doSave() {
         savedFlashMs = System.currentTimeMillis();
-        ravex.manager.ConfigManager.INSTANCE.save("default");
+        ravex.manager.ConfigManager.INSTANCE.saveAsync("default");
         startClosing();
-    }
-    private void startClosing() {
+    }    private void startClosing() {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
@@ -294,6 +452,16 @@ public class HudEditorScreen extends Screen {
     }
     @Override
     public void removed() {
+        // the parameter elements are shared with the click gui, drop their input states
+        ClickGUI.isDraggingSlider = false;
+        if (ClickGUI.activeNumberParameterElement != null) {
+            ClickGUI.activeNumberParameterElement.applyInput();
+            ClickGUI.activeNumberParameterElement = null;
+        }
+        ClickGUI.activeStringParameterElement = null;
+        ClickGUI.activeKeybindElement = null;
+        ClickGUI.activeColorPalette = null;
+        ClickGUI.activeColorParameter = null;
         super.removed();
     }
 }

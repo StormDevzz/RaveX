@@ -63,6 +63,20 @@ public class BaritoneIntegration {
         }
     }
 
+    // walks towards the given xz goal; silently does nothing without baritone.
+    public void setGoalXZ(int x, int z) {
+        if (!available && !init()) return;
+        try {
+            Object behavior = primaryBaritone.getClass().getMethod("getPathingBehavior").invoke(primaryBaritone);
+            Class<?> goalClass = Class.forName("baritone.api.pathing.goals.Goal");
+            Object goal = Class.forName("baritone.api.pathing.goals.GoalXZ")
+                .getConstructor(int.class, int.class)
+                .newInstance(x, z);
+            behavior.getClass().getMethod("setGoal", goalClass).invoke(behavior, goal);
+        } catch (Exception ignored) {
+        }
+    }
+
     public void applyBoolean(String settingName, boolean value) {
         if (!available) { if (debug) System.out.println("[RaveX] applyBoolean(" + settingName + "," + value + ") SKIPPED: not available"); return; }
         try {

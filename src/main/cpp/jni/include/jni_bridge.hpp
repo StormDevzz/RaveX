@@ -8,7 +8,7 @@ extern "C" {
 
 
 JNIEXPORT void JNICALL
-Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeGui(JNIEnv* env, jclass clazz);
+Java_ravex_utility_misc_GuiOptimizerUtility_nativeOptimizeGui(JNIEnv* env, jclass clazz);
 
 JNIEXPORT void JNICALL
 Java_ravex_manager_NativeManager_nativeCheckNatives(JNIEnv* env, jclass clazz);
@@ -23,7 +23,7 @@ JNIEXPORT jdouble JNICALL
 Java_ravex_modules_render_NameTags_nativeCalculateScale(JNIEnv* env, jclass clazz, jdouble distance, jdouble scaleParam, jboolean distanceScaling);
 
 JNIEXPORT jint JNICALL
-Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
+Java_ravex_utility_misc_GuiOptimizerUtility_nativeOptimizeNameTags(
     JNIEnv* env, jclass clazz,
     jdoubleArray cameraPos,
     jfloatArray modelView,
@@ -44,7 +44,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeNameTags(
 );
 
 JNIEXPORT void JNICALL
-Java_ravex_utility_misc_GuiOptimizer_nativeUpdateHudAnimations(
+Java_ravex_utility_misc_GuiOptimizerUtility_nativeUpdateHudAnimations(
     JNIEnv* env, jclass clazz,
     jfloatArray displayXs,
     jfloatArray displayYs,
@@ -56,7 +56,7 @@ Java_ravex_utility_misc_GuiOptimizer_nativeUpdateHudAnimations(
 );
 
 JNIEXPORT void JNICALL
-Java_ravex_utility_misc_GuiOptimizer_nativeOptimizeTracers(
+Java_ravex_utility_misc_GuiOptimizerUtility_nativeOptimizeTracers(
     JNIEnv* env, jclass clazz,
     jdoubleArray cameraPos,
     jfloatArray modelView,

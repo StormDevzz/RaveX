@@ -7,8 +7,8 @@ import ravex.utility.player.PlayerUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "TridentBoost", category = "Movement")
 public class TridentBoost {
-    @Parameter(name = "Mode", modes = {"Normal", "Always"})
-    public String mode = "Normal";
+    @Parameter(name = "Mode", modes = {"Vanilla", "NCP"})
+    public String mode = "Vanilla";
     @Parameter(name = "Speed", min = 0.5, max = 3.0, step = 0.1)
     public double speed = 1.0;
     @Parameter(name = "Vertical", min = 0.0, max = 2.0, step = 0.1)
@@ -22,11 +22,12 @@ public class TridentBoost {
         if (!InventoryUtility.hasEnchantment(main, "riptide")) return;
         if (!PlayerUtility.isUsingItem(player)) return;
         String m = mode;
-        if (m.equals("Normal") && !player.isInWaterOrRain()) return;
+        // vanilla needs water or rain for riptide
+        if (m.equals("Vanilla") && !player.isInWaterOrRain()) return;
         float yaw = player.getYRot() * ((float)Math.PI / 180F);
         float pitch = player.getXRot() * ((float)Math.PI / 180F);
         double mult = speed;
-        double vert = vertical;
+        double vert = m.equals("NCP") ? Math.min(vertical, 0.3) : vertical;
         double dx = -Math.sin(yaw) * Math.cos(pitch) * mult;
         double dy = -Math.sin(pitch) * vert;
         double dz = Math.cos(yaw) * Math.cos(pitch) * mult;

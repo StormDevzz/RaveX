@@ -1,15 +1,17 @@
 package ravex.modules.client;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.manager.LuaManager;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.client.multiplayer.ServerData;
 import ravex.utility.player.PlayerUtility;
+import ravex.utility.nativelib.NativeLoader;
 import ravex.mcwrapper.MinecraftWrapper;
 @Module(name = "RichPresence", category = "Client")
 public class RichPresence {
+    private static final String CLIENT_ID = "1517835260799484034";
+
     @Parameter(name = "LargeImage")
-    public String largeImage = "ravexdc";
+    public String largeImage = "Video";
     @Parameter(name = "ShowHP")
     public boolean showHP = true;
     @Parameter(name = "ShowCoords")
@@ -22,15 +24,26 @@ public class RichPresence {
     public boolean showButton = true;
     @Parameter(name = "ShowOS")
     public boolean showOS = true;
+
+    private static native void nativeInitialize(String clientId);
+    private static native void nativeShutdown();
+    private static native void nativeUpdatePresence(String state, String details, long startTimestamp,
+                                                     boolean showOS, boolean showButton, String largeImageKey);
+    private static native boolean nativeIsConnected();
+
     private Thread updateThread;
     private volatile boolean running = false;
     public void onEnable() {
+        if (!NativeLoader.loadLibrary("ravex_dc")) {
+            ravex.RaveX.LOGGER.warn("[RichPresence] native dc library is not available, module stays off");
+            return;
+        }
         running = true;
         updateThread = new Thread(() -> {
             try {
-                LuaManager.INSTANCE.discordConnect();
+                nativeInitialize(CLIENT_ID);
             } catch (Throwable t) {
-                System.err.println("[RichPresence] discordConnect failed: " + t.getMessage());
+                System.err.println("[RichPresence] nativeInitialize failed: " + t.getMessage());
                 running = false;
                 return;
             }
@@ -44,8 +57,7 @@ public class RichPresence {
                 } catch (Throwable ignored) {}
             }
             try {
-                LuaManager.INSTANCE.discordClearActivity();
-                LuaManager.INSTANCE.discordDisconnect();
+                nativeShutdown();
             } catch (Throwable ignored) {}
         }, "RaveX-RichPresence");
         updateThread.setDaemon(true);
@@ -58,8 +70,7 @@ public class RichPresence {
             updateThread = null;
         }
         try {
-            LuaManager.INSTANCE.discordClearActivity();
-            LuaManager.INSTANCE.discordDisconnect();
+            nativeShutdown();
         } catch (Throwable ignored) {}
     }
     private void updatePresence(long startTime) {
@@ -109,15 +120,9 @@ public class RichPresence {
             state = stateBuilder.toString();
         }
         try {
-            LuaManager.INSTANCE.discordSetActivity(details, state, startTime, showOS, showButton);
+            nativeUpdatePresence(state, details, startTime, showOS, showButton, largeImage);
         } catch (Throwable t) {
-            System.err.println("[RichPresence] discordSetActivity failed: " + t.getMessage());
+            System.err.println("[RichPresence] nativeUpdatePresence failed: " + t.getMessage());
         }
     }
-
-
-
-
-
-
 }

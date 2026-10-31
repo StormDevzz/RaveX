@@ -21,13 +21,15 @@ public class NameTags {
     @Parameter(name = "BackgroundColor", color = true, visible = "background")
     public int backgroundColor = 0x20000000;
     @Parameter(name = "CustomFont")
-    public boolean customFont = false;
+    public boolean customFont = true;
 
     @Parameter(name = "Entities", options = {"Players", "Monsters", "Passives"})
     public List<String> entities = new ArrayList<>(List.of("Players", "Monsters"));
 
     public boolean shouldDraw(net.minecraft.world.entity.Entity target) {
         if (!Modules.enabled(NameTags.class)) return false;
+        // logout ghosts are render states, skip them
+        if (target.getId() <= -20000) return false;
         if (!(target instanceof net.minecraft.world.entity.LivingEntity le)) return false;
         if (target instanceof net.minecraft.world.entity.player.Player) {
             return entities.contains("Players");

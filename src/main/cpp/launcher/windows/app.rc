@@ -34,8 +34,8 @@ IDR_ICON_NOTES PNG "icons/notes.png"
 IDR_ICON_WORLDS PNG "icons/worlds.png"
 1 24 "app.manifest"
 VS_VERSION_INFO VERSIONINFO
-FILEVERSION 1,2,1,0
-PRODUCTVERSION 1,2,1,0
+FILEVERSION 1,3,0,0
+PRODUCTVERSION 1,3,0,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -48,12 +48,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "RaveX"
             VALUE "FileDescription", "KickX Launcher"
-            VALUE "FileVersion", "1.2.1.0"
+            VALUE "FileVersion", "1.3"
             VALUE "InternalName", "kickx_launcher"
             VALUE "LegalCopyright", "Copyright (C) RaveX 2026"
             VALUE "OriginalFilename", "kickx_launcher.exe"
             VALUE "ProductName", "KickX Launcher"
-            VALUE "ProductVersion", "1.2.1.0"
+            VALUE "ProductVersion", "1.3"
         END
     END
     BLOCK "VarFileInfo"

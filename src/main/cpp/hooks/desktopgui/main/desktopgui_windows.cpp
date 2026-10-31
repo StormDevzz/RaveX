@@ -10,35 +10,53 @@
 #include <sstream>
 #include <algorithm>
 #include <cstdio>
+#include <cmath>
 
+#include "../../../common/include/jni_raii.hpp"
 #include "desktopgui.hpp"
+
+using ravex::jni::JniStringUtfChars;
+using ravex::jni::JniBooleanElements;
+using ravex::jni::checkAndClearException;
 
 #pragma comment(lib, "comctl32.lib")
 #pragma comment(lib, "gdi32.lib")
 #pragma comment(lib, "user32.lib")
+#pragma comment(lib, "msimg32.lib")
 
 
 
-static const COLORREF CLR_BG        = RGB(0x0e,0x0a,0x1a);
-static const COLORREF CLR_ROW       = RGB(0x16,0x10,0x26);
-static const COLORREF CLR_ROW_HOVER = RGB(0x1e,0x15,0x34);
-static const COLORREF CLR_TEXT      = RGB(0xee,0xee,0xee);
-static const COLORREF CLR_ON        = RGB(0xda,0x70,0xd6);
-static const COLORREF CLR_OFF       = RGB(0x4a,0x42,0x5c);
-static const COLORREF CLR_GEAR      = RGB(0x6a,0x5a,0x8c);
-static const COLORREF CLR_GEAR_HVR  = RGB(0xda,0x70,0xd6);
-static const COLORREF CLR_BORDER    = RGB(0x28,0x1a,0x4a);
-static const COLORREF CLR_TITLE     = RGB(0xda,0x70,0xd6);
-static const COLORREF CLR_BTN_TXT   = RGB(0xee,0xee,0xee);
-static const COLORREF CLR_DLG_BG    = RGB(0x12,0x0e,0x20);
+static const COLORREF CLR_BG        = RGB(0xf0,0xf0,0xf0);
+static const COLORREF CLR_ROW       = RGB(0xff,0xff,0xff);
+static const COLORREF CLR_ROW_HOVER = RGB(0xea,0xf6,0xfd);
+static const COLORREF CLR_TEXT      = RGB(0x1f,0x1f,0x1f);
+static const COLORREF CLR_ON        = RGB(0x3c,0x7f,0xb1);
+static const COLORREF CLR_OFF       = RGB(0xd9,0xd9,0xd9);
+static const COLORREF CLR_GEAR      = RGB(0x60,0x60,0x60);
+static const COLORREF CLR_GEAR_HVR  = RGB(0x2c,0x62,0x8b);
+static const COLORREF CLR_BORDER    = RGB(0xc8,0xcc,0xd0);
+static const COLORREF CLR_TITLE     = RGB(0x1f,0x2b,0x36);
+static const COLORREF CLR_BTN_TXT   = RGB(0xff,0xff,0xff);
+static const COLORREF CLR_OFF_TXT   = RGB(0x40,0x40,0x40);
+static const COLORREF CLR_TITLE_T   = RGB(0xf8,0xfc,0xff);
+static const COLORREF CLR_TITLE_B   = RGB(0xd0,0xe2,0xf3);
+static const COLORREF CLR_TITLE_BRD = RGB(0x9d,0xad,0xbc);
+static const COLORREF CLR_HOV_T     = RGB(0xea,0xf6,0xfd);
+static const COLORREF CLR_HOV_B     = RGB(0xc9,0xe6,0xf7);
+static const COLORREF CLR_HOV_BRD   = RGB(0x3c,0x7f,0xb1);
+static const COLORREF CLR_CLOSE_T   = RGB(0xdc,0x62,0x5a);
+static const COLORREF CLR_CLOSE_B   = RGB(0xb1,0x2b,0x24);
+static const COLORREF CLR_DLG_BG    = RGB(0xf0,0xf0,0xf0);
 
 static const int ROW_H   = 36;
-static const int TITLE_H = 40;
+static const int TITLE_H = 32;
 static const int PAD     = 6;
 static const int GEAR_W  = 28;
 static const int TOG_W   = 54;
 static const int WIN_CX  = 380;
 static const int WIN_CY  = 520;
+static const int CAP_BTN_W = 30;
+static const int CAP_CLOSE_W = 46;
 
 
 
@@ -59,7 +77,9 @@ static int g_cx        = WIN_CX;
 static int g_cy        = WIN_CY;
 static int g_hover_row = -1;
 static bool g_hover_gear = false;
+static int g_hover_cap = -1;
 static int g_total_rows   = 0;
+static HICON g_title_icon = nullptr;
 
 
 
@@ -123,12 +143,15 @@ static std::string notify_java_get_params(const std::string& name) {
     jmethodID m = env->GetStaticMethodID(g_desktopgui_class, "getModuleParams", "(Ljava/lang/String;)Ljava/lang/String;");
     if (m) {
         jstring jn = env->NewStringUTF(name.c_str());
+        if (ravex::jni::checkAndClearException(env)) return "";
         jstring jr = (jstring)env->CallStaticObjectMethod(g_desktopgui_class, m, jn);
         env->DeleteLocalRef(jn);
+        if (ravex::jni::checkAndClearException(env)) return "";
         if (jr) {
-            const char* c = env->GetStringUTFChars(jr, nullptr);
-            std::string out(c);
-            env->ReleaseStringUTFChars(jr, c);
+            JniStringUtfChars cGuard(env, jr);
+            if (!cGuard) return "";
+            if (ravex::jni::checkAndClearException(env)) return "";
+            std::string out(cGuard.get());
             env->DeleteLocalRef(jr);
             return out;
         }
@@ -145,6 +168,7 @@ static void notify_java_set_param(const std::string& mod, const std::string& par
         jstring jp = env->NewStringUTF(param.c_str());
         jstring jv = env->NewStringUTF(val.c_str());
         env->CallStaticVoidMethod(g_desktopgui_class, m, jm, jp, jv);
+        if (env->ExceptionCheck()) env->ExceptionClear();
         env->DeleteLocalRef(jm);
         env->DeleteLocalRef(jp);
         env->DeleteLocalRef(jv);
@@ -191,16 +215,104 @@ static void draw_text_w(HDC dc, int x, int y, int w, int h, const std::wstring& 
     SelectObject(dc, old);
 }
 
+enum { CAP_MIN = 0, CAP_MAX = 1, CAP_CLOSE = 2 };
 
+static void gradient_fill_border(HDC dc, const RECT& rc, COLORREF top, COLORREF bottom, COLORREF border) {
+    TRIVERTEX vtx[2] = {
+        { rc.left + 1, rc.top + 1, (COLOR16)(GetRValue(top) << 8), (COLOR16)(GetGValue(top) << 8), (COLOR16)(GetBValue(top) << 8), 0xff00 },
+        { rc.right - 1, rc.bottom - 1, (COLOR16)(GetRValue(bottom) << 8), (COLOR16)(GetGValue(bottom) << 8), (COLOR16)(GetBValue(bottom) << 8), 0xff00 }
+    };
+    GRADIENT_RECT gr = {0, 1};
+    GradientFill(dc, vtx, 2, &gr, 1, GRADIENT_FILL_RECT_V);
+
+    HPEN pen = CreatePen(PS_SOLID, 1, border);
+    HGDIOBJ op = SelectObject(dc, pen);
+    HGDIOBJ ob = SelectObject(dc, GetStockObject(NULL_BRUSH));
+    Rectangle(dc, rc.left, rc.top, rc.right, rc.bottom);
+    SelectObject(dc, op);
+    SelectObject(dc, ob);
+    DeleteObject(pen);
+}
+
+static int caption_button_at(int x, int y, int cx) {
+    int by = (TITLE_H - 20) / 2;
+    if (y < by || y > by + 20) return -1;
+    int right = cx - 2;
+    if (x >= right - CAP_CLOSE_W) return CAP_CLOSE;
+    if (x >= right - CAP_CLOSE_W - CAP_BTN_W) return CAP_MAX;
+    if (x >= right - CAP_CLOSE_W - 2 * CAP_BTN_W) return CAP_MIN;
+    return -1;
+}
+
+static void draw_caption_button(HDC dc, int x, int which, bool hover, bool maximized) {
+    int y = (TITLE_H - 20) / 2;
+    int w = (which == CAP_CLOSE) ? CAP_CLOSE_W : CAP_BTN_W;
+    RECT rc = {x, y, x + w, y + 20};
+    COLORREF top = CLR_TITLE_T, bottom = CLR_TITLE_B, border = CLR_TITLE_BRD;
+    if (hover) {
+        if (which == CAP_CLOSE) { top = CLR_CLOSE_T; bottom = CLR_CLOSE_B; border = CLR_CLOSE_B; }
+        else { top = CLR_HOV_T; bottom = CLR_HOV_B; border = CLR_HOV_BRD; }
+    }
+    gradient_fill_border(dc, rc, top, bottom, border);
+
+    COLORREF fg = (hover && which == CAP_CLOSE) ? RGB(0xff,0xff,0xff) : CLR_TITLE;
+    int mx = x + w / 2;
+    int my = y + 10;
+    HPEN pen = CreatePen(PS_SOLID, 1, fg);
+    HGDIOBJ op = SelectObject(dc, pen);
+    switch (which) {
+    case CAP_MIN:
+        MoveToEx(dc, mx - 5, my + 4, nullptr);
+        LineTo(dc, mx + 5, my + 4);
+        break;
+    case CAP_MAX:
+        if (maximized) {
+            Rectangle(dc, mx - 4, my - 4, mx + 3, my + 3);
+            MoveToEx(dc, mx - 2, my - 6, nullptr);
+            LineTo(dc, mx + 5, my - 6);
+            LineTo(dc, mx + 5, my + 1);
+        } else {
+            Rectangle(dc, mx - 5, my - 5, mx + 5, my + 4);
+        }
+        break;
+    default:
+        MoveToEx(dc, mx - 5, my - 5, nullptr);
+        LineTo(dc, mx + 5, my + 5);
+        MoveToEx(dc, mx + 5, my - 5, nullptr);
+        LineTo(dc, mx - 5, my + 5);
+        break;
+    }
+    SelectObject(dc, op);
+    DeleteObject(pen);
+}
+
+
+
+static const int SLIDER_STEPS = 1000;
+
+// decimals as needed by the parameter step
+static std::string fmt_num(double v, double step) {
+    int dec = 0;
+    double s = step > 0 ? step : 1.0;
+    while (s < 0.999999 && dec < 6) {
+        s *= 10.0;
+        dec++;
+    }
+    char buf[64];
+    snprintf(buf, sizeof(buf), "%.*f", dec, v);
+    return std::string(buf);
+}
 
 struct ParamCtrl {
     std::string name;
     std::string type;
-    HWND hwnd;
+    HWND hwnd = nullptr;
+    HWND value_hwnd = nullptr;
     std::string str_val;
-    double num_val, num_min, num_max, num_step;
+    double num_val = 0, num_min = 0, num_max = 0, num_step = 1;
     std::vector<std::string> modes;
-    int ctrl_id;
+    std::vector<HWND> boxes;
+    int ctrl_id = 0;
 };
 
 struct ParamDialogData {
@@ -253,22 +365,29 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 
             std::string type = parts[0];
             std::string pname = parts[1];
+            int ctrl_id = d->next_id++;
 
+            std::wstring wlabel = to_wide(pname);
+            if (type != "group") {
+                CreateWindowExW(0, L"STATIC", wlabel.c_str(),
+                    WS_CHILD | WS_VISIBLE | SS_RIGHT,
+                    8, y, 110, 22, hDlg, nullptr, g_hinst, nullptr);
+            }
 
-            std::string label_text = pname;
-            std::wstring wlabel = to_wide(label_text);
-            CreateWindowExW(0, L"STATIC", wlabel.c_str(),
-                WS_CHILD | WS_VISIBLE | SS_RIGHT,
-                8, y, 110, 22, hDlg, nullptr, g_hinst, nullptr);
-
-            if (type == "bool" && parts.size() >= 3) {
+            // one bad value must not kill the dialog
+            try {
+            if (type == "group") {
+                CreateWindowExW(0, L"STATIC", wlabel.c_str(),
+                    WS_CHILD | WS_VISIBLE | SS_LEFT,
+                    8, y + 4, cw - 16, 20, hDlg, nullptr, g_hinst, nullptr);
+                y += 26;
+            } else if (type == "bool" && parts.size() >= 3) {
                 HWND hChk = CreateWindowExW(0, L"BUTTON", L"",
                     WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
-                    120, y, 22, 22, hDlg, nullptr, g_hinst, nullptr);
+                    120, y, 22, 22, hDlg, (HMENU)(INT_PTR)ctrl_id, g_hinst, nullptr);
                 Button_SetCheck(hChk, parts[2] == "true" ? BST_CHECKED : BST_UNCHECKED);
                 ParamCtrl pc;
-                pc.name = pname; pc.type = type; pc.hwnd = hChk; pc.ctrl_id = d->next_id++;
-                SetWindowLongPtrW(hChk, GWLP_USERDATA, (LONG_PTR)d);
+                pc.name = pname; pc.type = type; pc.hwnd = hChk; pc.ctrl_id = ctrl_id;
                 d->ctrls.push_back(pc);
                 y += 28;
             } else if (type == "num" && parts.size() >= 6) {
@@ -276,29 +395,30 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
                 double mn  = std::stod(parts[3]);
                 double mx  = std::stod(parts[4]);
                 double stp = std::stod(parts[5]);
+                if (!(stp > 0.0)) stp = 1.0;
+                if (mx < mn) std::swap(mx, mn);
                 int tck_w = cw - 120 - 80 - 16;
                 if (tck_w < 60) tck_w = 60;
+                int range_val = 0;
+                if (mx > mn) {
+                    range_val = (int)std::lround((val - mn) / (mx - mn) * SLIDER_STEPS);
+                }
+                if (range_val < 0) range_val = 0;
+                if (range_val > SLIDER_STEPS) range_val = SLIDER_STEPS;
                 HWND hTb = CreateWindowExW(0, L"msctls_trackbar32", L"",
                     WS_CHILD | WS_VISIBLE | TBS_HORZ | TBS_NOTICKS,
-                    120, y + 2, tck_w, 24, hDlg, nullptr, g_hinst, nullptr);
-                int range_min = (int)(mn / stp);
-                int range_max = (int)(mx / stp);
-                int range_val = (int)(val / stp);
-                SendMessageW(hTb, TBM_SETRANGE, TRUE, MAKELPARAM(range_min, range_max));
+                    120, y + 2, tck_w, 24, hDlg, (HMENU)(INT_PTR)ctrl_id, g_hinst, nullptr);
+                SendMessageW(hTb, TBM_SETRANGE, TRUE, MAKELPARAM(0, SLIDER_STEPS));
                 SendMessageW(hTb, TBM_SETPOS, TRUE, range_val);
 
-                char buf[32];
-                snprintf(buf, sizeof(buf), "%.2f", val);
-                HWND hVal = CreateWindowExW(0, L"STATIC", to_wide(buf).c_str(),
+                HWND hVal = CreateWindowExW(0, L"STATIC", to_wide(fmt_num(val, stp)).c_str(),
                     WS_CHILD | WS_VISIBLE | SS_CENTER,
                     120 + tck_w + 4, y, 72, 22, hDlg, nullptr, g_hinst, nullptr);
 
                 ParamCtrl pc;
-                pc.name = pname; pc.type = type; pc.hwnd = hTb; pc.ctrl_id = d->next_id++;
+                pc.name = pname; pc.type = type; pc.hwnd = hTb; pc.ctrl_id = ctrl_id;
                 pc.num_val = val; pc.num_min = mn; pc.num_max = mx; pc.num_step = stp;
-                SetWindowLongPtrW(hTb, GWLP_USERDATA, (LONG_PTR)d);
-
-
+                pc.value_hwnd = hVal;
                 d->ctrls.push_back(pc);
                 y += 30;
             } else if (type == "mode" && parts.size() >= 4) {
@@ -306,7 +426,7 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
                 std::string opts = parts[3];
                 HWND hCmb = CreateWindowExW(0, L"COMBOBOX", L"",
                     WS_CHILD | WS_VISIBLE | CBS_DROPDOWNLIST | WS_VSCROLL,
-                    120, y, 180, 200, hDlg, nullptr, g_hinst, nullptr);
+                    120, y, 180, 200, hDlg, (HMENU)(INT_PTR)ctrl_id, g_hinst, nullptr);
                 int sel_idx = 0;
                 std::vector<std::string> mode_vals;
                 std::string opt_rem = opts;
@@ -327,40 +447,79 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
                 }
                 SendMessageW(hCmb, CB_SETCURSEL, sel_idx, 0);
                 ParamCtrl pc;
-                pc.name = pname; pc.type = type; pc.hwnd = hCmb; pc.ctrl_id = d->next_id++;
+                pc.name = pname; pc.type = type; pc.hwnd = hCmb; pc.ctrl_id = ctrl_id;
                 pc.modes = mode_vals;
-                SetWindowLongPtrW(hCmb, GWLP_USERDATA, (LONG_PTR)d);
                 d->ctrls.push_back(pc);
                 y += 28;
             } else if (type == "str" && parts.size() >= 3) {
                 HWND hEdt = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", to_wide(parts[2]).c_str(),
                     WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-                    120, y, 180, 22, hDlg, nullptr, g_hinst, nullptr);
+                    120, y, 180, 22, hDlg, (HMENU)(INT_PTR)ctrl_id, g_hinst, nullptr);
                 ParamCtrl pc;
-                pc.name = pname; pc.type = type; pc.hwnd = hEdt; pc.ctrl_id = d->next_id++;
+                pc.name = pname; pc.type = type; pc.hwnd = hEdt; pc.ctrl_id = ctrl_id;
                 pc.str_val = parts[2];
-                SetWindowLongPtrW(hEdt, GWLP_USERDATA, (LONG_PTR)d);
                 d->ctrls.push_back(pc);
                 y += 28;
             } else if (type == "action") {
                 HWND hBtn = CreateWindowExW(0, L"BUTTON", L"Execute",
                     WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
-                    120, y, 100, 24, hDlg, nullptr, g_hinst, nullptr);
+                    120, y, 100, 24, hDlg, (HMENU)(INT_PTR)ctrl_id, g_hinst, nullptr);
                 ParamCtrl pc;
-                pc.name = pname; pc.type = type; pc.hwnd = hBtn; pc.ctrl_id = d->next_id++;
-                SetWindowLongPtrW(hBtn, GWLP_USERDATA, (LONG_PTR)d);
+                pc.name = pname; pc.type = type; pc.hwnd = hBtn; pc.ctrl_id = ctrl_id;
                 d->ctrls.push_back(pc);
                 y += 28;
             } else if (type == "color" && parts.size() >= 3) {
                 HWND hEdt = CreateWindowExW(WS_EX_CLIENTEDGE, L"EDIT", to_wide(parts[2]).c_str(),
                     WS_CHILD | WS_VISIBLE | ES_AUTOHSCROLL,
-                    120, y, 100, 22, hDlg, nullptr, g_hinst, nullptr);
+                    120, y, 100, 22, hDlg, (HMENU)(INT_PTR)ctrl_id, g_hinst, nullptr);
                 ParamCtrl pc;
-                pc.name = pname; pc.type = type; pc.hwnd = hEdt; pc.ctrl_id = d->next_id++;
+                pc.name = pname; pc.type = type; pc.hwnd = hEdt; pc.ctrl_id = ctrl_id;
                 pc.str_val = parts[2];
-                SetWindowLongPtrW(hEdt, GWLP_USERDATA, (LONG_PTR)d);
                 d->ctrls.push_back(pc);
                 y += 28;
+            } else if (type == "multi" && parts.size() >= 4) {
+                std::string cur = parts[2];
+                std::string opts = parts[3];
+                std::vector<std::string> option_list;
+                std::string rem = opts;
+                size_t cp2;
+                while ((cp2 = rem.find(',')) != std::string::npos) {
+                    if (cp2 > 0) option_list.push_back(rem.substr(0, cp2));
+                    rem.erase(0, cp2 + 1);
+                }
+                if (!rem.empty()) option_list.push_back(rem);
+
+                ParamCtrl pc;
+                pc.name = pname; pc.type = type; pc.ctrl_id = ctrl_id;
+                int bx = 120;
+                for (size_t i = 0; i < option_list.size(); i++) {
+                    const std::string& opt = option_list[i];
+                    int ow = (int)opt.size() * 8 + 30;
+                    if (ow > 200) ow = 200;
+                    if (bx + ow > cw - 8 && bx > 120) {
+                        bx = 120;
+                        y += 24;
+                    }
+                    bool checked = false;
+                    if (!cur.empty()) {
+                        std::string hay = "," + cur + ",";
+                        checked = hay.find("," + opt + ",") != std::string::npos;
+                    }
+                    HWND hBox = CreateWindowExW(0, L"BUTTON", to_wide(opt).c_str(),
+                        WS_CHILD | WS_VISIBLE | BS_AUTOCHECKBOX,
+                        bx, y, ow, 22, hDlg, (HMENU)(INT_PTR)(ctrl_id + (int)i), g_hinst, nullptr);
+                    Button_SetCheck(hBox, checked ? BST_CHECKED : BST_UNCHECKED);
+                    pc.boxes.push_back(hBox);
+                    pc.modes.push_back(opt);
+                    bx += ow + 6;
+                }
+                if (!option_list.empty()) {
+                    d->next_id += (int)option_list.size() - 1;
+                }
+                d->ctrls.push_back(pc);
+                y += 28;
+            }
+            } catch (...) {
             }
         }
 
@@ -368,6 +527,13 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
         CreateWindowExW(0, L"BUTTON", L"Close",
             WS_CHILD | WS_VISIBLE | BS_PUSHBUTTON,
             (cw - 80) / 2, y + 8, 80, 28, hDlg, (HMENU)1, g_hinst, nullptr);
+
+        {
+            RECT cr = {0, 0, cw, y + 48};
+            AdjustWindowRect(&cr, WS_CAPTION | WS_SYSMENU | WS_THICKFRAME, FALSE);
+            SetWindowPos(hDlg, nullptr, 0, 0, cr.right - cr.left, cr.bottom - cr.top,
+                SWP_NOMOVE | SWP_NOZORDER);
+        }
 
         return 0;
     }
@@ -384,6 +550,20 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
 
 
         for (auto& pc : data->ctrls) {
+            if (pc.type == "multi") {
+                int first = pc.ctrl_id;
+                int count = (int)pc.boxes.size();
+                if (id < first || id >= first + count) continue;
+                if (code != BN_CLICKED) break;
+                std::string sel;
+                for (int i = 0; i < count; i++) {
+                    if (Button_GetCheck(pc.boxes[i]) != BST_CHECKED) continue;
+                    if (!sel.empty()) sel += ",";
+                    sel += pc.modes[i];
+                }
+                notify_java_set_param(data->mod_name, pc.name, sel);
+                break;
+            }
             if (pc.ctrl_id != id) continue;
 
             if (pc.type == "bool" && code == BN_CLICKED) {
@@ -420,10 +600,14 @@ static LRESULT CALLBACK ParamDlgProc(HWND hDlg, UINT msg, WPARAM wParam, LPARAM 
         for (auto& pc : data->ctrls) {
             if (pc.type != "num" || pc.hwnd != hTb) continue;
             int pos = (int)SendMessageW(hTb, TBM_GETPOS, 0, 0);
-            double val = pc.num_min + pos * pc.num_step;
-            char buf[32];
-            snprintf(buf, sizeof(buf), "%.2f", val);
-            notify_java_set_param(data->mod_name, pc.name, buf);
+            double val = pc.num_min + (pc.num_max - pc.num_min) * pos / (double)SLIDER_STEPS;
+            // snap to the declared step
+            val = pc.num_min + std::round((val - pc.num_min) / pc.num_step) * pc.num_step;
+            if (val > pc.num_max) val = pc.num_max;
+            if (val < pc.num_min) val = pc.num_min;
+            std::string txt = fmt_num(val, pc.num_step);
+            if (pc.value_hwnd) SetWindowTextW(pc.value_hwnd, to_wide(txt).c_str());
+            notify_java_set_param(data->mod_name, pc.name, txt);
             return 0;
         }
         return 0;
@@ -462,31 +646,38 @@ static void open_param_dialog(const std::string& mod_name) {
     std::string params = notify_java_get_params(mod_name);
     if (params.empty()) return;
 
-    EnableWindow(g_main_wnd, FALSE);
-
     std::string spec = mod_name + "\n" + params;
     std::wstring wspec = to_wide(spec);
 
-    int dlg_cx = 320;
-    int dlg_cy = 300;
+    int rows = 1;
+    for (char ch : params) {
+        if (ch == '|') rows++;
+    }
+    int client_w = 340;
+    int client_h = 8 + rows * 30 + 48;
+    DWORD style = WS_CAPTION | WS_SYSMENU | WS_THICKFRAME;
+    RECT rc = {0, 0, client_w, client_h};
+    AdjustWindowRect(&rc, style, FALSE);
+    int win_w = rc.right - rc.left;
+    int win_h = rc.bottom - rc.top;
 
     HWND hDlg = CreateWindowExW(WS_EX_DLGMODALFRAME, L"RavexParamDialog",
-        to_wide(mod_name).c_str(),
-        WS_CAPTION | WS_SYSMENU | WS_THICKFRAME,
-        CW_USEDEFAULT, CW_USEDEFAULT, dlg_cx, dlg_cy,
+        to_wide(mod_name).c_str(), style,
+        CW_USEDEFAULT, CW_USEDEFAULT, win_w, win_h,
         g_main_wnd, nullptr, g_hinst, (LPVOID)wspec.c_str());
 
-    if (hDlg) {
+    // failed dialog must not leave the dashboard disabled
+    if (!hDlg) return;
+    EnableWindow(g_main_wnd, FALSE);
 
-        RECT pr, dr;
-        GetWindowRect(g_main_wnd, &pr);
-        GetWindowRect(hDlg, &dr);
-        int dw = dr.right - dr.left, dh = dr.bottom - dr.top;
-        int px = pr.left + (pr.right - pr.left - dw) / 2;
-        int py = pr.top + (pr.bottom - pr.top - dh) / 2;
-        SetWindowPos(hDlg, nullptr, px, py, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-        ShowWindow(hDlg, SW_SHOW);
-    }
+    RECT pr, dr;
+    GetWindowRect(g_main_wnd, &pr);
+    GetWindowRect(hDlg, &dr);
+    int dw = dr.right - dr.left, dh = dr.bottom - dr.top;
+    int px = pr.left + (pr.right - pr.left - dw) / 2;
+    int py = pr.top + (pr.bottom - pr.top - dh) / 2;
+    SetWindowPos(hDlg, HWND_TOP, px, py, 0, 0, SWP_NOSIZE | SWP_SHOWWINDOW);
+    SetForegroundWindow(hDlg);
 }
 
 
@@ -503,16 +694,19 @@ static void paint_main(HWND hWnd) {
     fill_rect(memDC, 0, 0, g_cx, g_cy, CLR_BG);
 
 
-    fill_rect(memDC, 0, 0, g_cx, TITLE_H, CLR_BG);
-    draw_text(memDC, 0, 0, g_cx, TITLE_H, "RaveX Desktop Dashboard", CLR_TITLE, g_font_bold, DT_CENTER);
+    RECT title = {0, 0, g_cx, TITLE_H};
+    gradient_fill_border(memDC, title, CLR_TITLE_T, CLR_TITLE_B, CLR_TITLE_BRD);
 
+    if (g_title_icon) {
+        DrawIconEx(memDC, 8, (TITLE_H - 16) / 2, g_title_icon, 16, 16, 0, nullptr, DI_NORMAL);
+    }
+    draw_text(memDC, 30, 0, g_cx - 170, TITLE_H, "RaveX Desktop Dashboard", CLR_TITLE, g_font_bold, DT_LEFT);
 
-    HPEN sep_pen = CreatePen(PS_SOLID, 1, CLR_BORDER);
-    HGDIOBJ old_pen = SelectObject(memDC, sep_pen);
-    MoveToEx(memDC, 8, TITLE_H, nullptr);
-    LineTo(memDC, g_cx - 8, TITLE_H);
-    SelectObject(memDC, old_pen);
-    DeleteObject(sep_pen);
+    bool maximized = IsZoomed(hWnd) != 0;
+    int capRight = g_cx - 2;
+    draw_caption_button(memDC, capRight - CAP_CLOSE_W, CAP_CLOSE, g_hover_cap == CAP_CLOSE, maximized);
+    draw_caption_button(memDC, capRight - CAP_CLOSE_W - CAP_BTN_W, CAP_MAX, g_hover_cap == CAP_MAX, maximized);
+    draw_caption_button(memDC, capRight - CAP_CLOSE_W - 2 * CAP_BTN_W, CAP_MIN, g_hover_cap == CAP_MIN, maximized);
 
 
     int list_top = TITLE_H + 4;
@@ -573,7 +767,7 @@ static void paint_main(HWND hWnd) {
         int tog_x = tx;
         int tog_y = ry + (ROW_H - 2 - tog_h) / 2;
         draw_rounded_rect(memDC, tog_x, tog_y, tog_w, tog_h, tog_state ? CLR_ON : CLR_OFF, tog_state ? CLR_ON : CLR_BORDER);
-        draw_text(memDC, tog_x, tog_y, tog_w, tog_h, tog_state ? "ON" : "OFF", CLR_BTN_TXT, g_font, DT_CENTER);
+        draw_text(memDC, tog_x, tog_y, tog_w, tog_h, tog_state ? "ON" : "OFF", tog_state ? CLR_BTN_TXT : CLR_OFF_TXT, g_font, DT_CENTER);
     }
 
     BitBlt(dc, 0, 0, g_cx, g_cy, memDC, 0, 0, SRCCOPY);
@@ -655,6 +849,13 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
     case WM_MOUSEMOVE: {
         int x = LOWORD(lParam);
         int y = HIWORD(lParam);
+        int cap = caption_button_at(x, y, g_cx);
+        if (cap != g_hover_cap) {
+            g_hover_cap = cap;
+            InvalidateRect(hWnd, nullptr, FALSE);
+        }
+        TRACKMOUSEEVENT tme = {sizeof(tme), TME_LEAVE, hWnd, 0};
+        TrackMouseEvent(&tme);
         int list_top = TITLE_H + 4;
         if (y > list_top) {
             int row = (y - list_top) / ROW_H + g_scroll_y;
@@ -680,9 +881,46 @@ static LRESULT CALLBACK MainWndProc(HWND hWnd, UINT msg, WPARAM wParam, LPARAM l
         break;
     }
 
+    case WM_MOUSELEAVE: {
+        g_hover_row = -1;
+        g_hover_gear = false;
+        g_hover_cap = -1;
+        InvalidateRect(hWnd, nullptr, FALSE);
+        break;
+    }
+
+    case WM_NCHITTEST: {
+        LRESULT hit = DefWindowProcW(hWnd, msg, wParam, lParam);
+        if (hit != HTCLIENT) return hit;
+        POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+        ScreenToClient(hWnd, &pt);
+        if (pt.y >= 0 && pt.y < TITLE_H) {
+            if (caption_button_at(pt.x, pt.y, g_cx) >= 0) return HTCLIENT;
+            return HTCAPTION;
+        }
+        return HTCLIENT;
+    }
+
+    case WM_NCLBUTTONDBLCLK: {
+        POINT pt = {GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)};
+        ScreenToClient(hWnd, &pt);
+        if (pt.y >= 0 && pt.y < TITLE_H) {
+            ShowWindow(hWnd, IsZoomed(hWnd) ? SW_RESTORE : SW_MAXIMIZE);
+            return 0;
+        }
+        break;
+    }
+
     case WM_LBUTTONDOWN: {
         int x = LOWORD(lParam);
         int y = HIWORD(lParam);
+        int cap = caption_button_at(x, y, g_cx);
+        if (cap >= 0) {
+            if (cap == CAP_MIN) ShowWindow(hWnd, SW_MINIMIZE);
+            else if (cap == CAP_MAX) ShowWindow(hWnd, IsZoomed(hWnd) ? SW_RESTORE : SW_MAXIMIZE);
+            else PostMessageW(hWnd, WM_CLOSE, 0, 0);
+            return 0;
+        }
         int list_top = TITLE_H + 4;
         if (y <= list_top) break;
 
@@ -800,10 +1038,26 @@ static void window_thread() {
     RegisterClassExW(&dc);
 
 
-    HWND hWnd = CreateWindowExW(WS_EX_WINDOWEDGE, L"RavexDesktopGuiMain", L"RaveX Desktop Dashboard",
-        WS_OVERLAPPEDWINDOW | WS_VSCROLL,
+    HWND hWnd = CreateWindowExW(WS_EX_APPWINDOW, L"RavexDesktopGuiMain", L"RaveX Desktop Dashboard",
+        WS_POPUP | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_VSCROLL,
         CW_USEDEFAULT, CW_USEDEFAULT, WIN_CX, WIN_CY,
         nullptr, nullptr, g_hinst, nullptr);
+
+    if (hWnd) {
+        RECT rc = {0, 0, WIN_CX, WIN_CY};
+        AdjustWindowRect(&rc, WS_POPUP | WS_THICKFRAME | WS_VSCROLL, FALSE);
+        SetWindowPos(hWnd, nullptr, 0, 0, rc.right - rc.left, rc.bottom - rc.top,
+            SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
+
+        HMODULE self = nullptr;
+        if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT,
+                (LPCWSTR)&window_thread, &self)) {
+            g_title_icon = (HICON)LoadImageW(self, MAKEINTRESOURCEW(1), IMAGE_ICON, 16, 16, LR_DEFAULTCOLOR);
+            HICON big = (HICON)LoadImageW(self, MAKEINTRESOURCEW(1), IMAGE_ICON, 32, 32, LR_DEFAULTCOLOR);
+            if (big) SendMessageW(hWnd, WM_SETICON, ICON_BIG, (LPARAM)big);
+            if (g_title_icon) SendMessageW(hWnd, WM_SETICON, ICON_SMALL, (LPARAM)g_title_icon);
+        }
+    }
 
     if (!hWnd) {
         if (g_font) DeleteObject(g_font);
@@ -871,17 +1125,31 @@ Java_ravex_modules_client_DesktopGui_openDesktopGui(JNIEnv* env, jclass cls,
     if (g_desktopgui_class) env->DeleteGlobalRef(g_desktopgui_class);
     g_desktopgui_class = (jclass)env->NewGlobalRef(cls);
 
+    if (ravex::jni::checkAndClearException(env)) return;
+
     std::vector<ravex::ModuleGuiData> modules;
     jsize len = env->GetArrayLength(names);
-    jboolean* sbuf = env->GetBooleanArrayElements(states, nullptr);
+    if (ravex::jni::checkAndClearException(env)) return;
+
+    JniBooleanElements statesGuard(env, states);
+    if (ravex::jni::checkAndClearException(env)) return;
+    if (!statesGuard) return;
+
+    const jboolean* sbuf = statesGuard.get();
+
     for (jsize i = 0; i < len; i++) {
         jstring jn = (jstring)env->GetObjectArrayElement(names, i);
-        const char* c = env->GetStringUTFChars(jn, nullptr);
-        modules.push_back({std::string(c), sbuf[i] == JNI_TRUE});
-        env->ReleaseStringUTFChars(jn, c);
+        if (ravex::jni::checkAndClearException(env)) return;
+        if (!jn) continue;
+        JniStringUtfChars cGuard(env, jn);
+        if (!cGuard) {
+            env->DeleteLocalRef(jn);
+            continue;
+        }
+        if (ravex::jni::checkAndClearException(env)) return;
+        modules.push_back({std::string(cGuard.get()), sbuf[i] == JNI_TRUE});
         env->DeleteLocalRef(jn);
     }
-    env->ReleaseBooleanArrayElements(states, sbuf, JNI_ABORT);
 
     ravex::start_gui(modules);
 }
@@ -890,9 +1158,11 @@ JNIEXPORT void JNICALL
 Java_ravex_modules_client_DesktopGui_updateModuleState(JNIEnv* env, jclass cls,
     jstring name, jboolean enabled)
 {
-    const char* c = env->GetStringUTFChars(name, nullptr);
-    ravex::update_gui_state(std::string(c), enabled == JNI_TRUE);
-    env->ReleaseStringUTFChars(name, c);
+    JniStringUtfChars cGuard(env, name);
+    if (!cGuard) return;
+    if (ravex::jni::checkAndClearException(env)) return;
+    ravex::update_gui_state(std::string(cGuard.get()), enabled == JNI_TRUE);
+    if (ravex::jni::checkAndClearException(env)) return;
 }
 
 JNIEXPORT void JNICALL

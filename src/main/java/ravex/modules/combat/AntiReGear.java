@@ -159,13 +159,13 @@ public class AntiReGear {
             }
         } else if (absX <= absY && absX <= absZ) {
             if (absY >= absZ) {
-                return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
+                return dy > 0 ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
             } else {
                 return dz > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
             }
         } else {
             if (absY >= absX) {
-                return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
+                return dy > 0 ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
             } else {
                 return dx > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
             }

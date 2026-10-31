@@ -23,14 +23,8 @@ import java.util.Locale;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * Automatic update system.
- *
- * Flow: check GitHub Releases for a newer tag, let the user download the new jar,
- * then hand the replacement over to {@link ravex.update.UpdateInstaller} which waits
- * for the game process to exit before swapping the file (a running jar is locked on
- * Windows, so the swap cannot happen from inside the game).
- */
+// automatic update system.
+// checks github for a new tag, the installer swaps the jar later
 public class UpdateManager {
     public static final UpdateManager INSTANCE = new UpdateManager();
 
@@ -127,10 +121,7 @@ public class UpdateManager {
         return stagedJar;
     }
 
-    /**
-     * False when the mod runs from a dev environment, where replacing the jar makes no sense.
-     * Resolved once because it depends on where Fabric loaded the mod from.
-     */
+        // false in a dev environment, replacing the jar makes no sense
 public boolean isUpdatable() {
         return updatable;
     }
@@ -155,7 +146,7 @@ public boolean isUpdatable() {
 
     /* ------------------------------------------------------------------ check */
 
-    /** Runs a check in the background, unless one is already running or was done recently. */
+    // runs the check in the background
     public void checkInBackground() {
         if (isUpdatable() && shouldSkipRecentCheck()) return;
         checkForUpdates();
@@ -226,7 +217,7 @@ public boolean isUpdatable() {
             state = State.UP_TO_DATE;
             statusMessage = "";
         }
-        // Stamp the check so the next launch does not hit the GitHub API again for 3 hours.
+        // stamp the check, no API hit for the next 3 hours
         writeCheckCache();
     }
 
@@ -386,7 +377,7 @@ public boolean isUpdatable() {
         });
     }
 
-    /** Absolute path of the jar this mod is running from, or null in a dev environment. */
+    // path of the running jar, null in a dev environment
     public static String resolveCurrentJarPath() {
         try {
             String p = RaveX.getModJarPath();
@@ -438,11 +429,7 @@ public boolean isUpdatable() {
         return root.getAsJsonObject();
     }
 
-    /**
- * Looks for a checksum published next to the jar (typically {@code ravex.jar.sha256}).
- * Returns null when the release does not ship one, in which case the download is only
- * validated structurally.
- */
+        // checksum of the release jar, null when the release ships none
 private String findSha256Asset(JsonObject release, JsonObject jarAsset) {
     JsonArray assets = release.has("assets") && release.get("assets").isJsonArray()
             ? release.getAsJsonArray("assets") : new JsonArray();
@@ -500,11 +487,7 @@ private String findSha256Asset(JsonObject release, JsonObject jarAsset) {
         return fallback;
     }
 
-    /**
-     * Resolves the real version from a release payload.
-     * The release title and the notes heading are authoritative; the tag is only a
-     * last resort because {@code ravex149} cannot be inverted reliably.
- */
+        // the real version comes from the title, the tag is the last resort
 private static String readVersion(JsonObject release) {
         String fromName = versionFromLabel(optString(release, "name", ""));
         if (fromName != null) return fromName;
@@ -526,14 +509,8 @@ private static String readVersion(JsonObject release) {
         return version.isEmpty() ? null : version;
     }
 
-    /**
-     * Best-effort inversion of the release tag format {@code ravex<digits>}.
-     *
-     * <p>Only tags of up to three digits can be reversed without ambiguity, which covers the
-     * major.minor.patch versions this project uses. Longer tags are ambiguous (1.4.10 and 1.410
-     * both produce {@code ravex1410}) so {@code null} is returned and the caller falls back to
-     * the release title, which always carries the real version.
-     */
+        // best effort inversion of the tag format ravex<digits>
+        // only tags with up to three digits can be reversed
     public static String versionFromTag(String tag) {
         if (tag == null) return null;
         String digits = tag.replaceAll("[^0-9]", "");
@@ -547,7 +524,7 @@ private static String readVersion(JsonObject release) {
         return sb.toString();
     }
 
-    /** Extracts a version from a release body title, e.g. {@code # RaveX 1.4.9}. */
+    // version from the release title, e.g. # RaveX 1.4.9
     public static String versionFromNotesTitle(String body) {
         if (body == null) return null;
         for (String raw : body.split("\\r?\\n")) {
@@ -561,7 +538,7 @@ private static String readVersion(JsonObject release) {
         return null;
     }
 
-    /** Numeric-aware version compare. Returns >0 when {@code a} is newer than {@code b}. */
+    // numeric aware version compare
     public static int compareVersions(String a, String b) {
         String[] pa = split(a);
         String[] pb = split(b);
@@ -576,7 +553,7 @@ private static String readVersion(JsonObject release) {
                 result = Integer.compare(x.length(), y.length());
                 if (result == 0) result = x.compareTo(y);
             } else if (xNumeric != yNumeric) {
-                // a released numeric component always outranks a pre-release qualifier
+                // numeric release outranks a pre-release qualifier
                 result = xNumeric ? 1 : -1;
             } else {
                 result = x.compareTo(y);

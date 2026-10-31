@@ -9,29 +9,37 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "AutoMend", category = "Player")
 public class AutoMend {
-    @Parameter(name = "Threshold", min = 10.0, max = 95.0, step = 5.0)
-    public double threshold = 50.0;
-    @Parameter(name = "Swap", modes = {"Normal", "Silent"})
+    // start mending below this percent of max durability
+    @Parameter(name = "Durability", min = 1.0, max = 100.0, step = 1.0)
+    public double threshold = 100.0;
+    // silent downward aim, camera stays still
+    @Parameter(name = "Rotations")
+    public boolean rotations = true;
+    // skip pieces without mending, bottles are wasted
+    @Parameter(name = "MendingOnly")
+    public boolean mendingOnly = false;
+    @Parameter(name = "Swap", modes = {"Silent", "Normal"})
     public String swapMode = "Silent";
+
+    // tilt shown on the body, camera never moves
+    public static volatile float visiblePitch = Float.NaN;
+    public static volatile int visiblePitchTicks = 0;
+
+    public void onDisable() {
+        visiblePitch = Float.NaN;
+        visiblePitchTicks = 0;
+    }
+
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         var p = mc.getPlayer();
         if (p == null || mc.getLevel() == null || mc.getGameMode() == null) return;
-        boolean needsMend = false;
-        EquipmentSlot[] armorSlots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
-        for (EquipmentSlot slot : armorSlots) {
-            var stack = p.getItemBySlot(slot);
-            if (!stack.isEmpty() && stack.isDamaged()) {
-                double maxDamage = stack.getMaxDamage();
-                double currentDamage = stack.getDamageValue();
-                double durabilityPct = ((maxDamage - currentDamage) / maxDamage) * 100.0;
-                if (durabilityPct < threshold) {
-                    needsMend = true;
-                    break;
-                }
-            }
+        if (visiblePitchTicks > 0 && --visiblePitchTicks == 0) {
+            visiblePitch = Float.NaN;
         }
-        if (!needsMend) return;
+        if (mc.getCurrentScreen() != null) return;
+
+        if (!needsMend(p)) return;
         int expSlot = -1;
         for (int i = 0; i < 9; i++) {
             if (InventoryUtility.isItem(InventoryUtility.getItem(p, i), "experience_bottle")) {
@@ -40,15 +48,44 @@ public class AutoMend {
             }
         }
         if (expSlot == -1) return;
+
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         boolean silent = "Silent".equals(swapMode);
         InventoryUtility.selectSlot(p, expSlot);
-        NetworkUtility.sendRot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision);
-        var gm = mc.getGameMode();
-        if (gm != null) gm.useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
+
+        float oldPitch = p.getXRot();
+        if (rotations) {
+            NetworkUtility.sendRot(p.getYRot(), 90.0F, p.onGround(), p.horizontalCollision);
+            p.setXRot(90.0F);
+            visiblePitch = 90.0F;
+            visiblePitchTicks = 12;
+        }
+        mc.getGameMode().useItem(p, net.minecraft.world.InteractionHand.MAIN_HAND);
         SwingUtility.swing(p, net.minecraft.world.InteractionHand.MAIN_HAND);
-        if (silent) {
+        if (rotations) {
+            p.setXRot(oldPitch);
+        }
+
+        if (silent && prevSlot != expSlot) {
             InventoryUtility.selectSlot(p, prevSlot);
         }
+    }
+
+    // armor and both hands, only pieces below the percent count
+    private boolean needsMend(net.minecraft.client.player.LocalPlayer p) {
+        EquipmentSlot[] slots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+        for (EquipmentSlot slot : slots) {
+            if (belowThreshold(p.getItemBySlot(slot))) return true;
+        }
+        return belowThreshold(p.getMainHandItem()) || belowThreshold(p.getOffhandItem());
+    }
+
+    private boolean belowThreshold(net.minecraft.world.item.ItemStack stack) {
+        if (stack.isEmpty() || !stack.isDamageableItem() || !stack.isDamaged()) return false;
+        if (mendingOnly && !InventoryUtility.hasEnchantment(stack, "minecraft:mending")) return false;
+        double maxDamage = stack.getMaxDamage();
+        if (maxDamage <= 0) return false;
+        double durabilityPct = ((maxDamage - stack.getDamageValue()) / maxDamage) * 100.0;
+        return durabilityPct <= threshold;
     }
 }

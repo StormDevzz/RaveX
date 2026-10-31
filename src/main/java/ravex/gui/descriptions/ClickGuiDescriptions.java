@@ -20,10 +20,12 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Weather", "Change weather");
         DESCRIPTIONS.put("WorldColor", "World colors");
         DESCRIPTIONS.put("Trails", "Show paths");
+        DESCRIPTIONS.put("Trajectories", "Show where shots land");
         DESCRIPTIONS.put("AspectRatio", "Stretch screen");
         DESCRIPTIONS.put("Waypoint", "Save locations");
         DESCRIPTIONS.put("AimAssist", "Aim helper");
         DESCRIPTIONS.put("NameTags", "Show names");
+        DESCRIPTIONS.put("LogoutSpots", "Shows where players logged out");
         DESCRIPTIONS.put("Tracers", "Draw lines");
         DESCRIPTIONS.put("ChinaHat", "Cone hat on heads");
         DESCRIPTIONS.put("Trigger", "Attack on hover");
@@ -85,7 +87,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("BlockOutline", "Block highlight");
         DESCRIPTIONS.put("Fullbright", "Always bright");
         DESCRIPTIONS.put("GuiParticles", "Menu sparkles");
-        DESCRIPTIONS.put("NoRotate", "No head turn");
         DESCRIPTIONS.put("NoRender", "Hide things");
         DESCRIPTIONS.put("AutoWalk", "Walk forward");
         DESCRIPTIONS.put("MobOwner", "Show owner");
@@ -118,8 +119,8 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Blink", "Delay moves");
         DESCRIPTIONS.put("PacketFly", "Fly freely");
         DESCRIPTIONS.put("BoatFly", "Fly with boats");
-        DESCRIPTIONS.put("AutoApple", "Eat apples");
-        DESCRIPTIONS.put("TreeCutter", "Cut trees");
+        DESCRIPTIONS.put("AutoGapple", "nom nom");
+        DESCRIPTIONS.put("MoreChatHistory", "Longer chat history");
         DESCRIPTIONS.put("FakePearl", "Fake pearl");
         DESCRIPTIONS.put("BasePlace", "Place obsidian");
         DESCRIPTIONS.put("AnchorAura", "Explode anchors");
@@ -136,11 +137,10 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("DurabAlert", "Low durability");
         DESCRIPTIONS.put("AntiAttack", "No friendly hits");
         DESCRIPTIONS.put("LagNotify", "Lag warning");
-        DESCRIPTIONS.put("PopCounter", "Count totems");
-        DESCRIPTIONS.put("BookHelper", "Edit books");
-        DESCRIPTIONS.put("WebSelf", "Web yourself");
+        DESCRIPTIONS.put("BookHelper", "Edit books");        DESCRIPTIONS.put("WebSelf", "Web yourself");
         DESCRIPTIONS.put("KeyPearl", "Throw pearl");
         DESCRIPTIONS.put("AutoAuth", "Login helper");
+        DESCRIPTIONS.put("IllegalDisconnect", "Force kick yourself");
         DESCRIPTIONS.put("SafeWalk", "Safe walk");
 
 
@@ -148,9 +148,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("KillEffects", "Death effects");
         DESCRIPTIONS.put("AntiQuit", "No leaving");
         DESCRIPTIONS.put("DeathText", "Death message");
-        DESCRIPTIONS.put("SoundBlock", "Mute sounds");
         DESCRIPTIONS.put("CoordLogger", "Log position");
-        DESCRIPTIONS.put("Religion", "Show religions");
         DESCRIPTIONS.put("Phase", "Walk through walls");
         DESCRIPTIONS.put("MineAnimation", "Hide cracks");
         DESCRIPTIONS.put("HighJump", "High jump");
@@ -163,7 +161,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Replenish", "Refill items");
 
 
-        DESCRIPTIONS.put("AutoReplant", "Replant crops");
+        DESCRIPTIONS.put("AutoFarm", "Harvest and replant crops");
         DESCRIPTIONS.put("Nuker", "Mass break");
         DESCRIPTIONS.put("AutoTrade", "Trade villagers");
         DESCRIPTIONS.put("AutoFish", "Catch fish");
@@ -196,6 +194,7 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("ChatHud", "Chat overlay");
         DESCRIPTIONS.put("CooldownsHud", "Show cooldowns");
         DESCRIPTIONS.put("IndicatorsHud", "Target info");
+        DESCRIPTIONS.put("Radar", "Minimap with entity dots");
         DESCRIPTIONS.put("InvPreviewHud", "Preview items");
         DESCRIPTIONS.put("MediaHud", "Music info");
         DESCRIPTIONS.put("Settings", "Client settings");
@@ -204,7 +203,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("Fonts", "Change fonts");
         DESCRIPTIONS.put("PingSpoof", "Fake ping");
         DESCRIPTIONS.put("ShiftInterp", "Force crouch");
-        DESCRIPTIONS.put("SmallUser", "Small players");
         DESCRIPTIONS.put("LiquidControl", "Swim freely");
         DESCRIPTIONS.put("TntAura", "Bomb targets");
 
@@ -219,6 +217,11 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("NewChunks", "New chunks");
         DESCRIPTIONS.put("AutoCart", "Send carts");
         DESCRIPTIONS.put("MessageAura", "Message nearby players");
+        DESCRIPTIONS.put("JumpCircles", "Circles when you land");
+        DESCRIPTIONS.put("TunnelESP", "Highlight tunnels");
+        DESCRIPTIONS.put("HoleESP", "Highlight holes");
+        DESCRIPTIONS.put("VoidESP", "Highlight void");
+        DESCRIPTIONS.put("Animations", "Gui motion & smooth camera");
     }
 
     public static String getDescription(String moduleName) {

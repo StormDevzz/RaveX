@@ -16,20 +16,23 @@ public class FoodUtility {
     public static class Data {
         private final int slot;
         private final String itemName;
+        private final net.minecraft.world.item.Item item;
         private final int nutrition;
         private final float saturation;
         private final boolean canAlwaysEat;
 
-        public Data(int slot, String itemName, int nutrition, float saturation, boolean canAlwaysEat) {
+        public Data(int slot, String itemName, net.minecraft.world.item.Item item, int nutrition, float saturation, boolean canAlwaysEat) {
             this.slot = slot;
             this.itemName = itemName;
+            this.item = item;
             this.nutrition = nutrition;
             this.saturation = saturation;
             this.canAlwaysEat = canAlwaysEat;
         }
 
-        public static Data fromSlot(int slot, String itemName, FoodProperties props) {
+        public static Data fromSlot(int slot, String itemName, ItemStack stack, FoodProperties props) {
             return new Data(slot, itemName,
+                stack != null ? stack.getItem() : null,
                 props != null ? props.nutrition() : 0,
                 props != null ? props.saturation() : 0,
                 props != null && props.canAlwaysEat());
@@ -43,12 +46,15 @@ public class FoodUtility {
         public float getTotalValue() { return nutrition + saturation; }
         public int getHungerRestored() { return nutrition; }
 
+        // item based, localized names broke translated clients
         public boolean isGoldenApple() {
-            return itemName.contains("Golden Apple") || itemName.contains("golden_apple");
+            return item == Items.GOLDEN_APPLE
+                || itemName.contains("Golden Apple") || itemName.contains("golden_apple");
         }
 
         public boolean isEnchantedGoldenApple() {
-            return itemName.contains("Enchanted Golden Apple");
+            return item == Items.ENCHANTED_GOLDEN_APPLE
+                || itemName.contains("Enchanted Golden Apple") || itemName.contains("enchanted_golden_apple");
         }
 
         public boolean isAnyGoldenApple() {
@@ -56,7 +62,7 @@ public class FoodUtility {
         }
 
         public boolean isChorusFruit() {
-            return itemName.contains("Chorus Fruit") || itemName.contains("chorus_fruit");
+            return item == Items.CHORUS_FRUIT || itemName.contains("Chorus Fruit") || itemName.contains("chorus_fruit");
         }
     }
 
@@ -88,7 +94,7 @@ public class FoodUtility {
         if (!isFood(stack)) return null;
         FoodProperties props = stack.get(DataComponents.FOOD);
         if (props == null) return null;
-        return Data.fromSlot(slot, stack.getItem().getName().getString(), props);
+        return Data.fromSlot(slot, stack.getItem().getName().getString(), stack, props);
     }
 
     public static List<Data> findAllFoodInHotbar() {

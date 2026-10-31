@@ -111,7 +111,6 @@ LRESULT CALLBACK ColorProc(HWND hwnd,UINT msg,WPARAM wParam,LPARAM lParam){
     Gdiplus::Graphics g(ds->hDC);
     Gdiplus::Color col(GetRValue(d->sel),GetGValue(d->sel),GetBValue(d->sel)); if(d->alpha<255) col=Gdiplus::Color(d->alpha,GetRValue(d->sel),GetGValue(d->sel),GetBValue(d->sel));
     Gdiplus::SolidBrush br(col);
-    // checker for alpha
     if(d->alpha<255){ for(int y=0;y<40;y+=8) for(int x=0;x<90;x+=8){ bool dark=((x/8+y/8)%2)==0; Gdiplus::SolidBrush cb(dark?Gdiplus::Color(200,200,200):Gdiplus::Color(255,255,255)); g.FillRectangle(&cb,x,y,8,8);} }
     g.FillRectangle(&br,0,0,90,40);
     return TRUE;

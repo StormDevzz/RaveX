@@ -1,9 +1,22 @@
 package ravex.utility.misc;
-import java.util.HashMap;
+
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
 public class LanguageUtility {
     private static String currentLang = "English";
     private static final Map<String, Map<String, String>> STRINGS = new HashMap<>();
+
+    // files live in assets/ravex/lang/<name>.json, listed in index.json
+    private static final String LANG_INDEX_RESOURCE = "/assets/ravex/lang/index.json";
+    private static final String LANG_DIR_RESOURCE = "/assets/ravex/lang/";
+    private static final String LANG_DIR_USER = "RaveX/lang";
+    private static volatile boolean overlaysLoaded = false;
 
     static {
         Map<String, String> en = new HashMap<>();
@@ -30,6 +43,7 @@ public class LanguageUtility {
         en.put("NoSuitablePositionFound", "No suitable position found");
         en.put("NotEnoughSoulSand", "Not enough soul sand");
         en.put("NotEnoughWitherSkeletonSkulls", "Not enough wither skeleton skulls");
+        en.put("autowither_missing", "Need {0} more soul sand and {1} more skull(s) in the hotbar");
         en.put("autowalk_baritone", "§c[AutoWalk] Baritone mod is required for Baritone mode!");
         en.put("quiver_nobow", "§c[Quiver] No bow found in hotbar! Disabling...");
         en.put("quiver_noarrows", "§c[Quiver] No arrows of type {0} found! Disabling...");
@@ -37,6 +51,7 @@ public class LanguageUtility {
         en.put("antpearl_dist", "§ePearl incoming! §f{0}mAway");
         en.put("antpearl", "§ePearl incoming!");
         en.put("elytrahelper_chest", "§c[ElytraHelper] No replacement chest item found!");
+        en.put("elytrahelper_none", "§c[ElytraHelper] No elytra found!");
         en.put("desktopgui_nolib", "§c[DesktopGui] Native library not found!");
         en.put("fakeplayer_died_respawn", "§8[§cFakePlayer§8] §7Died, respawning");
         en.put("fakeplayer_died", "§8[§cFakePlayer§8] §7Died");
@@ -58,6 +73,27 @@ public class LanguageUtility {
         en.put("baseplace_placed", "§a[BasePlace] Placed obsidian at §f{0}, {1}, {2}");
         en.put("desc_KillAura", "Attack enemies");
         en.put("desc_mode_Mode_Snap2", "Alternative to Snap (aim at target)");
+        en.put("desc_mode_Mode_NoClick", "No clicks while moving");
+        en.put("desc_mode_YawMode_Spin", "Constantly spins the aim");
+        en.put("desc_mode_YawMode_Jitter", "Flips the aim left and right");
+        en.put("desc_mode_YawMode_Static", "Locks the aim behind your back");
+        en.put("desc_mode_YawMode_Random", "Random aim jerks");
+        en.put("desc_mode_YawMode_None", "Do not touch the yaw");
+        en.put("desc_mode_PitchMode_Down", "Looks straight down");
+        en.put("desc_mode_PitchMode_Up", "Looks straight up");
+        en.put("desc_mode_PitchMode_Jitter", "Flips the pitch up and down");
+        en.put("desc_mode_PitchMode_Static", "Freezes the pitch on the angle below");
+        en.put("desc_mode_PitchMode_None", "Do not touch the pitch");
+        en.put("desc_IllegalDisconnect", "Force a kick from the server");
+        en.put("desc_BindListHud", "List of modules that have a keybind");
+        en.put("pop_count", "§f{0} §7popped §6{1}§7x §cTotem");
+        en.put("book_edit_button", "Edit title & author");
+        en.put("book_title", "Title");
+        en.put("book_author", "Author");
+        en.put("book_done", "Done");
+        en.put("book_edit_only_written", "§eOnly written books can get a new author");
+        en.put("itemsaver_low", "§c[ItemSaver] §f{0} §7at §c{1}% §7durability");
+        en.put("itemsaver_swapped", "§7[ItemSaver] §f{0} §7hidden, kept safe");
         en.put("desc_ESP", "See through walls");
         en.put("desc_Search", "Find blocks and entities");
         en.put("desc_AutoTool", "Swap best tool");
@@ -65,8 +101,12 @@ public class LanguageUtility {
         en.put("desc_PVEUtils", "Smelt, tame, brew, bone meal & light");
         en.put("desc_ClickGui", "Open menu");
         en.put("desc_Notifications", "Screen alerts");
+        en.put("desc_JumpCircles", "Circles when you land");
+        en.put("desc_TunnelESP", "Highlight tunnels");
+        en.put("desc_HoleESP", "Highlight holes");
+        en.put("desc_VoidESP", "Highlight void");
+        en.put("desc_Animations", "Gui motion & smooth camera");
         en.put("desc_DeathText", "Death message");
-        en.put("desc_SoundBlock", "Mute sounds");
         en.put("desc_InvClean", "Clean inventory");
         en.put("desc_Handshake", "Fake handshake");
         en.put("desc_PortalGod", "Portal shield");
@@ -80,10 +120,12 @@ public class LanguageUtility {
         en.put("desc_Weather", "Change weather");
         en.put("desc_WorldColor", "World colors");
         en.put("desc_Trails", "Show paths");
+        en.put("desc_Trajectories", "Show where shots land");
         en.put("desc_AspectRatio", "Stretch screen");
         en.put("desc_Waypoint", "Save locations");
         en.put("desc_AimAssist", "Aim helper");
         en.put("desc_NameTags", "Show names");
+        en.put("desc_LogoutSpots", "Shows where players logged out");
         en.put("desc_Tracers", "Draw lines");
         en.put("desc_Trigger", "Attack on hover");
         en.put("desc_MaceSwap", "Swap to mace");
@@ -142,7 +184,6 @@ public class LanguageUtility {
         en.put("desc_BlockOutline", "Block highlight");
         en.put("desc_Fullbright", "Always bright");
         en.put("desc_GuiParticles", "Menu sparkles");
-        en.put("desc_NoRotate", "No head turn");
         en.put("desc_NoRender", "Hide things");
         en.put("desc_AutoWalk", "Walk forward");
         en.put("desc_MobOwner", "Show owner");
@@ -176,8 +217,8 @@ public class LanguageUtility {
         en.put("desc_Blink", "Delay moves");
         en.put("desc_PacketFly", "Fly freely");
         en.put("desc_BoatFly", "Fly with boats");
-        en.put("desc_AutoApple", "Eat apples");
-        en.put("desc_TreeCutter", "Cut trees");
+        en.put("desc_AutoGapple", "nom nom");
+        en.put("desc_MoreChatHistory", "Longer chat history");
         en.put("desc_FakePearl", "Fake pearl");
         en.put("desc_BasePlace", "Place obsidian");
         en.put("desc_AnchorAura", "Explode anchors");
@@ -195,7 +236,6 @@ public class LanguageUtility {
         en.put("desc_DurabAlert", "Low durability");
         en.put("desc_AntiAttack", "No friendly hits");
         en.put("desc_LagNotify", "Lag warning");
-        en.put("desc_PopCounter", "Count totems");
         en.put("desc_BookHelper", "Edit books");
         en.put("desc_WebSelf", "Web yourself");
         en.put("desc_KeyPearl", "Throw pearl");
@@ -207,7 +247,6 @@ public class LanguageUtility {
         en.put("desc_KillEffects", "Death effects");
         en.put("desc_AntiQuit", "No leaving");
         en.put("desc_CoordLogger", "Log position");
-        en.put("desc_Religion", "Show religions");
         en.put("desc_Phase", "Walk through walls");
         en.put("desc_MineAnimation", "Hide cracks");
         en.put("desc_HighJump", "High jump");
@@ -219,7 +258,7 @@ public class LanguageUtility {
         en.put("desc_Replenish", "Refill items");
 
 
-        en.put("desc_AutoReplant", "Replant crops");
+        en.put("desc_AutoFarm", "Harvest and replant crops");
         en.put("desc_Nuker", "Mass break");
         en.put("desc_AutoTrade", "Trade villagers");
         en.put("desc_AutoFish", "Catch fish");
@@ -251,6 +290,7 @@ public class LanguageUtility {
         en.put("desc_ChatHud", "Chat overlay");
         en.put("desc_CooldownsHud", "Show cooldowns");
         en.put("desc_IndicatorsHud", "Target info");
+        en.put("desc_Radar", "Minimap with entity dots");
         en.put("desc_InvPreviewHud", "Preview items");
         en.put("desc_MediaHud", "Music info");
         en.put("desc_Settings", "Client settings");
@@ -259,7 +299,6 @@ public class LanguageUtility {
         en.put("desc_Fonts", "Change fonts");
         en.put("desc_PingSpoof", "Fake ping");
         en.put("desc_ShiftInterp", "Force crouch");
-        en.put("desc_SmallUser", "Small players");
         en.put("desc_TntAura", "Bomb targets");
         en.put("desc_Particles", "Pretty particles");
         en.put("desc_Crosshair", "Custom crosshair");
@@ -285,13 +324,24 @@ public class LanguageUtility {
         en.put("hud_desc_ServerBrand", "Displays the server implementation brand using C++ JNI formatting.");
         en.put("desc_TargetHud", "Target info");
         en.put("hud_desc_TargetHud", "Displays target player statistics, health, armor, and hand items.");
+        en.put("hud_staff_title", "STAFF");
+        en.put("hud_staff_vanished", "VANISHED");
+        en.put("hud_staff_none", "No staff online");
+        en.put("shulker_peek_readonly", "Peek View - Read Only");
+        en.put("hud_chest_s", "S");
+        en.put("hud_chest_d", "D");
+        en.put("hud_chest_total", "Total");
+        en.put("hud_chest_empty", "No chests");
+        en.put("hud_desc_ChestCounter", "Counts single and double chests near the player.");
+        en.put("hud_desc_Ram", "Shows memory usage with a colored bar and optional history graph.");
+        en.put("hud_desc_StaffBoard", "Detects staff and admins across ReallyWorld, Genro and 6b6t servers.");
         en.put("hud_editor_scale_hint", "Mouse wheel: scale hovered HUD element");
+        en.put("autolog_browser_title", "AutoLog Browser");
         en.put("cmd_help", "Help");
         en.put("cmd_config", "Config");
         en.put("cmd_calc", "Calc");
         en.put("cmd_toggle", "Toggle");
         en.put("cmd_bind", "Bind");
-        en.put("cmd_panic", "Panic");
         en.put("cmd_say", "Say");
         en.put("cmd_time", "Time");
         en.put("cmd_modules", "Modules");
@@ -349,10 +399,14 @@ public class LanguageUtility {
         en.put("pal_presets", "Presets");
         en.put("pal_recent", "Recent");
         en.put("pal_rainbow", "Rainbow");
-        en.put("pal_positive", "Positive");
+        en.put("pal_positive", "Static");
+        en.put("pal_theme", "Theme sync");
         en.put("arg_title", "AutoReGear Kit Editor");
         en.put("arg_subtitle", "AutoReGear Kit Configuration");
         en.put("ic_title", "Inventory Cleaner");
+        en.put("ic_all_items", "All Items");
+        en.put("ic_selected", "Selected");
+        en.put("ic_clean_now", "Clean Now");
         en.put("ic_quit", "Quit");
         en.put("ob_welcome_title", "Welcome to RaveX");
         en.put("ob_welcome_sub", "A modern utility client for Minecraft. Let's set a few things up.");
@@ -373,6 +427,7 @@ public class LanguageUtility {
         en.put("cfg_model_slim", "Alex model");
         en.put("cfg_model_wide", "Steve model");
         en.put("prof_save_as", "Save Profile As:");
+        en.put("prof_empty", "No profiles yet. Capture current config to create one.");
         en.put("prof_applied", "Profile \"{0}\" applied");
         en.put("prof_deleted", "Profile \"{0}\" deleted");
         en.put("prof_saved", "Profile \"{0}\" saved");
@@ -388,6 +443,8 @@ public class LanguageUtility {
         en.put("macro_created", "Macro \"{0}\" created");
         en.put("arg_back", "ESC / Back");
         en.put("arg_save_close", "Save & Close");
+        en.put("arg_all_items", "All Items");
+        en.put("arg_kit_items", "Kit Items");
         en.put("ic_back", "ESC / Quit");
         en.put("ic_page", "Page {0} / {1}");
         en.put("act_toggle", "Toggle: ");
@@ -414,6 +471,7 @@ public class LanguageUtility {
         en.put("cl_scroll", "Scroll / drag");
         en.put("cl_latest", "Latest: {0}");
         en.put("cl_latest_date", "Latest: {0} - {1}");
+        en.put("last_update", "Last update: {0}");
         en.put("upd_button", "Updates");
         en.put("upd_title", "RaveX Updater");
         en.put("upd_subtitle", "Automatic updates");
@@ -441,6 +499,8 @@ public class LanguageUtility {
         en.put("upd_not_located", "Cannot locate the running RaveX jar (dev run?)");
         en.put("upd_already_in_place", "Update jar is already in place");
         en.put("upd_finished", "Update installed - restart the game");
+        en.put("desc_KeystrokesHud", "Movement key overlay");
+        en.put("pal_themes", "Themes");
         en.put("upd_toast", "Update available: {0}");
 
         Map<String, String> ru = new HashMap<>();
@@ -467,6 +527,7 @@ public class LanguageUtility {
         ru.put("NoSuitablePositionFound", "Подходящая позиция не найдена");
         ru.put("NotEnoughSoulSand", "Нехватка песка душ");
         ru.put("NotEnoughWitherSkeletonSkulls", "Нехватка черепов визер-скелетов");
+        ru.put("autowither_missing", "Не хватает: {0} песка душ и {1} черепа(ов) в хотбаре");
         ru.put("autowalk_baritone", "§c[AutoWalk] Для режима Baritone требуется мод Baritone!");
         ru.put("quiver_nobow", "§c[Quiver] Лук не найден в хотбаре! Отключение...");
         ru.put("quiver_noarrows", "§c[Quiver] Стрелы типа {0} не найдены! Отключение...");
@@ -474,6 +535,7 @@ public class LanguageUtility {
         ru.put("antpearl_dist", "§eЖемчуг летит! §f{0}м");
         ru.put("antpearl", "§eЖемчуг летит!");
         ru.put("elytrahelper_chest", "§c[ElytraHelper] Запасной нагрудник не найден!");
+        ru.put("elytrahelper_none", "§c[ElytraHelper] Элитра не найдена!");
         ru.put("desktopgui_nolib", "§c[DesktopGui] Нативная библиотека не найдена!");
         ru.put("fakeplayer_died_respawn", "§8[§cFakePlayer§8] §7Умер, возрождение");
         ru.put("fakeplayer_died", "§8[§cFakePlayer§8] §7Умер");
@@ -495,6 +557,27 @@ public class LanguageUtility {
         ru.put("baseplace_placed", "§a[BasePlace] Обсидиан установлен на §f{0}, {1}, {2}");
         ru.put("desc_KillAura", "Атака врагов");
         ru.put("desc_mode_Mode_Snap2", "Альтернатива Snap (наводись на цель)");
+        ru.put("desc_mode_Mode_NoClick", "В движении кликать нельзя");
+        ru.put("desc_mode_YawMode_Spin", "Постоянно крутит взгляд");
+        ru.put("desc_mode_YawMode_Jitter", "Кидает взгляд влево-вправо");
+        ru.put("desc_mode_YawMode_Static", "Фиксирует взгляд назад");
+        ru.put("desc_mode_YawMode_Random", "Случайные рывки взгляда");
+        ru.put("desc_mode_YawMode_None", "Не трогать поворот");
+        ru.put("desc_mode_PitchMode_Down", "Смотрит строго вниз");
+        ru.put("desc_mode_PitchMode_Up", "Смотрит строго вверх");
+        ru.put("desc_mode_PitchMode_Jitter", "Кидает взгляд вверх-вниз");
+        ru.put("desc_mode_PitchMode_Static", "Фиксирует угол ниже");
+        ru.put("desc_mode_PitchMode_None", "Не трогать наклон");
+        ru.put("desc_IllegalDisconnect", "Принудительный кик с сервера");
+        ru.put("desc_BindListHud", "Список модулей с биндом");
+        ru.put("pop_count", "§f{0} §7попнул §6{1}§7x §cТотем");
+        ru.put("book_edit_button", "Изменить название и автора");
+        ru.put("book_title", "Название");
+        ru.put("book_author", "Автор");
+        ru.put("book_done", "Готово");
+        ru.put("book_edit_only_written", "§eСменить автора можно только у подписанной книги");
+        ru.put("itemsaver_low", "§c[ItemSaver] §f{0} §7на §c{1}% §7прочности");
+        ru.put("itemsaver_swapped", "§7[ItemSaver] §f{0} §7убран в целости");
         ru.put("desc_ESP", "Видеть сквозь стены");
         ru.put("desc_Search", "Поиск блоков и сущностей");
         ru.put("desc_AutoTool", "Автосмена инструмента");
@@ -502,8 +585,12 @@ public class LanguageUtility {
         ru.put("desc_PVEUtils", "Плавка, приручение, варка, удобрение и свет");
         ru.put("desc_ClickGui", "Открыть меню");
         ru.put("desc_Notifications", "Уведомления на экране");
+        ru.put("desc_JumpCircles", "Круги при приземлении");
+        ru.put("desc_TunnelESP", "Подсветка тоннелей");
+        ru.put("desc_HoleESP", "Подсветка дыр");
+        ru.put("desc_VoidESP", "Подсветка пустоты");
+        ru.put("desc_Animations", "Анимации интерфейса и плавная камера");
         ru.put("desc_DeathText", "Кастомный текст смерти");
-        ru.put("desc_SoundBlock", "Блокировка звуков");
         ru.put("desc_InvClean", "Очистка инвентаря");
         ru.put("desc_Handshake", "Подмена рукопожатия");
         ru.put("desc_PortalGod", "Неуязвимость в портале");
@@ -517,10 +604,12 @@ public class LanguageUtility {
         ru.put("desc_Weather", "Изменить погоду");
         ru.put("desc_WorldColor", "Цвета мира");
         ru.put("desc_Trails", "Показать путь");
+        ru.put("desc_Trajectories", "Показывает, где упадёт снаряд");
         ru.put("desc_AspectRatio", "Растянуть экран");
         ru.put("desc_Waypoint", "Сохранение точек");
         ru.put("desc_AimAssist", "Помощь в прицеле");
         ru.put("desc_NameTags", "Показывать имена");
+        ru.put("desc_LogoutSpots", "Показывает, где вышли игроки");
         ru.put("desc_Tracers", "Линии к игрокам");
         ru.put("desc_Trigger", "Атака при наведении");
         ru.put("desc_MaceSwap", "Свап на булаву");
@@ -579,7 +668,6 @@ public class LanguageUtility {
         ru.put("desc_BlockOutline", "Подсветка блоков");
         ru.put("desc_Fullbright", "Яркость");
         ru.put("desc_GuiParticles", "Частицы в меню");
-        ru.put("desc_NoRotate", "Убрать поворот головы");
         ru.put("desc_NoRender", "Скрытие объектов");
         ru.put("desc_AutoWalk", "Автоходьба");
         ru.put("desc_MobOwner", "Владелец моба");
@@ -613,8 +701,8 @@ public class LanguageUtility {
         ru.put("desc_Blink", "Задержка движений");
         ru.put("desc_PacketFly", "Пакетный полёт");
         ru.put("desc_BoatFly", "Полёт на лодке");
-        ru.put("desc_AutoApple", "Автояблоко");
-        ru.put("desc_TreeCutter", "Рубить деревья");
+        ru.put("desc_AutoGapple", "Ням-ням");
+        ru.put("desc_MoreChatHistory", "Больше истории чата");
         ru.put("desc_FakePearl", "Фейковый жемчуг");
         ru.put("desc_BasePlace", "Ставить обсидиан");
         ru.put("desc_AnchorAura", "Взрывать якоря");
@@ -632,7 +720,6 @@ public class LanguageUtility {
         ru.put("desc_DurabAlert", "Предупреждение о прочности");
         ru.put("desc_AntiAttack", "Без ударов по своим");
         ru.put("desc_LagNotify", "Предупреждение о лагах");
-        ru.put("desc_PopCounter", "Счётчик тотемов");
         ru.put("desc_BookHelper", "Редактор книг");
         ru.put("desc_WebSelf", "Паутина на себя");
         ru.put("desc_KeyPearl", "Бросок жемчуга");
@@ -644,7 +731,6 @@ public class LanguageUtility {
         ru.put("desc_KillEffects", "Эффекты смерти");
         ru.put("desc_AntiQuit", "Блокировать выход");
         ru.put("desc_CoordLogger", "Лог координат");
-        ru.put("desc_Religion", "Религии");
         ru.put("desc_Phase", "Сквозь стены");
         ru.put("desc_MineAnimation", "Убрать трещины");
         ru.put("desc_HighJump", "Высокий прыжок");
@@ -656,7 +742,7 @@ public class LanguageUtility {
         ru.put("desc_Replenish", "Пополнять предметы");
 
 
-        ru.put("desc_AutoReplant", "Сажать заново");
+        ru.put("desc_AutoFarm", "Собирает и сажает урожай");
         ru.put("desc_Nuker", "Массовое разрушение");
         ru.put("desc_AutoTrade", "Торговля с жителями");
         ru.put("desc_AutoFish", "Авторыбалка");
@@ -687,6 +773,7 @@ public class LanguageUtility {
         ru.put("desc_ChatHud", "Оверлей чата");
         ru.put("desc_CooldownsHud", "Кулдауны предметов");
         ru.put("desc_IndicatorsHud", "Информация о цели");
+        ru.put("desc_Radar", "Мини-карта с точками сущностей");
         ru.put("desc_InvPreviewHud", "Превью инвентаря");
         ru.put("desc_MediaHud", "Информация о музыке");
         ru.put("desc_Settings", "Настройки клиента");
@@ -695,7 +782,6 @@ public class LanguageUtility {
         ru.put("desc_Fonts", "Шрифты");
         ru.put("desc_PingSpoof", "Фейковый пинг");
         ru.put("desc_ShiftInterp", "Принудительный шифт");
-        ru.put("desc_SmallUser", "Маленькие игроки");
         ru.put("desc_TntAura", "Бомбить врагов");
         ru.put("desc_Particles", "Красивые частицы");
         ru.put("desc_Crosshair", "Свой прицел");
@@ -721,13 +807,24 @@ public class LanguageUtility {
         ru.put("hud_desc_ServerBrand", "Бренд сервера через JNI");
         ru.put("desc_TargetHud", "Информация о цели");
         ru.put("hud_desc_TargetHud", "Отображает параметры цели, её здоровье, броню и предмет в руке.");
+        ru.put("hud_staff_title", "ПЕРСОНАЛ");
+        ru.put("hud_staff_vanished", "СКРЫТ");
+        ru.put("hud_staff_none", "Персонала нет в сети");
+        ru.put("shulker_peek_readonly", "Просмотр — только чтение");
+        ru.put("hud_chest_s", "1х");
+        ru.put("hud_chest_d", "2х");
+        ru.put("hud_chest_total", "Всего");
+        ru.put("hud_chest_empty", "Нет сундуков");
+        ru.put("hud_desc_ChestCounter", "Подсчитывает одинарные и двойные сундуки рядом с игроком.");
+        ru.put("hud_desc_Ram", "Отображает использование памяти с цветной шкалой и графиком истории.");
+        ru.put("hud_desc_StaffBoard", "Обнаруживает админов и персонал на ReallyWorld, дженро и 6b6t.");
         ru.put("hud_editor_scale_hint", "Колёсико мыши: масштаб выбранного HUD элемента");
+        ru.put("autolog_browser_title", "Браузер AutoLog");
         ru.put("cmd_help", "Помощь");
         ru.put("cmd_config", "Конфиг");
         ru.put("cmd_calc", "Кальк");
         ru.put("cmd_toggle", "Тогл");
         ru.put("cmd_bind", "Бинд");
-        ru.put("cmd_panic", "Паника");
         ru.put("cmd_say", "Сказать");
         ru.put("cmd_time", "Время");
         ru.put("cmd_modules", "Модули");
@@ -785,10 +882,14 @@ public class LanguageUtility {
         ru.put("pal_presets", "Пресеты");
         ru.put("pal_recent", "Недавние");
         ru.put("pal_rainbow", "Радуга");
-        ru.put("pal_positive", "Позитив");
+        ru.put("pal_positive", "Статика");
+        ru.put("pal_theme", "С темой");
         ru.put("arg_title", "Редактор наборов AutoReGear");
         ru.put("arg_subtitle", "Конфигурация наборов AutoReGear");
         ru.put("ic_title", "Чистильщик инвентаря");
+        ru.put("ic_all_items", "Все предметы");
+        ru.put("ic_selected", "Выбрано");
+        ru.put("ic_clean_now", "Очистить");
         ru.put("ic_quit", "Выход");
         ru.put("ob_welcome_title", "Добро пожаловать в RaveX");
         ru.put("ob_welcome_sub", "Современный утилитарный клиент для Minecraft. Настроим пару вещей.");
@@ -809,6 +910,7 @@ public class LanguageUtility {
         ru.put("cfg_model_slim", "Модель Alex");
         ru.put("cfg_model_wide", "Модель Steve");
         ru.put("prof_save_as", "Сохранить профиль как:");
+        ru.put("prof_empty", "Профилей пока нет. Сохраните текущую конфигурацию, чтобы создать первый.");
         ru.put("prof_applied", "Профиль «{0}» применён");
         ru.put("prof_deleted", "Профиль «{0}» удалён");
         ru.put("prof_saved", "Профиль «{0}» сохранён");
@@ -824,6 +926,8 @@ public class LanguageUtility {
         ru.put("macro_created", "Макрос «{0}» создан");
         ru.put("arg_back", "ESC / Назад");
         ru.put("arg_save_close", "Сохранить и закрыть");
+        ru.put("arg_all_items", "Все предметы");
+        ru.put("arg_kit_items", "Предметы кита");
         ru.put("ic_back", "ESC / Выход");
         ru.put("ic_page", "Страница {0} / {1}");
         ru.put("act_toggle", "Переключить: ");
@@ -850,6 +954,7 @@ public class LanguageUtility {
         ru.put("cl_scroll", "Прокрутка");
         ru.put("cl_latest", "Актуальная: {0}");
         ru.put("cl_latest_date", "Актуальная: {0} - {1}");
+        ru.put("last_update", "Последнее обновление: {0}");
         ru.put("upd_button", "Обновления");
         ru.put("upd_title", "Обновление RaveX");
         ru.put("upd_subtitle", "Автоматические обновления");
@@ -878,12 +983,115 @@ public class LanguageUtility {
         ru.put("upd_already_in_place", "Обновление уже на месте");
         ru.put("upd_finished", "Обновление установлено - перезапустите игру");
         ru.put("upd_toast", "Доступно обновление: {0}");
+        ru.put("desc_KeystrokesHud", "Оверлей клавиш движения");
+        ru.put("pal_themes", "Темы");
 
         STRINGS.put("English", en);
         STRINGS.put("Russian", ru);
     }
 
+    // ------------------------------------------------------------------
+    // extensible languages
+    //
+    // any number of extra languages can be attached without touching code:
+    //  - shipped with the mod: assets/ravex/lang/<file>.json + a line in index.json
+    //  - at runtime: a <file>.json in <game dir>/RaveX/lang/
+    // file format (utf-8):
+    // {
+    //   "name": "Deutsch",          <- shown in the Settings dropdown
+    //   "strings": { "key": "value", ... }
+    // }
+    // missing keys fall back to English, then to the raw key string.
+    // ------------------------------------------------------------------
+
+    // display names for the language dropdown
+    public static List<String> getLanguages() {
+        ensureOverlays();
+        List<String> out = new ArrayList<>();
+        if (STRINGS.containsKey("English")) out.add("English");
+        if (STRINGS.containsKey("Russian")) out.add("Russian");
+        List<String> extras = new ArrayList<>();
+        for (String name : STRINGS.keySet()) {
+            if (!out.contains(name)) extras.add(name);
+        }
+        extras.sort(String.CASE_INSENSITIVE_ORDER);
+        out.addAll(extras);
+        return out;
+    }
+
+    private static void ensureOverlays() {
+        if (overlaysLoaded) return;
+        overlaysLoaded = true;
+        loadResourceOverlays();
+        loadUserOverlays();
+    }
+
+    private static void loadResourceOverlays() {
+        try (InputStream index = LanguageUtility.class.getResourceAsStream(LANG_INDEX_RESOURCE)) {
+            if (index == null) return;
+            var files = parseJsonArray(index);
+            for (var el : files) {
+                String file = el.getAsString();
+                registerJson(LanguageUtility.class.getResourceAsStream(LANG_DIR_RESOURCE + file), file);
+            }
+        } catch (Throwable t) {
+            ravex.RaveX.LOGGER.warn("[Lang] resource overlays failed: {}", t.getMessage());
+        }
+    }
+
+    private static void loadUserOverlays() {
+        try {
+            Path dir = net.fabricmc.loader.api.FabricLoader.getInstance().getGameDir().resolve(LANG_DIR_USER);
+            if (!Files.isDirectory(dir)) return;
+            try (var paths = Files.list(dir)) {
+                for (Path p : paths.toList()) {
+                    String file = p.getFileName().toString();
+                    if (!file.endsWith(".json")) continue;
+                    try {
+                        registerJson(Files.newInputStream(p), file);
+                    } catch (Throwable t) {
+                        ravex.RaveX.LOGGER.warn("[Lang] failed to load {}: {}", file, t.getMessage());
+                    }
+                }
+            }
+        } catch (Throwable t) {
+            ravex.RaveX.LOGGER.warn("[Lang] user overlays failed: {}", t.getMessage());
+        }
+    }
+
+    private static void registerJson(InputStream stream, String source) {
+        if (stream == null) return;
+        try (stream) {
+            var reader = new java.io.InputStreamReader(stream, StandardCharsets.UTF_8);
+            var root = com.google.gson.JsonParser.parseReader(reader).getAsJsonObject();
+            if (root.has("name")) {
+                String name = root.get("name").getAsString();
+                Map<String, String> strings = new HashMap<>();
+                if (root.has("strings") && root.get("strings").isJsonObject()) {
+                    for (var e : root.getAsJsonObject("strings").entrySet()) {
+                        strings.put(e.getKey(), e.getValue().getAsString());
+                    }
+                }
+                if (!name.isBlank() && !strings.isEmpty()) {
+                    // built in languages win, first file with a name wins over later ones
+                    STRINGS.putIfAbsent(name, strings);
+                }
+            }
+        } catch (Throwable t) {
+            ravex.RaveX.LOGGER.warn("[Lang] bad language file {}: {}", source, t.getMessage());
+        }
+    }
+
+    private static java.util.List<com.google.gson.JsonElement> parseJsonArray(InputStream stream) {
+        var reader = new java.io.InputStreamReader(stream, StandardCharsets.UTF_8);
+        var arr = com.google.gson.JsonParser.parseReader(reader).getAsJsonArray();
+        List<com.google.gson.JsonElement> out = new ArrayList<>();
+        for (var el : arr) out.add(el);
+        return out;
+    }
+
     public static void setLanguage(String lang) {
+        ensureOverlays();
         if (STRINGS.containsKey(lang)) currentLang = lang;
     }
 

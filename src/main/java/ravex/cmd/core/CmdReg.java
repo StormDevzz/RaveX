@@ -63,7 +63,6 @@ public class CmdReg {
         INSTANCE.register(new ravex.cmd.cmds.CalcCmd());
         INSTANCE.register(new ravex.cmd.cmds.ToggleCmd());
         INSTANCE.register(new ravex.cmd.cmds.BindCmd());
-        INSTANCE.register(new ravex.cmd.cmds.PanicCmd());
         INSTANCE.register(new ravex.cmd.cmds.SayCmd());
         INSTANCE.register(new ravex.cmd.cmds.TimeCmd());
         INSTANCE.register(new ravex.cmd.cmds.ModulesCmd());

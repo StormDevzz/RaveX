@@ -4,22 +4,21 @@ import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 
-import ravex.utility.nativelib.NativeLibraryUtility;
 
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.AimUtility;
 import ravex.utility.player.rotation.RotationUtility;
+import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.client.ClientAlertUtility;
+import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 @Module(name = "ECFarmer", category = "World")
 public class ECFarmer {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.5)
     public double range = 4.5;
-    @Parameter(name = "Swap", modes = {"None", "Normal", "Silent"})
-    public String swapMode = "Silent";
-    @Parameter(name = "AutoTool")
-    public boolean autoTool = true;
+    @Parameter(name = "RestoreSlot")
+    public boolean restoreSlot = true;
     @Parameter(name = "AutoDisable")
     public boolean autoDisable = false;
     @Parameter(name = "Render")
@@ -29,7 +28,7 @@ public class ECFarmer {
     @Parameter(name = "RotationSpeed", min = 10.0, max = 360.0, step = 5.0, visible = "rotate")
     public double rotationSpeed = 120.0;
     @Parameter(name = "Color", color = true, visible = "render")
-    public int color = 0x3F8800FF;
+    public int color = 0x3F40A9F8;
     private enum State { IDLE, FIND_BREAK, BREAKING, FIND_PLACE, PLACING }
     private State state = State.IDLE;
     private int ecX, ecY, ecZ;
@@ -37,52 +36,54 @@ public class ECFarmer {
     private long lastActionTime = 0;
     private long breakStartTime = 0;
     private int prevSlot = -1;
-    private String activeSwapMode = "Silent";
     private static int targetX, targetY, targetZ;
     private static boolean hasRenderTarget;
-    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_ecfarmer");
-    private final ravex.utility.render.animate.EasingAnimationUtility placeAnim = new ravex.utility.render.animate.EasingAnimationUtility();
-    private final ravex.utility.render.animate.EasingAnimationUtility breakAnim = new ravex.utility.render.animate.EasingAnimationUtility();
-    private final ravex.utility.render.animate.SlideAnimationUtility slideAnim = new ravex.utility.render.animate.SlideAnimationUtility();
-    public static float renderProgress = 0f;
-    public static float placePulse = 0f;
-    public static int renderState = 0;
-    public static long breakAnimStart = 0L;
-    public static long placeAnimStart = 0L;
-    public static long placeAnimEnd = 0L;
-    public static float breakingProgress = 0f;
+
+    // last finished block, fades out as a highlight
+    public static final long HIGHLIGHT_FADE_MS = 900L;
+    private static int lastX, lastY, lastZ;
+    private static long lastAt = 0L;
+    private static boolean hasLast;
+
     public static float viewYaw = 0f;
     public static float viewPitch = 0f;
     public static boolean capturingView = false;
     private int activeToolSlot = -1;
-    private float animBreak = 0f;
-    private float animPlace = 0f;
 
     @Nullable
     public static net.minecraft.core.BlockPos getCurrentTarget() {
         if (!hasRenderTarget) return null;
         return BlockUtility.pos(targetX, targetY, targetZ);
     }
+
+    @Nullable
+    public static net.minecraft.core.BlockPos getLastTarget() {
+        if (!hasLast || System.currentTimeMillis() - lastAt > HIGHLIGHT_FADE_MS) return null;
+        return BlockUtility.pos(lastX, lastY, lastZ);
+    }
+
+    public static float getLastFade() {
+        if (!hasLast) return 0f;
+        float t = Math.min(1f, (System.currentTimeMillis() - lastAt) / (float) HIGHLIGHT_FADE_MS);
+        return 1f - t;
+    }
+
+    private static void markLast(int x, int y, int z) {
+        lastX = x; lastY = y; lastZ = z;
+        lastAt = System.currentTimeMillis();
+        hasLast = true;
+    }
+
     public void onEnable() {
         state = State.IDLE;
         hasEc = false;
         hasRenderTarget = false;
+        hasLast = false;
         prevSlot = -1;
-        placeAnim.reset();
-        breakAnim.reset();
-        slideAnim.reset();
-        animBreak = 0f;
-        animPlace = 0f;
-        renderProgress = 0f;
-        placePulse = 0f;
-        renderState = 0;
-        breakAnimStart = 0L;
-        placeAnimStart = 0L;
-        placeAnimEnd = 0L;
-        breakingProgress = 0f;
         activeToolSlot = -1;
         capturingView = false;
     }
+
     public void onDisable() {
         releaseView();
         if (hasEc) {
@@ -90,23 +91,15 @@ public class ECFarmer {
             if (BlockUtility.isBlock(st, "ender_chest")) {
                 MinecraftWrapper.getWrapper().getGameMode().stopDestroyBlock();
             }
+            if (prevSlot != -1) swapBack(MinecraftWrapper.getWrapper(), prevSlot);
         }
-        if (prevSlot != -1) swapBack(MinecraftWrapper.getWrapper(), prevSlot);
         hasEc = false;
         hasRenderTarget = false;
         prevSlot = -1;
         state = State.IDLE;
-        animBreak = 0f;
-        animPlace = 0f;
-        renderProgress = 0f;
-        placePulse = 0f;
-        renderState = 0;
-        breakAnimStart = 0L;
-        placeAnimStart = 0L;
-        placeAnimEnd = 0L;
-        breakingProgress = 0f;
         activeToolSlot = -1;
     }
+
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
@@ -123,8 +116,8 @@ public class ECFarmer {
             case FIND_PLACE -> findPlaceTarget(mc);
             case PLACING -> doPlace(mc, now);
         }
-        updateAnimations(now);
     }
+
     private void updateRotation(MinecraftWrapper mc) {
         var p = mc.getPlayer();
         var center = PhysicUtility.centerOf(BlockUtility.pos(ecX, ecY, ecZ));
@@ -142,6 +135,7 @@ public class ECFarmer {
         p.setYRot(limited[0]);
         p.setXRot(limited[1]);
     }
+
     private void releaseView() {
         if (!capturingView) return;
         capturingView = false;
@@ -151,23 +145,7 @@ public class ECFarmer {
             p.setXRot(viewPitch);
         }
     }
-    private void updateAnimations(long now) {
-        boolean breaking = state == State.BREAKING && breakStartTime > 0;
-        boolean placing = now < placeAnimEnd;
-        animBreak = breakAnim.updateFloat(breaking, 0.35f);
-        animPlace = placeAnim.updateFloat(placing, 0.45f);
-        if (breaking && breakStartTime > 0) {
-            renderProgress = breakingProgress;
-        } else {
-            renderProgress = animBreak;
-        }
-        if (placing) {
-            placePulse = (float) (0.5 + 0.5 * Math.sin((now - placeAnimStart) * 0.02));
-        } else {
-            placePulse *= 0.85f;
-        }
-        renderState = breaking ? 1 : (placing ? 2 : 0);
-    }
+
     private void findBreakTarget(MinecraftWrapper mc) {
         int[] found = scanForEC(mc);
         if (found != null) {
@@ -176,18 +154,17 @@ public class ECFarmer {
             targetX = ecX; targetY = ecY; targetZ = ecZ; hasRenderTarget = true;
             state = State.BREAKING;
             breakStartTime = 0;
-            breakAnimStart = 0L;
-            breakingProgress = 0f;
             activeToolSlot = -1;
             prevSlot = -1;
             return;
         }
         state = State.FIND_PLACE;
     }
+
     private void findPlaceTarget(MinecraftWrapper mc) {
         int ecSlot = findECSlot(mc);
         if (ecSlot == -1) {
-            sendMsg(mc, ravex.utility.misc.LanguageUtility.t("NoEnderChestsLeft"));
+            sendMsg(ravex.utility.misc.LanguageUtility.t("NoEnderChestsLeft"));
             ravex.modules.Modules.setEnabled(ECFarmer.class, false);
             return;
         }
@@ -198,6 +175,7 @@ public class ECFarmer {
         targetX = ecX; targetY = ecY; targetZ = ecZ; hasRenderTarget = true;
         state = State.PLACING;
     }
+
     private void doPlace(MinecraftWrapper mc, long now) {
         if (now - lastActionTime < 100) return;
         lastActionTime = now;
@@ -205,26 +183,26 @@ public class ECFarmer {
             state = State.IDLE;
             return;
         }
+        // grab the slot before any shuffling
+        int original = InventoryUtility.getSelectedSlot(mc.getPlayer());
         int ecSlot = findECSlot(mc);
         if (ecSlot == -1) {
             state = State.IDLE;
             return;
         }
-        int original = InventoryUtility.getSelectedSlot(mc.getPlayer());
-        if (!doSwap(mc, ecSlot)) {
-            state = State.IDLE;
-            return;
-        }
+        if (original != ecSlot) selectSlot(mc, ecSlot);
         var below = BlockUtility.pos(ecX, ecY - 1, ecZ);
         BlockUtility.useItemOn(mc, new net.minecraft.world.phys.BlockHitResult(
             PhysicUtility.centerOf(below), net.minecraft.core.Direction.UP, below, false));
         BlockUtility.swing(mc);
         swapBack(mc, original);
-        placeAnimStart = now;
-        placeAnimEnd = now + 500;
+        markLast(ecX, ecY, ecZ);
+        hasRenderTarget = false;
+        hasEc = false;
         state = State.IDLE;
         if (autoDisable) ravex.modules.Modules.setEnabled(ECFarmer.class, false);
     }
+
     private void doBreak(MinecraftWrapper mc, long now) {
         if (!hasEc) {
             state = State.IDLE;
@@ -233,102 +211,63 @@ public class ECFarmer {
         var cur = BlockUtility.getState(mc.getLevel(), ecX, ecY, ecZ);
         if (!BlockUtility.isBlock(cur, "ender_chest")) {
             if (prevSlot != -1) swapBack(mc, prevSlot);
+            markLast(ecX, ecY, ecZ);
             hasEc = false;
             hasRenderTarget = false;
             prevSlot = -1;
+            activeToolSlot = -1;
             state = State.IDLE;
             return;
         }
         if (breakStartTime == 0) {
-            int toolSlot = autoTool ? findBestTool(mc, cur) : findPickaxeSlot(mc);
+            // best tool is always selected, hotbar or inventory
+            int toolSlot = findToolSlot(mc, cur);
             if (toolSlot == -1) {
-                sendMsg(mc, ravex.utility.misc.LanguageUtility.t("NoPickaxeFound"));
+                sendMsg(ravex.utility.misc.LanguageUtility.t("NoPickaxeFound"));
                 ravex.modules.Modules.setEnabled(ECFarmer.class, false);
                 return;
             }
             prevSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-            activeSwapMode = resolveSwapMode();
-            if (!doSwap(mc, toolSlot, activeSwapMode)) {
-                prevSlot = -1;
-                state = State.IDLE;
-                return;
-            }
-            breakStartTime = now;
-            breakAnimStart = now;
-            breakingProgress = 0f;
+            selectSlot(mc, toolSlot);
             activeToolSlot = toolSlot;
+            breakStartTime = now;
             var dir = getDirection(mc.getPlayer().getEyePosition(), ecX, ecY, ecZ);
             mc.getGameMode().startDestroyBlock(BlockUtility.pos(ecX, ecY, ecZ), dir);
             BlockUtility.swing(mc);
             return;
         }
-        if (autoTool && "Silent".equals(activeSwapMode)) {
-            int toolSlot = findBestTool(mc, cur);
-            if (toolSlot != -1) {
-                InventoryUtility.silentSelectSlot(mc.getPlayer(), toolSlot);
-                activeToolSlot = toolSlot;
-            }
-        }
-        breakingProgress = Math.min(1f, breakingProgress + miningRate(mc, cur));
         var dir2 = getDirection(mc.getPlayer().getEyePosition(), ecX, ecY, ecZ);
         mc.getGameMode().continueDestroyBlock(BlockUtility.pos(ecX, ecY, ecZ), dir2);
         BlockUtility.swing(mc);
         var st = BlockUtility.getState(mc.getLevel(), ecX, ecY, ecZ);
         if (st.isAir() || !BlockUtility.isBlock(st, "ender_chest")) {
             if (prevSlot != -1) swapBack(mc, prevSlot);
+            markLast(ecX, ecY, ecZ);
             hasEc = false;
             hasRenderTarget = false;
             prevSlot = -1;
-            state = State.IDLE;
-            breakAnimStart = 0L;
-            breakingProgress = 0f;
             activeToolSlot = -1;
+            breakStartTime = 0;
+            state = State.IDLE;
             if (autoDisable) ravex.modules.Modules.setEnabled(ECFarmer.class, false);
         }
     }
-    private float miningRate(MinecraftWrapper mc, net.minecraft.world.level.block.state.BlockState state) {
-        var player = mc.getPlayer();
-        int cur = InventoryUtility.getSelectedSlot(player);
-        if (activeToolSlot >= 0 && activeToolSlot != cur) {
-            InventoryUtility.selectSlot(player, activeToolSlot);
-        }
-        float rate = state.getDestroyProgress(player, mc.getLevel(), BlockUtility.pos(ecX, ecY, ecZ));
-        if (activeToolSlot >= 0 && activeToolSlot != cur) {
-            InventoryUtility.selectSlot(player, cur);
-        }
-        return Math.max(rate, 0f);
+
+    // vanilla keybind handler misses programmatic slot changes
+    private void selectSlot(MinecraftWrapper mc, int slot) {
+        InventoryUtility.selectSlot(mc.getPlayer(), slot);
+        NetworkUtility.sendSetCarriedItem(slot);
     }
-    private String resolveSwapMode() {
-        if ("None".equals(swapMode)) return autoTool ? "Silent" : "None";
-        return swapMode;
-    }
-    private boolean doSwap(MinecraftWrapper mc, int targetSlot) {
-        return doSwap(mc, targetSlot, resolveSwapMode());
-    }
-    private boolean doSwap(MinecraftWrapper mc, int targetSlot, String mode) {
-        if (mode.equals("None")) {
-            return InventoryUtility.getSelectedSlot(mc.getPlayer()) == targetSlot;
-        } else if (mode.equals("Normal")) {
-            InventoryUtility.selectSlot(mc.getPlayer(), targetSlot);
-            return true;
-        } else if (mode.equals("Silent")) {
-            InventoryUtility.silentSelectSlot(mc.getPlayer(), targetSlot);
-            return true;
-        }
-        return false;
-    }
+
     private void swapBack(MinecraftWrapper mc, int originalSlot) {
-        if (originalSlot == -1) return;
-        String mode = activeSwapMode;
-        if (mode.equals("Normal")) {
-            InventoryUtility.selectSlot(mc.getPlayer(), originalSlot);
-        } else if (mode.equals("Silent")) {
-            InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
-        }
+        if (originalSlot == -1 || !restoreSlot) return;
+        selectSlot(mc, originalSlot);
     }
-    private void sendMsg(MinecraftWrapper mc, String msg) {
+
+    private void sendMsg(String msg) {
         ClientAlertUtility.alert("§8[§5ECFarmer§8] §7" + msg);
     }
+
     private int[] scanForEC(MinecraftWrapper mc) {
         double r = range;
         var eye = mc.getPlayer().getEyePosition();
@@ -357,6 +296,8 @@ public class ECFarmer {
         }
         return closest;
     }
+
+    // no side effects, doPlace captures the slot first
     private int findECSlot(MinecraftWrapper mc) {
         int slot = InventoryUtility.findHotbarSlot(mc.getPlayer(), "ender_chest");
         if (slot != -1) return slot;
@@ -364,53 +305,38 @@ public class ECFarmer {
         if (slot != -1) {
             int free = InventoryUtility.findEmptyHotbarSlot(mc.getPlayer());
             if (free != -1) {
-                InventoryUtility.selectSlot(mc.getPlayer(), free);
                 InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, free, InventoryUtility.SWAP);
                 return free;
             }
         }
         return -1;
     }
-    private int findPickaxeSlot(MinecraftWrapper mc) {
-        for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
-            if (InventoryUtility.isItem(stack, "netherite_pickaxe") || InventoryUtility.isItem(stack, "diamond_pickaxe")
-                || InventoryUtility.isItem(stack, "iron_pickaxe") || InventoryUtility.isItem(stack, "stone_pickaxe")
-                || InventoryUtility.isItem(stack, "wooden_pickaxe")) return i;
-        }
-        return -1;
-    }
-    private int findBestTool(MinecraftWrapper mc, net.minecraft.world.level.block.state.BlockState state) {
+
+    // pickaxe always wins, else the fastest tool
+    private int findToolSlot(MinecraftWrapper mc, net.minecraft.world.level.block.state.BlockState state) {
         var player = mc.getPlayer();
-        int best = ravex.utility.player.ToolUtility.findBestToolSlot(player, state);
-        if (best >= 0) return best;
         int selected = InventoryUtility.getSelectedSlot(player);
-        float invSpeed = 1.0f;
-        int bestInv = -1;
-        for (int i = 9; i < 36; i++) {
-            var stack = InventoryUtility.getItem(player, i);
+        int best = -1;
+        float bestScore = 1.0f; // must beat the bare hand
+        for (int i = 0; i < 36; i++) {
+            ItemStack stack = InventoryUtility.getItem(player, i);
             if (stack.isEmpty()) continue;
-            float speed = stack.getDestroySpeed(state);
-            if (speed > invSpeed) {
-                invSpeed = speed;
-                bestInv = i;
+            boolean pickaxe = InventoryUtility.isPickaxeItem(stack);
+            if (!pickaxe && state.requiresCorrectToolForDrops() && !stack.isCorrectToolForDrops(state)) continue;
+            float score = stack.getDestroySpeed(state) + (pickaxe ? 1000f : 0f);
+            if (score > bestScore) {
+                bestScore = score;
+                best = i;
             }
         }
-        if (bestInv != -1) {
-            float selSpeed = InventoryUtility.getItem(player, selected).getDestroySpeed(state);
-            if (invSpeed > selSpeed) {
-                int free = InventoryUtility.findEmptyHotbarSlot(player);
-                if (free != -1) {
-                    InventoryUtility.handleInventoryClick(mc, player, bestInv, free, InventoryUtility.SWAP);
-                    return free;
-                }
-                InventoryUtility.handleInventoryClick(mc, player, bestInv, selected, InventoryUtility.SWAP);
-                return selected;
-            }
-        }
-        if (InventoryUtility.getItem(player, selected).getDestroySpeed(state) > 1.0f) return selected;
-        return -1;
+        if (best == -1) return -1;
+        if (best < 9) return best;
+        int free = InventoryUtility.findEmptyHotbarSlot(player);
+        int dest = free != -1 ? free : selected;
+        InventoryUtility.handleInventoryClick(mc, player, best, dest, InventoryUtility.SWAP);
+        return dest;
     }
+
     @Nullable
     private int[] findPlacePos(MinecraftWrapper mc) {
         var eye = mc.getPlayer().getEyePosition();
@@ -431,6 +357,7 @@ public class ECFarmer {
         }
         return null;
     }
+
     private static net.minecraft.core.Direction getDirection(net.minecraft.world.phys.Vec3 eye, int x, int y, int z) {
         var center = PhysicUtility.centerOf(BlockUtility.pos(x, y, z));
         double dx = eye.x - center.x;
@@ -443,18 +370,11 @@ public class ECFarmer {
             if (absX >= absZ) return dx > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
             else return dz > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
         } else if (absX <= absY && absX <= absZ) {
-            if (absY >= absZ) return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
+            if (absY >= absZ) return dy > 0 ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
             else return dz > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
         } else {
-            if (absY >= absX) return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
+            if (absY >= absX) return dy > 0 ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
             else return dx > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
         }
     }
-    private static native double nativeCalcBreakTime(String toolId, int efficiency, int haste, int durability, int maxDura);
-    private static native int nativeCalcDurabilityLoss(String toolId, int efficiency);
-
-
-
-
-
 }

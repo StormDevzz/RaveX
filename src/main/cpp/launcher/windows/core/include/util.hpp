@@ -10,5 +10,8 @@ bool readFile(const std::wstring& path, std::string& out);
 bool fileExists(const std::wstring& path);
 bool createDirs(const std::wstring& path);
 std::wstring joinPath(const std::wstring& a, const std::wstring& b);
+std::wstring windowsVersionName();
+bool isLegacyWindows();
+bool extractZip(const std::wstring& zipPath, const std::wstring& destDir, std::string* error);
 
 }

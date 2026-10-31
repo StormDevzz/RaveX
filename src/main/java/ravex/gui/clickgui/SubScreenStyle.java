@@ -1,12 +1,16 @@
 package ravex.gui.clickgui;
 
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 import ravex.manager.ModuleManager;
 import ravex.modules.client.ClickGui;
 import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
+import ravex.utility.render.ScreenIcons;
 
+// shared look of the sub screens, flat panels and soft shadows
 public final class SubScreenStyle {
     private SubScreenStyle() {}
 
@@ -28,12 +32,19 @@ public final class SubScreenStyle {
     }
 
     public static void header(GuiGraphics graphics, int width, String title, String subtitle, int activeColor) {
-        int pa = panelAlpha();
-        Render2DUtility.drawGradientRect(graphics, 0, 0, width, 40,
-            ColorUtility.withAlpha(0x08081A, Math.min(230, pa + 60)), ColorUtility.withAlpha(0x08081A, 0));
-        Render2DUtility.drawRect(graphics, 0, 39, width, 1, ColorUtility.withAlpha(activeColor, 90));
-        FontRenderUtility.drawString(graphics, title, 18, 8, 0xFFFFFFFF, true);
-        FontRenderUtility.drawString(graphics, subtitle, 18, 23, 0xFF7070A0, false);
+        header(graphics, width, title, subtitle, activeColor, null);
+    }
+
+    // header with an optional icon left of the title.
+    public static void header(GuiGraphics graphics, int width, String title, String subtitle, int activeColor, Identifier icon) {
+        int textX = 20;
+        if (icon != null) {
+            ScreenIcons.ensureLoaded();
+            graphics.blit(RenderPipelines.GUI_TEXTURED, icon, 20, 7, 0f, 0f, 24, 24, 100, 100, 100, 100, 0xFFFFFFFF);
+            textX = 52;
+        }
+        FontRenderUtility.drawString(graphics, title, textX, 8, 0xFFFFFFFF, true);
+        FontRenderUtility.drawString(graphics, subtitle, textX, 24, 0xFF7A7A96, false);
     }
 
     public static void statusPill(GuiGraphics graphics, int screenWidth, String message, int activeColor) {
@@ -48,10 +59,9 @@ public final class SubScreenStyle {
 
     public static void card(GuiGraphics graphics, int x, int y, int w, int h, int activeColor) {
         ClickGui c = cfg();
-        int r = Math.max(2, Math.min((int) c.cornerRadius, h / 2));
-        Render2DUtility.drawGaussianShadow(graphics, x, y, w, h, Math.max(4, r), 0x66000000);
+        int r = Math.max(8, Math.min((int) c.cornerRadius, h / 2));
+        Render2DUtility.drawGaussianShadow(graphics, x, y, w, h, Math.max(6, r), 0x38000000);
         Render2DUtility.drawRound(graphics, x, y, w, h, r, ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, (int) c.panelOpacity));
-        Render2DUtility.drawRect(graphics, x + r, y, w - r * 2, 1, ColorUtility.withAlpha(activeColor, 70));
         if (c.outlines) {
             Render2DUtility.drawRoundBorder(graphics, x, y, w, h, r, 1, c.outlineColor);
         }
@@ -64,11 +74,10 @@ public final class SubScreenStyle {
 
     public static void modal(GuiGraphics graphics, int x, int y, int w, int h, int activeColor) {
         ClickGui c = cfg();
-        int r = Math.max(4, Math.min((int) c.cornerRadius + 2, h / 2));
+        int r = Math.max(8, Math.min((int) c.cornerRadius + 2, h / 2));
         int pa = Math.min(240, (int) c.panelOpacity + 140);
-        Render2DUtility.drawGaussianShadow(graphics, x, y, w, h, r + 2, 0x99000000);
+        Render2DUtility.drawGaussianShadow(graphics, x, y, w, h, r + 2, 0x88000000);
         Render2DUtility.drawRound(graphics, x, y, w, h, r, ColorUtility.withAlpha(0x0C0C1C, pa));
-        Render2DUtility.drawRect(graphics, x + r, y, w - r * 2, 2, activeColor);
         if (c.outlines) {
             Render2DUtility.drawRoundBorder(graphics, x, y, w, h, r, 1, c.outlineColor);
         }
@@ -81,33 +90,36 @@ public final class SubScreenStyle {
 
     public static void button(GuiGraphics graphics, int x, int y, int w, int h, boolean hovered, boolean primary, int activeColor) {
         int ba = (int) cfg().buttonOpacity;
-        int r = Math.max(3, Math.min(7, h / 2));
+        int r = Math.max(6, h / 2);
         int bg;
         if (primary) {
-            bg = ColorUtility.withAlpha(activeColor, hovered ? 210 : Math.max(ba + 50, 110));
+            bg = ColorUtility.withAlpha(activeColor, hovered ? 215 : Math.max(ba + 50, 130));
         } else {
-            bg = ColorUtility.withAlpha(0x202030, hovered ? Math.max(ba * 2, 200) : Math.max(ba + 70, 120));
+            bg = ColorUtility.withAlpha(0x1C1C2C, hovered ? Math.max(ba * 2, 205) : Math.max(ba + 70, 125));
         }
         Render2DUtility.drawRound(graphics, x, y, w, h, r, bg);
+        Render2DUtility.drawRoundBorder(graphics, x, y, w, h, r, 1,
+            ColorUtility.withAlpha(0xFFFFFFFF, hovered ? 28 : 15));
     }
 
     public static void input(GuiGraphics graphics, int x, int y, int w, int h, int activeColor) {
         int pa = panelAlpha();
-        Render2DUtility.drawRound(graphics, x, y, w, h, 4, ColorUtility.withAlpha(0x141426, Math.min(255, pa + 130)));
-        Render2DUtility.drawRect(graphics, x + 1, y + h - 1, w - 2, 1, ColorUtility.withAlpha(activeColor, 140));
+        Render2DUtility.drawRound(graphics, x, y, w, h, 6, ColorUtility.withAlpha(0x141426, Math.min(255, pa + 130)));
+        Render2DUtility.drawRoundBorder(graphics, x, y, w, h, 6, 1, ColorUtility.withAlpha(0xFFFFFF, 16));
     }
 
     public static void row(GuiGraphics graphics, int x, int y, int w, int h, boolean selected, boolean hovered, int activeColor) {
+        int r = Math.min(6, h / 2);
         if (selected) {
-            Render2DUtility.drawRound(graphics, x, y, w, h, 4, ColorUtility.withAlpha(activeColor, 55));
-            Render2DUtility.drawRect(graphics, x, y + 3, 2, h - 6, activeColor);
+            Render2DUtility.drawRound(graphics, x, y, w, h, r, ColorUtility.withAlpha(activeColor, 44));
+            Render2DUtility.drawRound(graphics, x, y + 3, 2, h - 6, 1, activeColor);
         } else if (hovered) {
-            Render2DUtility.drawRound(graphics, x, y, w, h, 4, ColorUtility.withAlpha(0xFFFFFF, 14));
+            Render2DUtility.drawRound(graphics, x, y, w, h, r, ColorUtility.withAlpha(0xFFFFFF, 10));
         }
     }
 
     public static void toolbarPill(GuiGraphics graphics, int x, int y, int w, int h) {
-        Render2DUtility.drawGaussianShadow(graphics, x, y, w, h, 8, 0x55000000);
+        Render2DUtility.drawGaussianShadow(graphics, x, y, w, h, 8, 0x44000000);
         Render2DUtility.drawRound(graphics, x, y, w, h, 10,
             ColorUtility.withAlpha(ColorUtility.PANEL_BODY_END, Math.max(panelAlpha(), 70)));
     }

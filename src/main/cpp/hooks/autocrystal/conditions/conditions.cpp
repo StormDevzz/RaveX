@@ -56,8 +56,13 @@ bool ConditionValidator::isPlacementSafe(
         }
 
         if (checkSuicide) {
+            if (playerHealth + playerAbsorption <= config.antiSuicideMinHealth) {
+                return false;
+            }
             double netHealth = playerHealth + playerAbsorption - selfDamage;
-            if (netHealth <= 0.5) return false;
+            if (netHealth <= config.antiSuicideMinHealth) {
+                return false;
+            }
         }
     }
 
@@ -77,8 +82,6 @@ bool ConditionValidator::isPlacementSafe(
 bool ConditionValidator::shouldForceArmorBreak(const EntityStats& targetStats, double targetEffectiveHp, bool armorBreaker, double armorPercent) {
     if (!armorBreaker) return false;
 
-
-
     double minDur = ArmorCalc::getMinArmorDurability(targetStats);
     if (minDur > 0.0 && minDur <= armorPercent && targetEffectiveHp <= 28.0) {
         return true;
@@ -88,8 +91,6 @@ bool ConditionValidator::shouldForceArmorBreak(const EntityStats& targetStats, d
 
 bool ConditionValidator::shouldForcePopTotem(double targetEffectiveHp, double targetDmg, double targetTotems, bool totemDetection) {
     if (!totemDetection) return false;
-
-
 
     if (targetTotems > 0.0 && targetDmg >= targetEffectiveHp) {
         return true;

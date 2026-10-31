@@ -9,6 +9,8 @@ import ravex.mcwrapper.MinecraftWrapper;
 public class AutoNameTag {
 @Parameter(name = "Delay", min = 0, max = 2000, step = 50)
 public double delay = 0;
+@Parameter(name = "NoSwing")
+public boolean noSwing = false;
 private long lastUseTime;
 public void onEnable() {
         lastUseTime = 0;
@@ -47,7 +49,12 @@ public void onTick() {
         int prevSlot = InventoryUtility.getSelectedSlot(p);
         InventoryUtility.selectSlot(p, tagSlot);
         EntityUtility.interact(mc, target);
-        SwingUtility.swingMainHand(p);
+        if (noSwing) {
+            // arm stays still, server still gets the swing
+            SwingUtility.swingServer(p, net.minecraft.world.InteractionHand.MAIN_HAND);
+        } else {
+            SwingUtility.swingMainHand(p);
+        }
         if (tagSlot != prevSlot) {
             InventoryUtility.selectSlot(p, prevSlot);
         }

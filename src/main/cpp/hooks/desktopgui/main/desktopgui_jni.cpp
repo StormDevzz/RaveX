@@ -9,6 +9,7 @@
 #include <thread>
 #include <sstream>
 #include <cmath>
+#include "../../../common/include/jni_raii.hpp"
 
 static JavaVM* cached_jvm = nullptr;
 static jclass desktopgui_class = nullptr;
@@ -47,12 +48,15 @@ std::string notify_java_get_params(const std::string& name) {
     jmethodID method = env->GetStaticMethodID(desktopgui_class, "getModuleParams", "(Ljava/lang/String;)Ljava/lang/String;");
     if (method) {
         jstring jname = env->NewStringUTF(name.c_str());
+        if (ravex::jni::checkAndClearException(env)) return "";
         jstring result = (jstring)env->CallStaticObjectMethod(desktopgui_class, method, jname);
         env->DeleteLocalRef(jname);
+        if (ravex::jni::checkAndClearException(env)) return "";
         if (result) {
-            const char* chars = env->GetStringUTFChars(result, nullptr);
-            std::string out(chars);
-            env->ReleaseStringUTFChars(result, chars);
+            JniStringUtfChars charsGuard(env, result);
+            if (!charsGuard) return "";
+            if (ravex::jni::checkAndClearException(env)) return "";
+            std::string out(charsGuard.get());
             env->DeleteLocalRef(result);
             return out;
         }
@@ -68,10 +72,12 @@ void notify_java_set_param(const std::string& mod_name, const std::string& param
         jstring jmod = env->NewStringUTF(mod_name.c_str());
         jstring jpar = env->NewStringUTF(param_name.c_str());
         jstring jval = env->NewStringUTF(value.c_str());
+        if (ravex::jni::checkAndClearException(env)) return;
         env->CallStaticVoidMethod(desktopgui_class, method, jmod, jpar, jval);
         env->DeleteLocalRef(jmod);
         env->DeleteLocalRef(jpar);
         env->DeleteLocalRef(jval);
+        if (ravex::jni::checkAndClearException(env)) return;
     }
 }
 
@@ -433,29 +439,47 @@ Java_ravex_modules_client_DesktopGui_openDesktopGui(JNIEnv* env, jclass cls, job
     if (desktopgui_class) env->DeleteGlobalRef(desktopgui_class);
     desktopgui_class = (jclass)env->NewGlobalRef(cls);
 
+    if (ravex::jni::checkAndClearException(env)) return;
+
     std::vector<ravex::ModuleGuiData> modules;
     jsize len = env->GetArrayLength(names);
-    jboolean* states_buf = env->GetBooleanArrayElements(states, NULL);
+    if (ravex::jni::checkAndClearException(env)) return;
+
+    JniBooleanElements statesGuard(env, states);
+    if (ravex::jni::checkAndClearException(env)) return;
+    if (!statesGuard) return;
+
+    const jboolean* states_buf = statesGuard.get();
+
     for (jsize i = 0; i < len; i++) {
         jstring jname = (jstring)env->GetObjectArrayElement(names, i);
-        const char* name_chars = env->GetStringUTFChars(jname, NULL);
-        modules.push_back({std::string(name_chars), states_buf[i] == JNI_TRUE});
-        env->ReleaseStringUTFChars(jname, name_chars);
+        if (ravex::jni::checkAndClearException(env)) return;
+        if (!jname) continue;
+        JniStringUtfChars nameGuard(env, jname);
+        if (!nameGuard) {
+            env->DeleteLocalRef(jname);
+            continue;
+        }
+        if (ravex::jni::checkAndClearException(env)) return;
+        modules.push_back({std::string(nameGuard.get()), states_buf[i] == JNI_TRUE});
         env->DeleteLocalRef(jname);
     }
-    env->ReleaseBooleanArrayElements(states, states_buf, JNI_ABORT);
+
     ravex::start_gui(modules);
 }
 
 JNIEXPORT void JNICALL
 Java_ravex_modules_client_DesktopGui_updateModuleState(JNIEnv* env, jclass cls, jstring name, jboolean enabled) {
-    const char* name_chars = env->GetStringUTFChars(name, NULL);
-    ravex::update_gui_state(std::string(name_chars), enabled == JNI_TRUE);
-    env->ReleaseStringUTFChars(name, name_chars);
+    JniStringUtfChars nameGuard(env, name);
+    if (!nameGuard) return;
+    if (ravex::jni::checkAndClearException(env)) return;
+    ravex::update_gui_state(std::string(nameGuard.get()), enabled == JNI_TRUE);
+    if (ravex::jni::checkAndClearException(env)) return;
 }
 
 JNIEXPORT void JNICALL
 Java_ravex_modules_client_DesktopGui_closeDesktopGui(JNIEnv* env, jclass cls) {
+    if (ravex::jni::checkAndClearException(env)) return;
     ravex::stop_gui();
 }
 

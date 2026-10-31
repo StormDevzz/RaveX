@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.16)
 
 if(WIN32)
+    enable_language(RC)
     add_library(ravex_calculator SHARED
         main/calculator.cpp
         main/calculator_jni_windows.cpp
+        res/calculator.rc
     )
 else()
     add_library(ravex_calculator SHARED
@@ -18,7 +20,7 @@ target_include_directories(ravex_calculator PRIVATE
 )
 
 if(WIN32)
-    target_link_libraries(ravex_calculator PRIVATE ${JNI_LIBRARIES} comctl32)
+    target_link_libraries(ravex_calculator PRIVATE ${JNI_LIBRARIES} comctl32 msimg32)
 else()
     find_package(PkgConfig REQUIRED)
     pkg_check_modules(GTK3 REQUIRED gtk+-3.0)
@@ -33,7 +35,12 @@ endif()
 set_target_properties(ravex_calculator PROPERTIES
     OUTPUT_NAME "ravex_calculator"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
+
+if(MINGW)
+    target_link_options(ravex_calculator PRIVATE -static-libgcc -static-libstdc++ -static)
+endif()
 
 if(WIN32)
     set_target_properties(ravex_calculator PROPERTIES PREFIX "")

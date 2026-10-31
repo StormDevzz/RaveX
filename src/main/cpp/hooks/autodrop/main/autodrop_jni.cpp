@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "autodrop.hpp"
 
 extern "C" {
@@ -18,6 +19,7 @@ Java_ravex_modules_combat_AutoDrop_nativeFindTargets(
 
     jdoubleArray result = env->NewDoubleArray(targets.size() * 4);
     if (!result) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     std::vector<jdouble> buf(targets.size() * 4);
     for (size_t i = 0; i < targets.size(); i++) {
@@ -27,6 +29,7 @@ Java_ravex_modules_combat_AutoDrop_nativeFindTargets(
         buf[i * 4 + 3] = targets[i].score;
     }
     env->SetDoubleArrayRegion(result, 0, buf.size(), buf.data());
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return result;
 }
 

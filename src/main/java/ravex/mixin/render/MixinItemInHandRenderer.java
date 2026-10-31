@@ -74,8 +74,6 @@ public abstract class MixinItemInHandRenderer {
         if (scale != 1f) poseStack.scale(scale, scale, scale);
     }
 
-    // ===== Shaders =====
-
     @Inject(
         method = "renderHandsWithItems(FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;Lnet/minecraft/client/player/LocalPlayer;I)V",
         at = @At("HEAD")
@@ -92,14 +90,13 @@ public abstract class MixinItemInHandRenderer {
         Shaders.RENDERING_HAND.set(false);
     }
 
-    // ===== Captures =====
-
     private static AbstractClientPlayer capturedPlayer;
     private static InteractionHand capturedHand;
+    private static ItemStack capturedStack;
     private static float capturedSwingProgress = 0f;
     private static float peakSwingProgress = 0f;
 
-    // --- Capture player (runs first by local var index) ---
+    // capture player (first by var index)
     @ModifyVariable(
         method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
         at = @At("HEAD"),
@@ -111,7 +108,7 @@ public abstract class MixinItemInHandRenderer {
         return player;
     }
 
-    // --- Capture hand (runs second by local var index, BEFORE swingProgress) ---
+    // capture hand before swingProgress
     @ModifyVariable(
         method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
         at = @At("HEAD"),
@@ -123,7 +120,19 @@ public abstract class MixinItemInHandRenderer {
         return hand;
     }
 
-    // --- Modify swingProgress (runs third by local var index, AFTER hand is captured) ---
+    // capture item stack
+    @ModifyVariable(
+        method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
+        at = @At("HEAD"),
+        ordinal = 0,
+        argsOnly = true
+    )
+    private ItemStack ravex$captureStack(ItemStack stack) {
+        capturedStack = stack;
+        return stack;
+    }
+
+    // modify swingProgress after the hand capture
     @ModifyVariable(
         method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
         at = @At("HEAD"),
@@ -151,7 +160,6 @@ public abstract class MixinItemInHandRenderer {
         return swingProgress;
     }
 
-    // --- Modify equipProgress for Swipe ---
     @ModifyVariable(
         method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
         at = @At("HEAD"),
@@ -160,25 +168,25 @@ public abstract class MixinItemInHandRenderer {
     )
     private float modifyEquipProgress(float equipProgress) {
         if (!Modules.enabled(SwingAnimation.class)) return equipProgress;
+        if (capturedStack != null && capturedStack.is(net.minecraft.world.item.Items.FILLED_MAP)) return equipProgress;
         if ("Swipe".equals(Modules.get(SwingAnimation.class).mode)) return 0.0f;
         return equipProgress;
     }
-
-    // ===== ViewModel: applyItemArmTransform RETURN =====
 
     @Inject(
         method = "applyItemArmTransform(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/entity/HumanoidArm;F)V",
         at = @At("RETURN")
     )
     private void onApplyItemArmTransformReturn(PoseStack poseStack, HumanoidArm arm, float f, CallbackInfo ci) {
+        if (capturedStack != null && capturedStack.is(net.minecraft.world.item.Items.FILLED_MAP)) {
+            return;
+        }
         if (Modules.enabled(SwingAnimation.class) && !Modules.enabled(NoSwing.class)) {
             String mode = Modules.get(SwingAnimation.class).mode;
             if ("Default".equals(mode) || "Akrien".equals(mode) || "Swipe".equals(mode) || "Rich".equals(mode) || "WexSide".equals(mode) || "Wex".equals(mode)) return;
         }
         applyViewModel(poseStack, arm);
     }
-
-    // ===== Main: cancel renderArmWithItem for all SwingAnimation modes =====
 
     @Inject(
         method = "renderArmWithItem(Lnet/minecraft/client/player/AbstractClientPlayer;FFLnet/minecraft/world/InteractionHand;FLnet/minecraft/world/item/ItemStack;FLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/SubmitNodeCollector;I)V",
@@ -203,9 +211,19 @@ public abstract class MixinItemInHandRenderer {
             }
         }
 
-        if (!Modules.enabled(SwingAnimation.class) || Modules.enabled(NoSwing.class) || stack.isEmpty()) return;
-        if (hand != InteractionHand.MAIN_HAND) return;
-        if (PlayerUtility.isUsingItem(player)) return;
+        if (!Modules.enabled(SwingAnimation.class) || Modules.enabled(NoSwing.class) || stack.isEmpty() || stack.is(net.minecraft.world.item.Items.FILLED_MAP)) {
+            capturedStack = null;
+            return;
+        }
+        if (hand != InteractionHand.MAIN_HAND) {
+            capturedStack = null;
+            return;
+        }
+        // using item: that hand keeps the vanilla pose
+        if (PlayerUtility.isUsingItem(player) && player.getUsedItemHand() == hand) {
+            capturedStack = null;
+            return;
+        }
 
         ci.cancel();
 
@@ -233,6 +251,7 @@ public abstract class MixinItemInHandRenderer {
         renderItem(player, stack, context, poseStack, collector, light);
 
         poseStack.popPose();
+        capturedStack = null;
     }
 
     @Inject(method = "tick", at = @At("TAIL"))

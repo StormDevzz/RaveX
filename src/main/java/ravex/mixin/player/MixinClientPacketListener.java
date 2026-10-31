@@ -43,5 +43,34 @@ public class MixinClientPacketListener {
             }
         }
     }
+
+    @Inject(method = "handleEntityEvent", at = @At("HEAD"))
+    private void onTotemEvent(net.minecraft.network.protocol.game.ClientboundEntityEventPacket packet, CallbackInfo ci) {
+        // event 35 is the totem pop
+        if (packet.getEventId() != 35) return;
+        var mc = MinecraftWrapper.getWrapper();
+        if (mc.getPlayer() == null || mc.getLevel() == null) return;
+        if (packet.getEntity(mc.getLevel()) == mc.getPlayer()) {
+            ravex.modules.render.Animations.totemPopNs = System.nanoTime();
+        }
+    }
+
+    @Inject(method = "handleSetEntityData", at = @At("RETURN"))
+    private void onSetEntityData(net.minecraft.network.protocol.game.ClientboundSetEntityDataPacket packet, CallbackInfo ci) {
+        // catch health 0 at apply time, the tick loop misses it
+        var mc = MinecraftWrapper.getWrapper();
+        var level = mc.getLevel();
+        if (level == null) return;
+        var entity = level.getEntity(packet.id());
+        if (entity instanceof net.minecraft.world.entity.player.Player player && player.isDeadOrDying()) {
+            ravex.modules.render.Animations.onVictimDied(player);
+        }
+    }
+
+    @Inject(method = "handleBlockDestruction", at = @At("HEAD"))
+    private void onBlockDestruction(net.minecraft.network.protocol.game.ClientboundBlockDestructionPacket packet, CallbackInfo ci) {
+        // server dig progress drives PacketMine timing
+        ravex.modules.player.PacketMine.onServerDigProgress(packet.getId(), packet.getPos(), packet.getProgress());
+    }
 }
 

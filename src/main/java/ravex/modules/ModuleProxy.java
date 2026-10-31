@@ -1,5 +1,6 @@
 package ravex.modules;
 
+import com.google.gson.JsonObject;
 import ravex.event.EventBusHolder;
 import ravex.parameter.Parameter;
 import ravex.parameter.ParameterFactory;
@@ -19,6 +20,7 @@ public final class ModuleProxy extends Module {
     private Method pojoGetX, pojoSetX, pojoGetY, pojoSetY;
     private Method pojoGetW, pojoSetW, pojoGetH, pojoSetH;
     private Method pojoConsumesKeyBind;
+    private Method pojoSaveExtra, pojoLoadExtra;
 
     public ModuleProxy(Object component) {
         this.component = component;
@@ -42,6 +44,21 @@ public final class ModuleProxy extends Module {
             if ("render".equals(name)) renderMethods.add(m);
         }
         try { pojoConsumesKeyBind = compClass.getMethod("consumesKeyBindPress"); } catch (NoSuchMethodException ignored) {}
+        // pojo modules keep extra data, forward the config hooks
+        try { pojoSaveExtra = compClass.getMethod("saveExtra", JsonObject.class); } catch (NoSuchMethodException ignored) {}
+        try { pojoLoadExtra = compClass.getMethod("loadExtra", JsonObject.class); } catch (NoSuchMethodException ignored) {}
+    }
+
+    @Override
+    public void saveExtra(JsonObject obj) {
+        if (pojoSaveExtra == null) return;
+        try { pojoSaveExtra.invoke(component, obj); } catch (Exception ignored) {}
+    }
+
+    @Override
+    public void loadExtra(JsonObject obj) {
+        if (pojoLoadExtra == null) return;
+        try { pojoLoadExtra.invoke(component, obj); } catch (Exception ignored) {}
     }
 
     private void scanParameters() {

@@ -1,7 +1,6 @@
 package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.world.entity.MoverType;
 import ravex.utility.movement.MoveUtility;
 import ravex.RaveX;
 
@@ -268,7 +267,7 @@ public class ElytraFly {
                 }
                 vel = applyTimerAndAccel(vel);
                 MoveUtility.setMotion(vel);
-                mc.getPlayer().move(MoverType.SELF, vel);
+                MoveUtility.moveSelf(vel);
                 if ("Fireworks".equals(curMode)) {
                     fwTimer++;
                     if (fwTimer >= (int) fireworkDelay) {
@@ -284,7 +283,7 @@ public class ElytraFly {
                 net.minecraft.world.phys.Vec3 v = new net.minecraft.world.phys.Vec3(vel[0], vel[1], vel[2]);
                 v = applyTimerAndAccel(v);
                 MoveUtility.setMotion(v);
-                mc.getPlayer().move(MoverType.SELF, v);
+                MoveUtility.moveSelf(v);
             }
         }
     }
@@ -336,7 +335,7 @@ public class ElytraFly {
         net.minecraft.world.phys.Vec3 vel = new net.minecraft.world.phys.Vec3(targetX, targetY, targetZ);
         vel = applyTimerAndAccel(vel);
         MoveUtility.setMotion(vel);
-        player.move(MoverType.SELF, vel);
+        MoveUtility.moveSelf(vel);
         fwTimer++;
         if (fwTimer >= (int) fireworkDelay) {
             if (grimExtender && grimZone != null && System.currentTimeMillis() - grimStartTime < 50000L) {

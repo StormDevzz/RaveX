@@ -23,8 +23,9 @@ public class ModuleManager {
             try {
                 var ann = clazz.getDeclaredAnnotation(ravex.modules.annotations.Module.class);
                 if (ann == null) continue;
-                if (clazz.getName().equals("ravex.modules.client.Baritone")
-                        && !ravex.integrations.baritone.BaritoneIntegration.isBaritonePresent()) continue;
+                if (!ravex.integrations.baritone.BaritoneIntegration.isBaritonePresent()
+                        && (clazz.getName().equals("ravex.modules.client.Baritone")
+                            || clazz.getName().equals("ravex.modules.misc.PauseBaritone"))) continue;
                 String cat = ann.category();
                 var ctor = clazz.getDeclaredConstructor();
                 ctor.setAccessible(true);
@@ -73,20 +74,29 @@ public class ModuleManager {
             clickGui.setKeyBind(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT_SHIFT);
     }
 
+    private List<Module> clickGuiModuleCache;
+    private List<Module> hudModuleCache;
+
     public List<Module> getClickGuiModules() {
-        List<Module> list = new ArrayList<>();
-        for (Module m : modules) {
-            if (!m.isHud()) list.add(m);
+        if (clickGuiModuleCache == null) {
+            List<Module> list = new ArrayList<>();
+            for (Module m : modules) {
+                if (!m.isHud()) list.add(m);
+            }
+            clickGuiModuleCache = list;
         }
-        return list;
+        return clickGuiModuleCache;
     }
 
     public List<Module> getHudModules() {
-        List<Module> list = new ArrayList<>();
-        for (Module m : modules) {
-            if (m.isHud()) list.add(m);
+        if (hudModuleCache == null) {
+            List<Module> list = new ArrayList<>();
+            for (Module m : modules) {
+                if (m.isHud()) list.add(m);
+            }
+            hudModuleCache = list;
         }
-        return list;
+        return hudModuleCache;
     }
 
     public List<Module> getByCategory(String category) {

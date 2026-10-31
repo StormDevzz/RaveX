@@ -8,11 +8,15 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.SwingUtility;
@@ -20,7 +24,10 @@ import ravex.utility.player.ToolUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.rotation.SilentRotationUtility;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import org.jetbrains.annotations.Nullable;
 
 public class BlockUtility {
     public static class BreakConfig {
@@ -135,27 +142,32 @@ public class BlockUtility {
         BlockPos bestNeighbor = null;
         Direction bestFace = Direction.UP;
         double bestDist = Double.MAX_VALUE;
-        for (Direction dir : Direction.values()) {
-            BlockPos neighbor = target.relative(dir);
-            BlockState st = _mc.level.getBlockState(neighbor);
-            if (st.isCollisionShapeFullBlock(_mc.level, neighbor)) {
+        // pass 1 any sturdy face, pass 2 any collidable neighbour
+        for (int pass = 0; pass < 2 && bestNeighbor == null; pass++) {
+            for (Direction dir : Direction.values()) {
+                BlockPos neighbor = target.relative(dir);
+                BlockState st = _mc.level.getBlockState(neighbor);
+                if (st.isAir() || st.liquid()) continue;
+                Direction face = dir.getOpposite();
+                boolean usable = pass == 0
+                    ? st.isFaceSturdy(_mc.level, neighbor, face)
+                    : !st.getCollisionShape(_mc.level, neighbor).isEmpty();
+                if (!usable) continue;
                 double d = neighbor.distToCenterSqr(eye);
                 if (d < bestDist) {
                     bestDist = d;
                     bestNeighbor = neighbor;
-                    bestFace = dir.getOpposite();
+                    bestFace = face;
                 }
             }
         }
-        if (bestNeighbor != null) {
-            Vec3 hitVec = Vec3.atCenterOf(bestNeighbor)
-                .add(new Vec3(bestFace.getStepX(), bestFace.getStepY(), bestFace.getStepZ()).scale(0.5));
-            return new BlockHitResult(hitVec, bestFace, bestNeighbor, false);
+        if (bestNeighbor == null) {
+            // no support, placing would land somewhere else
+            return null;
         }
-        if (target.distToCenterSqr(eye) < 36.0) {
-            return new BlockHitResult(Vec3.atCenterOf(target), Direction.UP, target, false);
-        }
-        return null;
+        Vec3 hitVec = Vec3.atCenterOf(bestNeighbor)
+            .add(new Vec3(bestFace.getStepX(), bestFace.getStepY(), bestFace.getStepZ()).scale(0.5));
+        return new BlockHitResult(hitVec, bestFace, bestNeighbor, false);
     }
 
     public static BlockHitResult placeOnTop(MinecraftWrapper mc, BlockPos supportBlock) {
@@ -253,6 +265,35 @@ public class BlockUtility {
         return isBlock(level.getBlockState(pos), name);
     }
 
+    private static final Set<Identifier> DEFAULT_XRAY = new HashSet<>();
+
+    static {
+        add(Blocks.DIAMOND_ORE, Blocks.DEEPSLATE_DIAMOND_ORE);
+        add(Blocks.IRON_ORE, Blocks.DEEPSLATE_IRON_ORE);
+        add(Blocks.GOLD_ORE, Blocks.DEEPSLATE_GOLD_ORE);
+        add(Blocks.EMERALD_ORE, Blocks.DEEPSLATE_EMERALD_ORE);
+        add(Blocks.LAPIS_ORE, Blocks.DEEPSLATE_LAPIS_ORE);
+        add(Blocks.REDSTONE_ORE, Blocks.DEEPSLATE_REDSTONE_ORE);
+        add(Blocks.COAL_ORE, Blocks.DEEPSLATE_COAL_ORE);
+        add(Blocks.COPPER_ORE, Blocks.DEEPSLATE_COPPER_ORE);
+        add(Blocks.NETHER_QUARTZ_ORE, Blocks.NETHER_GOLD_ORE, Blocks.ANCIENT_DEBRIS);
+        add(Blocks.CHEST, Blocks.ENDER_CHEST, Blocks.FURNACE, Blocks.CRAFTING_TABLE);
+        add(Blocks.ENCHANTING_TABLE, Blocks.SPAWNER, Blocks.BEDROCK);
+    }
+
+    private static void add(Block... blocks) {
+        for (Block b : blocks)
+            DEFAULT_XRAY.add(BuiltInRegistries.BLOCK.getKey(b));
+    }
+
+    public static Set<Identifier> getDefaultXrayBlocks() {
+        return new HashSet<>(DEFAULT_XRAY);
+    }
+
+    public static Identifier getIdentifier(Block block) {
+        return BuiltInRegistries.BLOCK.getKey(block);
+    }
+
     public static InteractionResult useItemOn(MinecraftWrapper mc, BlockHitResult hit) {
         return useItemOn(mc, hit, InteractionHand.MAIN_HAND);
     }
@@ -275,6 +316,11 @@ public class BlockUtility {
 
     public static boolean isSolid(Level level, BlockPos pos) {
         return level.getBlockState(pos).isCollisionShapeFullBlock(level, pos);
+    }
+
+    public static boolean isSolidBlock(Level level, BlockPos pos) {
+        var state = level.getBlockState(pos);
+        return !state.isAir() && state.isSolid();
     }
 
     public static boolean isLiquid(Level level, BlockPos pos) {
@@ -404,5 +450,86 @@ public class BlockUtility {
         BlockHitResult bhr = new BlockHitResult(hitVec, face.getOpposite(), pos, false);
         useItemOn(mc, bhr, hand);
         return true;
+    }
+
+    public static boolean hasCollision(Level level, BlockPos pos) {
+        return !level.getBlockState(pos).getCollisionShape(level, pos).isEmpty();
+    }
+
+    public static BlockPos findNearestStandable(Level level, BlockPos origin, double px, double py, double pz, int radius) {
+        BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
+        for (int x = -radius; x <= radius; x++) {
+            for (int z = -radius; z <= radius; z++) {
+                for (int y = 2; y >= -5; y--) {
+                    BlockPos pos = origin.offset(x, y, z);
+                    if (hasCollision(level, pos)) continue;
+                    if (!hasCollision(level, pos.below())) continue;
+                    double d = pos.distToCenterSqr(px, py, pz);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        best = pos;
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
+    public static final class SegmentHit {
+        public final double x, y, z;
+        public final double normalX, normalY, normalZ;
+        public final int blockX, blockY, blockZ;
+
+        private SegmentHit(double x, double y, double z, double normalX, double normalY, double normalZ,
+                int blockX, int blockY, int blockZ) {
+            this.x = x;
+            this.y = y;
+            this.z = z;
+            this.normalX = normalX;
+            this.normalY = normalY;
+            this.normalZ = normalZ;
+            this.blockX = blockX;
+            this.blockY = blockY;
+            this.blockZ = blockZ;
+        }
+    }
+
+    // collider raycast for a moving projectile, the owner decides what gets ignored
+    @Nullable
+    public static SegmentHit clipSegment(@Nullable Object owner, double fromX, double fromY, double fromZ,
+            double toX, double toY, double toZ) {
+        var mc = MinecraftWrapper.getWrapper();
+        var level = mc.getLevel();
+        if (level == null) return null;
+        Entity ownerEntity = owner instanceof Entity e ? e : mc.getPlayer();
+        Vec3 from = new Vec3(fromX, fromY, fromZ);
+        Vec3 to = new Vec3(toX, toY, toZ);
+        BlockHitResult hit = level.clip(new ClipContext(from, to,
+                ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, ownerEntity));
+        if (hit.getType() == HitResult.Type.MISS) return null;
+        Vec3 location = hit.getLocation();
+        Vec3 normal = hit.getDirection().getUnitVec3();
+        BlockPos pos = hit.getBlockPos();
+        return new SegmentHit(location.x, location.y, location.z,
+                normal.x, normal.y, normal.z, pos.getX(), pos.getY(), pos.getZ());
+    }
+
+    // any fluid, water or lava
+    public static boolean hasFluidAt(double x, double y, double z) {
+        var level = MinecraftWrapper.getWrapper().getLevel();
+        return level != null && !level.getFluidState(BlockPos.containing(x, y, z)).isEmpty();
+    }
+
+    public static int getMinY(MinecraftWrapper mc) {
+        var level = mc.getLevel();
+        return level != null ? level.getMinY() : Integer.MIN_VALUE;
+    }
+
+    public static boolean isTargetedBlock(int x, int y, int z) {
+        HitResult hit = MinecraftWrapper.getWrapper().getHitResult();
+        if (!(hit instanceof BlockHitResult blockHit)) return false;
+        BlockPos pos = blockHit.getBlockPos();
+        return pos.getX() == x && pos.getY() == y && pos.getZ() == z;
     }
 }

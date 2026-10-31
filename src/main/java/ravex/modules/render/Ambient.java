@@ -4,5 +4,5 @@ import ravex.modules.annotations.Parameter;
 @Module(name = "Ambient", category = "Render")
 public class Ambient {
     @Parameter(name = "Color", color = true)
-    public int color = 0x1EFFFFFF;
+    public int color = 0x1E40A9F8;
 }

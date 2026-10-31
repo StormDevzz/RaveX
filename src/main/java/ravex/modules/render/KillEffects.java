@@ -27,9 +27,8 @@ public class KillEffects {
     @Subscribe
     public void onDeath(DeathEvent event) {
         if (!Modules.enabled(KillEffects.class)) return;
-        net.minecraft.world.entity.player.Player victim = event.getPlayer();
-        if (victim == MinecraftWrapper.getWrapper().getPlayer()) return;
-        net.minecraft.world.entity.LivingEntity living = victim;
+        net.minecraft.world.entity.LivingEntity living = event.getEntity();
+        if (living == null || living == MinecraftWrapper.getWrapper().getPlayer()) return;
         if (!shouldAffect(living)) return;
         ClientLevel level = (ClientLevel) living.level();
         if (level == null) return;

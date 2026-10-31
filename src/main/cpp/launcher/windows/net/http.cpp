@@ -39,6 +39,34 @@ HINTERNET openSession() {
                        WINHTTP_NO_PROXY_NAME, WINHTTP_NO_PROXY_BYPASS, 0);
 }
 
+// One session for the whole process. Reusing it lets WinHTTP pool TCP/TLS
+// connections, which matters a lot when the asset index has thousands of
+// tiny files. The handle is only used to create per-request connections.
+// WINHTTP_OPTION_DECOMPRESSION needs Windows 8.1+. On Windows 7 the option
+// fails, so gzip is only advertised when the runtime can actually decode it.
+bool g_decompressionEnabled = false;
+
+HINTERNET sharedSession() {
+    static HINTERNET session = []() -> HINTERNET {
+        HINTERNET s = openSession();
+        if (s) {
+            WinHttpSetTimeouts(s, 5000, 10000, 15000, 30000);
+            DWORD n = 32;
+            WinHttpSetOption(s, WINHTTP_OPTION_MAX_CONNS_PER_SERVER, &n, sizeof(n));
+            WinHttpSetOption(s, WINHTTP_OPTION_MAX_CONNS_PER_1_0_SERVER, &n, sizeof(n));
+            DWORD decompress = WINHTTP_DECOMPRESSION_FLAG_ALL;
+            g_decompressionEnabled = WinHttpSetOption(s, WINHTTP_OPTION_DECOMPRESSION, &decompress, sizeof(decompress)) != FALSE;
+        }
+        return s;
+    }();
+    return session;
+}
+
+bool decompressionEnabled() {
+    sharedSession();
+    return g_decompressionEnabled;
+}
+
 HINTERNET openConnection(HINTERNET session, const UrlParts& url) {
     return WinHttpConnect(session, url.host.c_str(), url.port, 0);
 }
@@ -73,31 +101,25 @@ std::string doRequest(const wchar_t* method, const std::string& url, const std::
         *error = "Invalid URL";
         return {};
     }
-    HINTERNET session = openSession();
+    HINTERNET session = sharedSession();
     if (!session) {
         *error = "Failed to initialize HTTP";
         return {};
     }
-    DWORD resolveTimeout = 5000;
-    DWORD connectTimeout = 10000;
-    DWORD sendTimeout = 15000;
-    DWORD receiveTimeout = 30000;
-    WinHttpSetTimeouts(session, resolveTimeout, connectTimeout, sendTimeout, receiveTimeout);
     HINTERNET conn = openConnection(session, parts);
     if (!conn) {
         *error = "Failed to connect";
-        WinHttpCloseHandle(session);
         return {};
     }
     HINTERNET req = openRequest(conn, method, parts);
     if (!req) {
         *error = "Failed to create request";
         WinHttpCloseHandle(conn);
-        WinHttpCloseHandle(session);
         return {};
     }
     std::wstring headers;
     headers += L"User-Agent: kickx_launcher/1.0\r\n";
+    if (decompressionEnabled()) headers += L"Accept-Encoding: gzip, deflate\r\n";
     if (!bearer.empty()) headers += L"Authorization: Bearer " + fromUtf8(bearer) + L"\r\n";
     if (!contentType.empty()) headers += L"Content-Type: " + fromUtf8(contentType) + L"\r\n";
     if (url.find("api.github.com") != std::string::npos) {
@@ -113,14 +135,12 @@ std::string doRequest(const wchar_t* method, const std::string& url, const std::
         *error = "Request failed";
         WinHttpCloseHandle(req);
         WinHttpCloseHandle(conn);
-        WinHttpCloseHandle(session);
         return {};
     }
     if (!WinHttpReceiveResponse(req, nullptr)) {
         *error = "No response";
         WinHttpCloseHandle(req);
         WinHttpCloseHandle(conn);
-        WinHttpCloseHandle(session);
         return {};
     }
     DWORD statusCode = 0;
@@ -130,7 +150,6 @@ std::string doRequest(const wchar_t* method, const std::string& url, const std::
     std::string result = readResponse(req);
     WinHttpCloseHandle(req);
     WinHttpCloseHandle(conn);
-    WinHttpCloseHandle(session);
     if (statusCode < 200 || statusCode >= 300) {
         std::string msg = "HTTP " + std::to_string(statusCode);
         if (!result.empty()) {
@@ -184,37 +203,33 @@ bool downloadFile(const std::string& url, const std::wstring& dest,
             *error = "Invalid URL";
             return false;
         }
-        HINTERNET session = openSession();
+        HINTERNET session = sharedSession();
         if (!session) {
             *error = "Failed to initialize HTTP";
             return false;
         }
-        WinHttpSetTimeouts(session, 5000, 10000, 15000, 60000);
         HINTERNET conn = openConnection(session, parts);
         if (!conn) {
             *error = "Failed to connect";
-            WinHttpCloseHandle(session);
             continue;
         }
         HINTERNET req = openRequest(conn, L"GET", parts);
         if (!req) {
             *error = "Failed to create request";
             WinHttpCloseHandle(conn);
-            WinHttpCloseHandle(session);
             continue;
         }
         std::wstring dlHeaders = L"User-Agent: kickx_launcher/1.0\r\n";
+        if (decompressionEnabled()) dlHeaders += L"Accept-Encoding: gzip, deflate\r\n";
         if (!WinHttpSendRequest(req, dlHeaders.c_str(), static_cast<DWORD>(dlHeaders.size()),
                                 WINHTTP_NO_REQUEST_DATA, 0, 0, 0)) {
             WinHttpCloseHandle(req);
             WinHttpCloseHandle(conn);
-            WinHttpCloseHandle(session);
             continue;
         }
         if (!WinHttpReceiveResponse(req, nullptr)) {
             WinHttpCloseHandle(req);
             WinHttpCloseHandle(conn);
-            WinHttpCloseHandle(session);
             continue;
         }
         DWORD contentLength = 0;
@@ -227,7 +242,6 @@ bool downloadFile(const std::string& url, const std::wstring& dest,
             *error = "Failed to create file";
             WinHttpCloseHandle(req);
             WinHttpCloseHandle(conn);
-            WinHttpCloseHandle(session);
             continue;
         }
         long long total = contentLength > 0 ? contentLength : 0;
@@ -265,7 +279,6 @@ bool downloadFile(const std::string& url, const std::wstring& dest,
         CloseHandle(hFile);
         WinHttpCloseHandle(req);
         WinHttpCloseHandle(conn);
-        WinHttpCloseHandle(session);
         if (!ok) {
             DeleteFileW(dest.c_str());
             if (cancelled && *cancelled) {
@@ -280,15 +293,8 @@ bool downloadFile(const std::string& url, const std::wstring& dest,
     return false;
 }
 
-// burst-mode download for many small files (mod icons):
-//  - ONE long-lived session is shared by every caller: TLS handshake and
-//    keep-alive connections are reused (WinHTTP handles are safe for
-//    independent concurrent requests), instead of a fresh handshake per file;
-//  - the per-server connection limit is raised so parallel fetches can
-//    actually saturate the link (the "Wi-Fi module" gets a real workout);
-//  - up to 3 attempts with a tiny backoff: flaky DNS/Wi-Fi spikes no longer
-//    leave permanent placeholder icons in the list;
-//  - the HTTP status is checked, so an error page is never saved as an icon.
+// burst mod-icon download: one shared session, 3 tries
+// status is checked so an error page is never saved
 bool downloadFileFast(const std::string& url, const std::wstring& dest) {
     static HINTERNET session = []() -> HINTERNET {
         HINTERNET s = openSession();

@@ -7,9 +7,19 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.BowItem;
+import net.minecraft.world.item.CrossbowItem;
+import net.minecraft.world.item.EggItem;
+import net.minecraft.world.item.EnderpearlItem;
+import net.minecraft.world.item.ExperienceBottleItem;
+import net.minecraft.world.item.FireworkRocketItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.SnowballItem;
+import net.minecraft.world.item.ThrowablePotionItem;
+import net.minecraft.world.item.TridentItem;
+import net.minecraft.world.item.WindChargeItem;
 import net.minecraft.resources.Identifier;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.world.phys.EntityHitResult;
@@ -171,19 +181,19 @@ public class InventoryUtility {
     }
 
     public static void swapToOffhand(@NotNull MinecraftWrapper mc, @NotNull LocalPlayer player, int inventorySlot) {
-        var _mc = mc.getRaw();
+        // slot 40 exists only in the plain inventory menu
+        if (player.containerMenu != player.inventoryMenu) return;
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);
         if (containerSlot == -1) return;
-        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, player);
-        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, 45, 0, InventoryUtility.PICKUP, player);
-        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, InventoryUtility.PICKUP, player);
+        mc.getRaw().gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 40, SWAP, player);
     }
 
     public static void quickMoveStack(@NotNull MinecraftWrapper mc, @NotNull LocalPlayer player, int inventorySlot) {
         var _mc = mc.getRaw();
         int containerSlot = inventorySlotToContainerSlot(inventorySlot);
         if (containerSlot == -1) return;
-        player.containerMenu.quickMoveStack(player, containerSlot);
+        // use gameMode, the raw menu call is client side only
+        _mc.gameMode.handleInventoryMouseClick(player.containerMenu.containerId, containerSlot, 0, QUICK_MOVE, player);
     }
 
     public static void clickSlot(@NotNull MinecraftWrapper mc, @NotNull LocalPlayer player, int inventorySlot, int button, @NotNull ClickType type) {
@@ -429,5 +439,71 @@ public class InventoryUtility {
 
     public static boolean isWritableBook(@NotNull ItemStack stack) {
         return !stack.isEmpty() && stack.is(Items.WRITABLE_BOOK);
+    }
+
+    @Nullable
+    public static String getItemId(@NotNull ItemStack stack) {
+        if (stack.isEmpty()) return null;
+        Identifier id = BuiltInRegistries.ITEM.getKey(stack.getItem());
+        return id == null ? null : id.toString();
+    }
+
+    public static boolean isDamageable(@NotNull ItemStack stack) {
+        return !stack.isEmpty() && stack.isDamageableItem();
+    }
+
+    public static double getDurabilityPercent(@NotNull ItemStack stack) {
+        int max = stack.getMaxDamage();
+        if (max <= 0) return 0.0;
+        return (max - stack.getDamageValue()) * 100.0 / max;
+    }
+
+    public static boolean isWearingElytra(@NotNull net.minecraft.world.entity.player.Player player) {
+        return isItem(player.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.CHEST), "elytra");
+    }
+
+    public static boolean hasElytra(@NotNull net.minecraft.world.entity.player.Player player) {
+        for (int i = 0; i < 36; i++) {
+            if (isItem(player.getInventory().getItem(i), "elytra")) return true;
+        }
+        return false;
+    }
+
+    public enum ProjectileItemKind {
+        NONE, BOW, CROSSBOW, THROWABLE, POTION, EXPERIENCE_BOTTLE, TRIDENT, WIND_CHARGE, FIREWORK
+    }
+
+    // which projectile an item launches
+    @NotNull
+    public static ProjectileItemKind projectileItemKind(@NotNull ItemStack stack) {
+        if (stack.isEmpty()) return ProjectileItemKind.NONE;
+        Item item = stack.getItem();
+        if (item instanceof BowItem) return ProjectileItemKind.BOW;
+        if (item instanceof CrossbowItem) return ProjectileItemKind.CROSSBOW;
+        if (item instanceof EnderpearlItem || item instanceof SnowballItem || item instanceof EggItem)
+            return ProjectileItemKind.THROWABLE;
+        if (item instanceof ThrowablePotionItem) return ProjectileItemKind.POTION;
+        if (item instanceof ExperienceBottleItem) return ProjectileItemKind.EXPERIENCE_BOTTLE;
+        if (item instanceof TridentItem) return ProjectileItemKind.TRIDENT;
+        if (item instanceof WindChargeItem) return ProjectileItemKind.WIND_CHARGE;
+        if (item instanceof FireworkRocketItem) return ProjectileItemKind.FIREWORK;
+        return ProjectileItemKind.NONE;
+    }
+
+    @NotNull
+    public static ProjectileItemKind projectileItemKind(@Nullable Object stack) {
+        return stack instanceof ItemStack itemStack ? projectileItemKind(itemStack) : ProjectileItemKind.NONE;
+    }
+
+    // 1.0 when not drawing, vanilla charge curve while the bow is in use
+    public static float getBowDrawPower(@Nullable Object player, @Nullable Object stack) {
+        if (!(player instanceof net.minecraft.world.entity.player.Player p) || !(stack instanceof ItemStack itemStack))
+            return 0.0f;
+        if (!p.isUsingItem() || p.getUseItem() != itemStack) return 1.0f;
+        return BowItem.getPowerForTime(p.getTicksUsingItem());
+    }
+
+    public static boolean isCrossbowCharged(@Nullable Object stack) {
+        return stack instanceof ItemStack itemStack && CrossbowItem.isCharged(itemStack);
     }
 }

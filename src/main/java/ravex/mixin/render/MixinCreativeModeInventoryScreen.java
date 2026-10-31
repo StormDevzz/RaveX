@@ -24,7 +24,7 @@ public class MixinCreativeModeInventoryScreen {
     private void onGetTooltipFromContainerItem(ItemStack stack, CallbackInfoReturnable<List<Component>> cir) {
         if (!Modules.enabled(ToolTips.class)) return;
         ToolTips tips = Modules.get(ToolTips.class);
-        if (!tips.showShulker || !tips.isShulker(stack)) return;
+        if (!tips.shulkerRegear || !tips.isShulker(stack)) return;
 
         List<Component> original = cir.getReturnValue();
         Set<String> tabNames = new HashSet<>();

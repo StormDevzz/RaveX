@@ -39,6 +39,6 @@ public class MixinLightTexture {
         index = 0
     )
     private float modifyDarkness(float value) {
-        return isFullbright() ? (float) Modules.get(Fullbright.class).darknessMult : value;
+        return isFullbright() ? (float) Modules.get(Fullbright.class).brightness : value;
     }
 }

@@ -28,8 +28,6 @@ ThemeColors getTheme(const std::string& name) {
     if (name == "ocean") return ThemeColors{RGB(15, 25, 40), RGB(22, 38, 60), RGB(200, 220, 240), RGB(40, 160, 220), RGB(40, 160, 220), RGB(120, 200, 255), true, 255, true};
     if (name == "forest") return ThemeColors{RGB(18, 30, 18), RGB(28, 48, 28), RGB(210, 230, 210), RGB(80, 180, 80), RGB(80, 180, 80), RGB(120, 220, 120), true, 255, true};
     if (name == "win95") {
-        // classic Windows 95: teal desktop, silver face, black text, navy title bar
-        // and selection, square corners, 3D bevels, no glow.
         ThemeColors t{RGB(0, 128, 128), RGB(192, 192, 192), RGB(0, 0, 0), RGB(0, 0, 128), RGB(192, 192, 192), RGB(255, 255, 255), false, 255, false};
         t.caption = RGB(0, 0, 128);
         t.captionText = RGB(255, 255, 255);
@@ -37,8 +35,6 @@ ThemeColors getTheme(const std::string& name) {
         return t;
     }
     if (name == "vista") {
-        // frutiger Aero (Windows Vista / 7): deep glass blue, bright aero cyan
-        // accents, glossy sheen on buttons. No cursor glow for this theme.
         ThemeColors t{RGB(18, 46, 78), RGB(38, 76, 116), RGB(235, 246, 255), RGB(66, 176, 255), RGB(52, 120, 190), RGB(140, 225, 255), false, 255, true};
         t.caption = RGB(24, 60, 96);
         t.captionText = RGB(255, 255, 255);
@@ -91,6 +87,25 @@ void applyWindowTheme(HWND hwnd, const ThemeColors& theme) {
     RedrawWindow(hwnd, nullptr, nullptr, RDW_ALLCHILDREN | RDW_UPDATENOW | RDW_INVALIDATE | RDW_FRAME);
 }
 
+COLORREF blendThemeColor(COLORREF a, COLORREF b, int weightA) {
+    if (weightA < 0) weightA = 0;
+    if (weightA > 100) weightA = 100;
+    const int weightB = 100 - weightA;
+    return RGB(
+        (GetRValue(a) * weightA + GetRValue(b) * weightB + 50) / 100,
+        (GetGValue(a) * weightA + GetGValue(b) * weightB + 50) / 100,
+        (GetBValue(a) * weightA + GetBValue(b) * weightB + 50) / 100);
+}
+
+COLORREF themeContrastText(COLORREF background) {
+    const double lum = 0.299 * GetRValue(background) + 0.587 * GetGValue(background) + 0.114 * GetBValue(background);
+    return lum > 140.0 ? RGB(20, 20, 20) : RGB(255, 255, 255);
+}
+
+COLORREF themeMutedText(COLORREF text, COLORREF background) {
+    return blendThemeColor(text, background, 72);
+}
+
 void paintThemedBox(Gdiplus::Graphics& g, const Gdiplus::RectF& rc, COLORREF fill, bool classic, bool sunken) {
     if (rc.Width <= 0 || rc.Height <= 0) return;
     Gdiplus::Color c(GetRValue(fill), GetGValue(fill), GetBValue(fill));
@@ -109,8 +124,7 @@ void paintThemedBox(Gdiplus::Graphics& g, const Gdiplus::RectF& rc, COLORREF fil
         g.Restore(st);
         return;
     }
-    // windows 95: square face, white highlight on top/left, gray shadow on
-    // bottom/right - flipped around for sunken (pressed) boxes.
+    // win95 bevel flips: light top/left, dark bottom/right
     Gdiplus::GraphicsState st = g.Save();
     g.SetSmoothingMode(Gdiplus::SmoothingModeNone);
     g.FillRectangle(&br, rc);

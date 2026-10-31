@@ -35,10 +35,47 @@ public class ConfigManager {
         }
     }
 
+    private static final java.util.concurrent.ExecutorService CONFIG_IO =
+        java.util.concurrent.Executors.newSingleThreadExecutor(r -> {
+            Thread t = new Thread(r, "RaveX-ConfigIO");
+            t.setDaemon(true);
+            return t;
+        });
+
     public boolean save(String name) {
         try {
             File file = new File(configDir, name + ".json");
-            JsonObject root = new JsonObject();
+            writeRoot(file, buildRoot(), name);
+            return true;
+        } catch (Exception e) {
+            ravex.RaveX.LOGGER.error("[ConfigManager] Failed to save config: " + name, e);
+            return false;
+        }
+    }
+
+    // json built and written off the render thread
+    public void saveAsync(String name) {
+        CONFIG_IO.execute(() -> {
+            try {
+                File file = new File(configDir, name + ".json");
+                JsonObject root = buildRoot();
+                writeRoot(file, root, name);
+            } catch (Exception e) {
+                ravex.RaveX.LOGGER.error("[ConfigManager] Failed to save config: " + name, e);
+            }
+        });
+    }
+
+    private void writeRoot(File file, JsonObject root, String name) {
+        try (FileWriter writer = new FileWriter(file)) {
+            gson.toJson(root, writer);
+        } catch (Exception e) {
+            ravex.RaveX.LOGGER.error("[ConfigManager] Failed to write config: " + name, e);
+        }
+    }
+
+    private JsonObject buildRoot() {
+        JsonObject root = new JsonObject();
 
             for (Module m : ModuleManager.INSTANCE.getModules()) {
                 JsonObject modObj = new JsonObject();
@@ -89,15 +126,7 @@ public class ConfigManager {
                 hudRoot.add(hm.getName(), hudObj);
             }
             root.add("hud_modules", hudRoot);
-
-            try (FileWriter writer = new FileWriter(file)) {
-                gson.toJson(root, writer);
-            }
-            return true;
-        } catch (Exception e) {
-            ravex.RaveX.LOGGER.error("[ConfigManager] Failed to save config: " + name, e);
-            return false;
-        }
+        return root;
     }
 
     public boolean load(String name) {
@@ -108,6 +137,11 @@ public class ConfigManager {
             JsonObject root;
             try (FileReader reader = new FileReader(file)) {
                 root = JsonParser.parseReader(reader).getAsJsonObject();
+            }
+
+            // autoReplant was renamed, carry old settings over
+            if (root.has("AutoReplant") && !root.has("AutoFarm")) {
+                root.add("AutoFarm", root.get("AutoReplant"));
             }
 
             for (Module m : ModuleManager.INSTANCE.getModules()) {

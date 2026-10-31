@@ -7,7 +7,6 @@ import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import org.jetbrains.annotations.Nullable;
@@ -18,10 +17,10 @@ import org.jetbrains.annotations.Nullable;
 public class SourceFiller {
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
-    @Parameter(name = "Mode", modes = {"Normal", "Smart"})
-    public String mode = "Smart";
-    @Parameter(name = "SilentSwap")
-    public boolean silent = true;
+    @Parameter(name = "Swap", modes = {"Silent", "Normal"})
+    public String swap = "Normal";
+    @Parameter(name = "AirPlace")
+    public boolean airPlace = false;
     @Parameter(name = "Rotate")
     public boolean rotate = true;
     @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
@@ -33,22 +32,37 @@ public class SourceFiller {
         if (p == null || mc.getLevel() == null) return;
         if (System.currentTimeMillis() - lastPlaceTime < delay) return;
         int spongeSlot = InventoryUtility.findHotbarSlot(p, "sponge");
-        if (spongeSlot == -1) return;
+        int selectedSlot = InventoryUtility.getSelectedSlot(p);
+        int slotToUse;
+        boolean swapped;
+        if (spongeSlot != -1) {
+            slotToUse = spongeSlot;
+            swapped = (spongeSlot != selectedSlot);
+        } else {
+            slotToUse = selectedSlot;
+            swapped = false;
+        }
+        if (p.getInventory().getItem(slotToUse).isEmpty()) return;
         net.minecraft.core.BlockPos targetPos = findTargetWater(p, mc);
         if (targetPos == null) return;
-        int prevSlot = InventoryUtility.getSelectedSlot(p);
-        InventoryUtility.selectSlot(p, spongeSlot);
-        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(targetPos);
-        net.minecraft.world.phys.BlockHitResult hit = new net.minecraft.world.phys.BlockHitResult(hitVec, net.minecraft.core.Direction.UP, targetPos, false);
         if (rotate) {
             float[] rots = RotationUtility.anglesTo(p.getEyePosition(), PhysicUtility.centerOf(targetPos));
-            p.setYRot(rots[0]);
-            p.setXRot(rots[1]);
+            p.setYBodyRot(rots[0]);
+            p.setYHeadRot(rots[0]);
         }
-        BlockUtility.useItemOn(mc, hit);
-        SwingUtility.swingMainHand(p);
-        if (silent && spongeSlot != prevSlot)
-            InventoryUtility.selectSlot(p, prevSlot);
+        if (airPlace) {
+            if (swapped) InventoryUtility.swapToSlot(p, slotToUse, "Silent".equals(swap) ? "Silent" : "Normal");
+            BlockUtility.grimAirPlace(mc, targetPos, net.minecraft.world.InteractionHand.MAIN_HAND);
+            ravex.utility.player.SwingUtility.swingMainHand(p);
+            if (swapped && "Silent".equals(swap)) InventoryUtility.swapBackSlot(p, selectedSlot, "Silent");
+            if (swapped && "Normal".equals(swap)) InventoryUtility.swapBackSlot(p, selectedSlot, "Normal");
+        } else {
+            var cfg = new BlockUtility.PlaceConfig();
+            cfg.swing = true;
+            cfg.restoreSlot = swapped;
+            cfg.swapMode = "Silent".equals(swap) ? "Silent" : "Normal";
+            BlockUtility.placeBlock(mc, targetPos, slotToUse, cfg);
+        }
         lastPlaceTime = System.currentTimeMillis();
     }
     @Nullable
@@ -63,17 +77,8 @@ public class SourceFiller {
                     if (mc.getLevel().getFluidState(bp).is(net.minecraft.tags.FluidTags.WATER)) candidates.add(bp);
                 }
         if (candidates.isEmpty()) return null;
-        return "Smart".equals(mode)
-            ? candidates.stream().max(Comparator.comparingInt(bp -> countAdjacentWater(bp, mc))).orElse(null)
-            : candidates.stream().min(Comparator.comparingDouble(bp -> p.getEyePosition().distanceToSqr(PhysicUtility.centerOf(bp)))).orElse(null);
+        return candidates.get(0);
     }
-    private int countAdjacentWater(net.minecraft.core.BlockPos pos, MinecraftWrapper mc) {
-        int count = 0;
-        for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values())
-            if (mc.getLevel().getFluidState(pos.relative(dir)).is(net.minecraft.tags.FluidTags.WATER)) count++;
-        return count;
-    }
-
 
 
 

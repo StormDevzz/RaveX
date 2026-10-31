@@ -26,19 +26,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * Changelog source of truth is {@code .github/RELEASE_NOTES.md} in the repository.
- *
- * <p>That file is shipped inside the jar as {@code /ravex/changelog.md} (see the Gradle
- * {@code copyChangelog} task) so there is always something to show offline. When GitHub is
- * reachable the full release history is pulled from the Releases API instead - every release
- * body is exactly the RELEASE_NOTES.md of that version - and cached on disk.
- */
+// the history screen pulls the commit history from github
+// the result is cached on disk and refreshed once a day
+// the bundled changelog is the offline fallback
 public class ChangelogManager {
     public static final ChangelogManager INSTANCE = new ChangelogManager();
 
     private static final String API_URL =
-            "https://api.github.com/repos/StormDevzz/RaveX/releases?per_page=30";
+            "https://api.github.com/repos/StormDevzz/RaveX/commits?per_page=100";
+    // hard cap for paging,30 pages =3000 commits.
+    private static final int MAX_PAGES = 30;
+    // the history is refreshed at most once a day.
+    private static final long REFRESH_MS = 24L * 60L * 60L * 1000L;
     private static final String WEB_URL = "https://github.com/StormDevzz/RaveX/releases";
     private static final String BUNDLED_RESOURCE = "/ravex/changelog.md";
     private static final DateTimeFormatter DATE_FORMAT =
@@ -102,7 +101,8 @@ public class ChangelogManager {
 
         Entry(String version, String date, String url, List<Line> lines) {
             this.version = version;
-            this.date = date;
+            // bundled changelogs have no date, avoid nulls
+            this.date = date == null ? "" : date;
             this.url = url;
             this.lines = lines;
         }
@@ -122,7 +122,7 @@ public class ChangelogManager {
 
     /* ------------------------------------------------------------- loading */
 
-    /** Blocking load from the bundled resource / disk cache. Call once, off the render thread. */
+    // blocking load, call it off the render thread
     public void loadLocal() {
         List<Entry> cached = readCache();
         if (cached != null && !cached.isEmpty()) {
@@ -143,36 +143,54 @@ public class ChangelogManager {
         fromNetwork = false;
     }
 
-    /** Pulls the full release history from GitHub. */
+    // pulls the full commit history from GitHub, at most once a day.
     public void loadRemote() {
+        File cache = getCacheFile();
+        if (cache.isFile() && System.currentTimeMillis() - cache.lastModified() < REFRESH_MS) {
+            // fresh commits only show up about a day later
+            return;
+        }
         try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(API_URL))
-                    .header("User-Agent", "RaveX-Client")
-                    .header("Accept", "application/vnd.github+json")
-                    .timeout(Duration.ofSeconds(15))
-                    .GET()
-                    .build();
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-            if (response.statusCode() != 200) {
-                RaveX.LOGGER.info("[Changelog] GitHub returned HTTP {}", response.statusCode());
-                return;
-            }
-            JsonElement root = JsonParser.parseString(response.body());
-            if (!root.isJsonArray()) return;
-
             List<Entry> parsed = new ArrayList<>();
-            for (JsonElement element : root.getAsJsonArray()) {
-                if (!element.isJsonObject()) continue;
-                JsonObject release = element.getAsJsonObject();
-                if (release.has("draft") && release.get("draft").getAsBoolean()) continue;
-                String body = optString(release, "body", "");
-                if (body.isBlank()) continue;
-                String version = versionFrom(release);
-                if (version == null) continue;
-                String date = formatDate(optString(release, "published_at", ""));
-                String url = optString(release, "html_url", WEB_URL);
-                parsed.add(new Entry(version, date, url, parseMarkdownLines(body)));
+            for (int page = 1; page <= MAX_PAGES; page++) {
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(API_URL + "&page=" + page))
+                        .header("User-Agent", "RaveX-Client")
+                        .header("Accept", "application/vnd.github+json")
+                        .timeout(Duration.ofSeconds(15))
+                        .GET()
+                        .build();
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+                if (response.statusCode() != 200) {
+                    RaveX.LOGGER.info("[History] GitHub returned HTTP {}", response.statusCode());
+                    return;
+                }
+                JsonElement root = JsonParser.parseString(response.body());
+                if (!root.isJsonArray()) return;
+                JsonArray array = root.getAsJsonArray();
+                for (JsonElement element : array) {
+                    if (!element.isJsonObject()) continue;
+                    JsonObject commit = element.getAsJsonObject();
+                    String sha = optString(commit, "sha", "");
+                    if (sha.length() < 7) continue;
+                    if (!commit.has("commit") || !commit.get("commit").isJsonObject()) continue;
+                    JsonObject inner = commit.getAsJsonObject("commit");
+                    String message = optString(inner, "message", "");
+                    if (message.isBlank()) continue;
+                    String date = "";
+                    if (inner.has("author") && inner.get("author").isJsonObject()) {
+                        date = optString(inner.getAsJsonObject("author"), "date", "");
+                    }
+                    List<Line> lines = new ArrayList<>();
+                    for (String messageLine : message.split("\\r?\\n")) {
+                        if (messageLine.isBlank()) continue;
+                        lines.addAll(parseMarkdownLines(messageLine.strip()));
+                    }
+                    if (lines.isEmpty()) continue;
+                    parsed.add(new Entry(sha.substring(0, 7), formatDate(date),
+                            optString(commit, "html_url", WEB_URL), lines));
+                }
+                if (array.size() < 100) break;
             }
             if (!parsed.isEmpty()) {
                 entries = parsed;
@@ -180,14 +198,11 @@ public class ChangelogManager {
                 writeCache(parsed);
             }
         } catch (Exception e) {
-            RaveX.LOGGER.info("[Changelog] Remote load failed: {}", e.getMessage());
+            RaveX.LOGGER.info("[History] Remote load failed: {}", e.getMessage());
         }
     }
 
-    /**
-     * Release title and notes heading are authoritative; the tag is only a fallback
-     * because {@code ravex149} cannot be inverted into 1.4.9 unambiguously.
- */
+        // the title wins, the tag cannot be inverted reliably
 private static String versionFrom(JsonObject release) {
         String fromName = UpdateManager.versionFromLabel(optString(release, "name", ""));
         if (fromName != null) return fromName;
@@ -208,7 +223,7 @@ private static String versionFrom(JsonObject release) {
 
     /* -------------------------------------------------------------- parsing */
 
-    /** Splits markdown into one entry per {@code #} title block. */
+    // splits markdown into one entry per # title block.
     public static List<Entry> parseMarkdown(String markdown, String defaultDate, String defaultUrl) {
         List<Entry> result = new ArrayList<>();
         List<Line> current = new ArrayList<>();
@@ -235,7 +250,7 @@ private static String versionFrom(JsonObject release) {
 
     private static final String DEFAULT_VERSION = null;
 
-    /** Parses a single markdown line into styled spans. */
+    // parses a single markdown line into styled spans.
     public static List<Line> parseMarkdownLines(String raw) {
         List<Line> out = new ArrayList<>();
         if (raw == null) return out;
@@ -286,7 +301,7 @@ private static String versionFrom(JsonObject release) {
         return cleaned.isEmpty() ? DEFAULT_VERSION : cleaned;
     }
 
-    /** Minimal inline markdown: **bold**, *italic*, `code`, [text](url). */
+    // minimal inline markdown: **bold**, *italic*, `code`, [text](url).
     private static List<Span> parseSpans(String text) {
         List<Span> spans = new ArrayList<>();
         StringBuilder buffer = new StringBuilder();
@@ -369,7 +384,7 @@ private static String versionFrom(JsonObject release) {
             Path parent = file.toPath().getParent();
             if (parent != null) Files.createDirectories(parent);
             try (OutputStream out = Files.newOutputStream(file.toPath())) {
-                out.write(("{\"entries\":" + array + "}").getBytes(StandardCharsets.UTF_8));
+                out.write(("{\"kind\":\"commits\",\"entries\":" + array + "}").getBytes(StandardCharsets.UTF_8));
             }
         } catch (Exception e) {
             RaveX.LOGGER.info("[Changelog] Could not write cache: {}", e.getMessage());
@@ -382,7 +397,10 @@ private static String versionFrom(JsonObject release) {
             if (!file.isFile()) return null;
             JsonElement root = JsonParser.parseString(Files.readString(file.toPath(), StandardCharsets.UTF_8));
             if (!root.isJsonObject()) return null;
-            JsonElement arrayElement = root.getAsJsonObject().get("entries");
+            JsonObject rootObj = root.getAsJsonObject();
+            JsonElement cacheKind = rootObj.get("kind");
+            if (cacheKind == null || !"commits".equals(cacheKind.getAsString())) return null;
+            JsonElement arrayElement = rootObj.get("entries");
             if (arrayElement == null || !arrayElement.isJsonArray()) return null;
 
             List<Entry> list = new ArrayList<>();

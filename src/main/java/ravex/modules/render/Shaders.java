@@ -1,25 +1,28 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
+import ravex.utility.nativelib.NativeLibraryUtility;
+import ravex.utility.shaders.ShaderFx;
 
-import ravex.utility.shaders.EffectType;
-import ravex.utility.shaders.ShaderConfig;
-import ravex.manager.HandShaderManager;
-import ravex.manager.PlayerShaderManager;
-import ravex.utility.shaders.nativec.ShaderNative;
 @Module(name = "Shaders", category = "Render")
 public class Shaders {
-public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
+    // effect engine dll, NativeLibraryUtility loads it from the resources on enable
+    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_shaderfx");
+
+    public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInitial(() -> false);
     public static final ThreadLocal<Boolean> RENDERING_HAND = ThreadLocal.withInitial(() -> false);
     @Parameter(name = "Players")
     public boolean players = true;
     @Parameter(name = "Items")
     public boolean items = true;
-    @Parameter(name = "ThroughWalls")
-    public boolean throughWalls = false;
+    @Parameter(name = "Hand")
+    public boolean hand = true;
     @Parameter(name = "Color", color = true)
-    public int fillColor = 0x77FF00A4;
-    @Parameter(name = "Effect", modes = {"FireAura", "EnergyGlow", "Chroma", "Ripple", "Pulse"})
+    public int fillColor = 0x7740A9F8;
+    // shared opacity for hands, items, players
+    @Parameter(name = "Opacity", min = 0.1, max = 1.0, step = 0.05)
+    public double opacity = 1.0;
+    @Parameter(name = "Effect", modes = {"Static", "FireAura", "EnergyGlow", "Chroma"})
     public String effectMode = "FireAura";
 
     private static long lastTimeNanos;
@@ -35,28 +38,33 @@ public static final ThreadLocal<Boolean> RENDERING_PLAYER = ThreadLocal.withInit
         return timeSeconds;
     }
 
+    public int appliedAlpha() {
+        int a = (int) Math.round(opacity * 255.0);
+        if (a < 1) a = 1;
+        if (a > 255) a = 255;
+        return a;
+    }
+
+    // colour the render paths use; the picker stays in charge in every mode.
+    public int appliedColor() {
+        return fillColor;
+    }
+
+    // native effect id, the whole formula lives in the dll
+    public int fx() {
+        return ShaderFx.idOf(effectMode);
+    }
+
+    // native effect engine availability, the render paths ask this before shading
+    public static boolean nativeReady() {
+        return NATIVE.isLoaded();
+    }
+
     public void onEnable() {
-        ShaderNative.init();
-        HandShaderManager.init();
-        PlayerShaderManager.init();
-        System.out.println("[RaveX-Shaders] Enabled. Native: " + ShaderNative.isAvailable());
-    }
-    public void onDisable() {
-        HandShaderManager.shutdown();
-        PlayerShaderManager.shutdown();
-    }
-    public ShaderConfig createConfig() {
-        ShaderConfig cfg = new ShaderConfig();
-        cfg.enabled = true;
-        cfg.intensity = 1f;
-        cfg.throughWalls = throughWalls;
-        switch (effectMode) {
-            case "FireAura":   cfg.effect = EffectType.FIRE_AURA; break;
-            case "EnergyGlow": cfg.effect = EffectType.ENERGY_GLOW; break;
-            case "Chroma":      cfg.effect = EffectType.CHROMA; break;
-            case "Ripple":      cfg.effect = EffectType.RIPPLE; break;
-            case "Pulse":       cfg.effect = EffectType.PULSE; break;
-        }
-        return cfg;
+        // native engine only
+        NATIVE.load();
+        // unknown old mode falls back to Static
+        if (ShaderFx.idOf(effectMode) == ShaderFx.STATIC && !"Static".equals(effectMode)) effectMode = "Static";
+        System.out.println("[RaveX-Shaders] Enabled. Native: " + NATIVE.isLoaded());
     }
 }

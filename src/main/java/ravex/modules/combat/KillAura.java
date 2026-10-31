@@ -57,7 +57,7 @@ public class KillAura {
     @Parameter(name = "ESP Mode", modes = {"RaveXV1", "Circle", "Square"}, visible = "advanced")
     public String targetEspMode = "Circle";
     @Parameter(name = "ESP Color", color = true, visible = "advanced")
-    public int targetEspColor = 0xFF00FFFF;
+    public int targetEspColor = 0xFF40A9F8;
 
     @Parameter(name = "ThroughWalls", visible = "advanced")
     public boolean throughWalls = true;
@@ -102,6 +102,7 @@ public class KillAura {
     private float prevPitch = 0;
     private int airTicks = 0;
     private double predictedFall = 0.0;
+    private int groundJumpTicks = 0;
     private int snap2Ticks = 0;
     private net.minecraft.world.phys.Vec3 hitboxPoint = net.minecraft.world.phys.Vec3.ZERO;
     private net.minecraft.world.phys.Vec3 hitboxMotion = net.minecraft.world.phys.Vec3.ZERO;
@@ -156,6 +157,7 @@ public class KillAura {
         sprintResetTicks = 0;
         airTicks = 0;
         predictedFall = 0.0;
+        groundJumpTicks = 0;
         snap2Ticks = 0;
         hitboxPoint = net.minecraft.world.phys.Vec3.ZERO;
         hitboxMotion = net.minecraft.world.phys.Vec3.ZERO;
@@ -194,27 +196,68 @@ public class KillAura {
         if (player.onGround()) {
             ka.airTicks = 0;
             ka.predictedFall = 0.0;
+            if (mc.getOptions().keyJump.isDown() || ka.autoJump || Modules.enabled(Speed.class)) {
+                ka.groundJumpTicks++;
+            } else {
+                ka.groundJumpTicks = 0;
+            }
         } else {
             ka.airTicks++;
+            ka.groundJumpTicks = 0;
             double vY = player.getDeltaMovement().y;
             if (vY < 0) {
                 ka.predictedFall += -vY;
             }
         }
 
-        var target = ka.currentTarget;
-        if (target == null || EntityUtility.isDead(target)) return;
+        var locked = ka.currentTarget;
+        if (locked == null || EntityUtility.isDead(locked) || !ka.isValidTarget(mc, locked)) {
+            locked = null;
+        }
+        var best = ka.findTarget(mc);
+        if (best != null && (locked == null || (best != locked
+                && eyeDistanceTo(mc, best) + 0.5 < eyeDistanceTo(mc, locked)))) {
+            locked = best;
+        }
+        if (locked == null) {
+            ka.currentTarget = null;
+            silentRotation.hasRotation = false;
+            ka.snap2Ticks = 0;
+            ka.prevYaw = player.getYRot();
+            ka.prevPitch = player.getXRot();
+            return;
+        }
+        ka.currentTarget = locked;
+        var target = locked;
 
         double distToTarget = Math.sqrt(target.getBoundingBox().distanceToSqr(player.getEyePosition()));
-        if (distToTarget > ka.range + ka.aimRange) return;
+        if (distToTarget > ka.range + ka.aimRange) {
+            silentRotation.hasRotation = false;
+            return;
+        }
 
         if (ka.autoJump && ka.smartCrits && player.onGround()
                 && !mc.getOptions().keyJump.isDown() && !PlayerUtility.isUsingItem(player)) {
             player.jumpFromGround();
         }
 
+        boolean speedActive = Modules.enabled(Speed.class);
+        boolean inAir = !player.onGround();
+        boolean speedHopping = speedActive && MoveUtility.isMoving();
+        boolean jumpHeld = mc.getOptions().keyJump.isDown() || ka.autoJump || speedHopping;
+        boolean isJumping = inAir || (jumpHeld && ka.groundJumpTicks <= 5);
+        boolean wantCrit = ka.smartCrits && (ka.onlyCritz || isJumping);
+
         if (ka.mode.startsWith("Snap2")) {
-            boolean imminent = player.getAttackStrengthScale(0.5f) >= 0.85f || canPerformCrit(ka, player);
+            boolean imminent;
+            if (wantCrit) {
+                imminent = canPerformCrit(ka, player) && player.getAttackStrengthScale(0.5f) >= 0.85f;
+                if (!imminent && inAir && player.getAttackStrengthScale(0.5f) >= 0.85f && player.getDeltaMovement().y < 0.15) {
+                    imminent = true;
+                }
+            } else {
+                imminent = player.getAttackStrengthScale(0.5f) >= Math.max(0.75f, (float) ka.cooldownThreshold - 0.1f);
+            }
             if (imminent) {
                 ka.snap2Ticks = Math.max(ka.snap2Ticks, ka.interactTicks);
             }
@@ -222,13 +265,9 @@ public class KillAura {
 
         float[] freshAngles = ka.calculateAngles(mc, target);
         float freshYaw   = freshAngles[0];
-        float freshPitch = freshAngles[1];
+        float freshPitch = RotationUtility.clampPitch(freshAngles[1]);
 
-        if (ka.mode.startsWith("Snap2") && ka.snap2Ticks == 0) {
-            silentRotation.hasRotation = false;
-        } else {
-            silentRotation.set(freshYaw, freshPitch);
-        }
+        silentRotation.set(freshYaw, freshPitch);
 
         if (ka.attackTiming.equals("Pre")) {
             tryAttack(ka, mc, target, freshYaw, freshPitch);
@@ -240,7 +279,6 @@ public class KillAura {
             silentRotation.hasRotation = false;
             return;
         }
-        silentRotation.hasRotation = false;
 
         var locked = currentTarget;
         if (locked == null || EntityUtility.isDead(locked) || !isValidTarget(mc, locked)) {
@@ -253,54 +291,50 @@ public class KillAura {
         }
         if (locked == null) {
             currentTarget = null;
-            if (mode.startsWith("Snap2")) {
-                snap2Ticks = 0;
-                prevYaw = mc.getPlayer().getYRot();
-                prevPitch = mc.getPlayer().getXRot();
-            }
+            silentRotation.hasRotation = false;
+            snap2Ticks = 0;
+            prevYaw = mc.getPlayer().getYRot();
+            prevPitch = mc.getPlayer().getXRot();
             return;
         }
         currentTarget = locked;
         var target = locked;
 
+        boolean tickSpeedActive = Modules.enabled(Speed.class);
+        boolean tickInAir = !mc.getPlayer().onGround();
+        boolean tickSpeedHopping = tickSpeedActive && MoveUtility.isMoving();
+        boolean tickJumpHeld = mc.getOptions().keyJump.isDown() || autoJump || tickSpeedHopping;
+        boolean tickIsJumping = tickInAir || (tickJumpHeld && groundJumpTicks <= 5);
+        boolean tickWantCrit = smartCrits && (onlyCritz || tickIsJumping);
+
         if (mode.startsWith("Snap2")) {
-            boolean imminent = mc.getPlayer().getAttackStrengthScale(0.5f) >= 0.85f || canPerformCrit(this, mc.getPlayer());
+            boolean imminent;
+            if (tickWantCrit) {
+                imminent = canPerformCrit(this, mc.getPlayer()) && mc.getPlayer().getAttackStrengthScale(0.5f) >= 0.85f;
+                if (!imminent && tickInAir && mc.getPlayer().getAttackStrengthScale(0.5f) >= 0.85f && mc.getPlayer().getDeltaMovement().y < 0.15) {
+                    imminent = true;
+                }
+            } else {
+                imminent = mc.getPlayer().getAttackStrengthScale(0.5f) >= Math.max(0.75f, (float) cooldownThreshold - 0.1f);
+            }
             if (imminent) {
                 snap2Ticks = Math.max(snap2Ticks, interactTicks);
             }
         }
 
         float[] angles = calculateAngles(mc, target);
+        float yaw   = angles[0];
+        float pitch = RotationUtility.clampPitch(angles[1]);
 
-        float rawYaw = angles[0];
-        float rawPitch = RotationUtility.clampPitch(angles[1]);
-        float gcd = RotationUtility.getGCD();
-        float prevPlayerYaw   = mc.getPlayer().getYRot();
-        float prevPlayerPitch = mc.getPlayer().getXRot();
-        float deltaYaw   = RotationUtility.normalizeYaw(rawYaw - prevPlayerYaw);
-        float deltaPitch = rawPitch - prevPlayerPitch;
-        if (gcd > 0) {
-            deltaYaw   = Math.round(deltaYaw   / gcd) * gcd;
-            deltaPitch = Math.round(deltaPitch / gcd) * gcd;
-        }
-        float yaw   = prevPlayerYaw   + deltaYaw;
-        float pitch = prevPlayerPitch + deltaPitch;
-
-        if (mode.startsWith("Snap2") && snap2Ticks == 0) {
-            prevYaw = mc.getPlayer().getYRot();
-            prevPitch = mc.getPlayer().getXRot();
-            silentRotation.hasRotation = false;
+        silentRotation.set(yaw, pitch);
+        if (freeLook) {
+            mc.getPlayer().yHeadRot = yaw;
+            mc.getPlayer().yBodyRot = yaw;
         } else {
-            silentRotation.set(yaw, pitch);
-            if (freeLook) {
-                mc.getPlayer().yHeadRot = yaw;
-                mc.getPlayer().yBodyRot = yaw;
-            } else {
-                mc.getPlayer().setYRot(yaw);
-                mc.getPlayer().setXRot(pitch);
-                mc.getPlayer().yHeadRot = yaw;
-                mc.getPlayer().yBodyRot = yaw;
-            }
+            mc.getPlayer().setYRot(yaw);
+            mc.getPlayer().setXRot(pitch);
+            mc.getPlayer().yHeadRot = yaw;
+            mc.getPlayer().yBodyRot = yaw;
         }
 
         if (autoJump && smartCrits && mc.getPlayer().onGround()
@@ -356,11 +390,13 @@ public class KillAura {
         if (player.onGround()) return false;
 
         double velY = player.getDeltaMovement().y;
-        double fall = Math.max(player.fallDistance, ka.predictedFall);
+        if (velY >= 0.0) return false;
+        if (player.fallDistance <= 0.0F) return false;
+
         if (ka.minFall > 0.0) {
-            return velY < 0.0 && fall >= ka.minFall;
+            return velY < -0.02 && player.fallDistance >= ka.minFall;
         }
-        return velY < 0.0 || fall > 0.0;
+        return velY < -0.02;
     }
 
     private static void tryAttack(KillAura ka, MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, float yaw, float pitch) {
@@ -381,17 +417,19 @@ public class KillAura {
         if (!checkRayTrace(mc, target, yaw, pitch, ka.rayTrace, ka.range, isHvH(ka))) return;
 
         boolean hvh = isHvH(ka);
-        boolean isJumping = mc.getOptions().keyJump.isDown() || ka.autoJump || Modules.enabled(Speed.class);
+        boolean speedActive = Modules.enabled(Speed.class);
         boolean inAir = !player.onGround();
-        boolean wantCrit = ka.smartCrits && (ka.onlyCritz || inAir || isJumping);
-
-        if (wantCrit && !canPerformCrit(ka, player)) {
-            return;
-        }
+        boolean speedHopping = speedActive && MoveUtility.isMoving();
+        boolean jumpHeld = mc.getOptions().keyJump.isDown() || ka.autoJump || speedHopping;
+        boolean isJumping = inAir || (jumpHeld && ka.groundJumpTicks <= 5);
+        boolean wantCrit = ka.smartCrits && (ka.onlyCritz || isJumping);
 
         float attackScale = player.getAttackStrengthScale(0.5f);
+        if (target.hurtTime > 2 && attackScale < 0.85f) return;
+
         if (wantCrit) {
-            if (attackScale < 0.92f) return;
+            if (!canPerformCrit(ka, player)) return;
+            if (attackScale <= 0.90f) return;
         } else {
             if (attackScale < (float) ka.cooldownThreshold) return;
         }
@@ -404,15 +442,18 @@ public class KillAura {
             float[] desired = RotationUtility.anglesTo(eyePos, targetAimPos);
             float yawDiff   = Math.abs(RotationUtility.normalizeYaw(yaw - desired[0]));
             float pitchDiff = Math.abs(pitch - desired[1]);
-            if (yawDiff > 18.0f || pitchDiff > 20.0f) return;
+            float maxDiffYaw = speedActive ? 38.0f : 22.0f;
+            float maxDiffPitch = speedActive ? 35.0f : 25.0f;
+            if (yawDiff > maxDiffYaw || pitchDiff > maxDiffPitch) return;
         }
 
         if (ka.mode.equals("Snap2") && !hvh) {
             var aimPos = target.position().add(0, target.getBbHeight() * 0.5, 0);
             float[] desired = RotationUtility.anglesTo(eyePos, aimPos);
-            float yawDiff = Math.abs(RotationUtility.normalizeYaw(player.getYRot() - desired[0]));
-            float pitchDiff = Math.abs(player.getXRot() - desired[1]);
-            if (yawDiff > ka.fov / 2.0 || pitchDiff > 40.0f) return;
+            float yawDiff = Math.abs(RotationUtility.normalizeYaw(yaw - desired[0]));
+            float pitchDiff = Math.abs(pitch - desired[1]);
+            double maxAllowedYaw = Math.max(ka.fov / 2.0, 40.0);
+            if (yawDiff > maxAllowedYaw || pitchDiff > 50.0f) return;
         }
 
         if (ka.shieldBreaker && target instanceof net.minecraft.world.entity.player.Player targetPlayer && targetPlayer.isBlocking()) {
@@ -430,13 +471,19 @@ public class KillAura {
                 boolean wasSprinting = player.isSprinting() || serverSprinting;
                 if (wasSprinting) {
                     player.setSprinting(false);
+                    serverSprinting = false;
                     NetworkUtility.sendPlayerCommand(net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.STOP_SPRINTING);
                 }
                 EntityUtility.attack(mc, target);
                 EntityUtility.swingHand(mc);
                 if (wasSprinting) {
-                    player.setSprinting(true);
-                    NetworkUtility.sendPlayerCommand(net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.START_SPRINTING);
+                    if (wantCrit || ka.sprintMode.equals("Legit")) {
+                        ka.sprintResetTicks = 1;
+                    } else {
+                        player.setSprinting(true);
+                        serverSprinting = true;
+                        NetworkUtility.sendPlayerCommand(net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.START_SPRINTING);
+                    }
                 }
                 NetworkUtility.sendSetCarriedItem(currentSlot);
                 ka.lastAttackTime = now;
@@ -448,6 +495,7 @@ public class KillAura {
         boolean wasSprinting = player.isSprinting() || serverSprinting;
         if (wasSprinting) {
             player.setSprinting(false);
+            serverSprinting = false;
             NetworkUtility.sendPlayerCommand(net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.STOP_SPRINTING);
         }
 
@@ -455,15 +503,17 @@ public class KillAura {
         ka.lastAttackTime = now;
 
         if (wasSprinting) {
-            player.setSprinting(true);
-            NetworkUtility.sendPlayerCommand(net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.START_SPRINTING);
+            if (wantCrit || ka.sprintMode.equals("Legit")) {
+                ka.sprintResetTicks = 1;
+            } else {
+                player.setSprinting(true);
+                serverSprinting = true;
+                NetworkUtility.sendPlayerCommand(net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket.Action.START_SPRINTING);
+            }
         }
 
         if (ka.mode.startsWith("Snap2")) {
             ka.snap2Ticks = Math.max(ka.snap2Ticks, 1);
-        }
-        if (ka.sprintMode.equals("Legit")) {
-            ka.sprintResetTicks = 1;
         }
 
         if (ka.keepSprint) {
@@ -495,7 +545,7 @@ public class KillAura {
 
     public static boolean shouldBlockSprint() {
         KillAura ka = Modules.get(KillAura.class);
-        return ka != null && Modules.enabled(KillAura.class) && "Legit".equals(ka.sprintMode) && ka.sprintResetTicks > 0;
+        return ka != null && Modules.enabled(KillAura.class) && ka.sprintResetTicks > 0;
     }
 
     private static double eyeDistanceTo(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity le) {
@@ -514,7 +564,7 @@ public class KillAura {
         if (eyeDistanceTo(mc, le) > range + aimRange + 0.3) return false;
         if (!throughWalls && !mc.getPlayer().hasLineOfSight(le)) return false;
         if (AntiBot.isBotCheck(le)) return false;
-        if (mode.equals("Snap2")) {
+        if (mode.equals("Snap2") && !freeLook && le != currentTarget) {
             float angleToTarget = Math.abs(RotationUtility.normalizeYaw(RotationUtility.yawTo(mc.getPlayer().getEyePosition(), le.position().add(0, le.getBbHeight() * 0.5, 0)) - mc.getPlayer().getYRot()));
             if (angleToTarget > fov / 2.0) return false;
         }
@@ -548,7 +598,7 @@ public class KillAura {
 
             if (!throughWalls && !mc.getPlayer().hasLineOfSight(le)) continue;
             if (AntiBot.isBotCheck(e)) continue;
-            if (mode.equals("Snap2")) {
+            if (mode.equals("Snap2") && !freeLook) {
                 float angleToTarget = Math.abs(RotationUtility.normalizeYaw(RotationUtility.yawTo(mc.getPlayer().getEyePosition(), le.position().add(0, le.getBbHeight() * 0.5, 0)) - mc.getPlayer().getYRot()));
                 if (angleToTarget > fov / 2.0) continue;
             }
@@ -596,6 +646,8 @@ public class KillAura {
             prevPitch = mc.getPlayer().getXRot();
         }
 
+        boolean moving = MoveUtility.isMoving() || Modules.enabled(Speed.class);
+
         float yaw, pitch;
         if (mode.equals("Tracker")) {
             var stomachPos = target.position().add(0, target.getBbHeight() * 0.45, 0);
@@ -607,19 +659,19 @@ public class KillAura {
             float diffPitch = targetPitch - prevPitch;
             float absDiffYaw = Math.abs(diffYaw);
 
-            float MAX_YAW_SPEED   = 30.0f;
-            float MAX_PITCH_SPEED = 20.0f;
+            float MAX_YAW_SPEED   = moving ? 85.0f : 40.0f;
+            float MAX_PITCH_SPEED = moving ? 45.0f : 25.0f;
 
-            float tYaw   = Math.min(absDiffYaw / 180.0f, 1.0f);
-            float tPitch = Math.min(Math.abs(diffPitch) / 90.0f, 1.0f);
-            float speedYaw   = MAX_YAW_SPEED   * (2.0f * tYaw   - tYaw   * tYaw);
-            float speedPitch = MAX_PITCH_SPEED * (2.0f * tPitch - tPitch * tPitch);
+            float tYaw   = Math.min(absDiffYaw / 60.0f, 1.0f);
+            float tPitch = Math.min(Math.abs(diffPitch) / 50.0f, 1.0f);
+            float speedYaw   = MAX_YAW_SPEED   * Math.max(0.35f, 1.5f * tYaw);
+            float speedPitch = MAX_PITCH_SPEED * Math.max(0.35f, 1.5f * tPitch);
 
-            speedYaw   = Math.max(speedYaw,   0.5f);
-            speedPitch = Math.max(speedPitch, 0.3f);
+            speedYaw   = Math.max(speedYaw,   moving ? 8.0f : 1.0f);
+            speedPitch = Math.max(speedPitch, moving ? 4.0f : 0.5f);
 
-            float jitterYaw   = (float) (Math.random() * 0.6 - 0.3);
-            float jitterPitch = (float) (Math.random() * 0.4 - 0.2);
+            float jitterYaw   = (float) (Math.random() * 0.4 - 0.2);
+            float jitterPitch = (float) (Math.random() * 0.3 - 0.15);
 
             float stepYaw   = Math.max(-speedYaw,   Math.min(speedYaw,   diffYaw))   + jitterYaw;
             float stepPitch = Math.max(-speedPitch, Math.min(speedPitch, diffPitch)) + jitterPitch;
@@ -643,11 +695,22 @@ public class KillAura {
             float absDiffYaw = Math.abs(diffYaw);
             float absDiffPitch = Math.abs(diffPitch);
 
-            float tYaw = Math.min(absDiffYaw / 60.0f, 1.0f);
-            float tPitch = Math.min(absDiffPitch / 40.0f, 1.0f);
+            float tYaw = Math.min(absDiffYaw / 45.0f, 1.0f);
+            float tPitch = Math.min(absDiffPitch / 35.0f, 1.0f);
 
             double currentMaxYaw = minYawStep + (maxYawStep - minYawStep) * (tYaw * (2.0 - tYaw));
-            double currentMaxPitch = Math.max(4.0, maxPitchStep * (tPitch * (2.0 - tPitch)));
+            double currentMaxPitch = Math.max(6.0, maxPitchStep * (tPitch * (2.0 - tPitch)));
+
+            if (snap2Ticks > 0 || moving) {
+                double speedBonus = Modules.enabled(Speed.class) ? 45.0 : (moving ? 30.0 : 0.0);
+                if (snap2Ticks > 0) {
+                    currentMaxYaw = Math.max(currentMaxYaw + 45.0 + speedBonus, 120.0);
+                    currentMaxPitch = Math.max(currentMaxPitch + 30.0, 75.0);
+                } else {
+                    currentMaxYaw = Math.max(currentMaxYaw + speedBonus, 95.0);
+                    currentMaxPitch = Math.max(currentMaxPitch + 15.0, 50.0);
+                }
+            }
 
             float clampedYawDiff = Math.clamp(diffYaw, (float) -currentMaxYaw, (float) currentMaxYaw);
             float clampedPitchDiff = Math.clamp(diffPitch, (float) -currentMaxPitch, (float) currentMaxPitch);
@@ -688,22 +751,22 @@ public class KillAura {
         }
         double width = target.getBbWidth();
         double height = target.getBbHeight();
-        double halfW = Math.max((width - 0.08) / 2.0, 0.05);
+        double halfW = Math.min(width * 0.12, 0.06);
 
         if (hitboxMotion.equals(net.minecraft.world.phys.Vec3.ZERO)) {
             hitboxMotion = new net.minecraft.world.phys.Vec3(
-                (Math.random() - 0.5) * 0.04,
-                (Math.random() - 0.5) * 0.04,
-                (Math.random() - 0.5) * 0.04
+                (Math.random() - 0.5) * 0.02,
+                (Math.random() - 0.5) * 0.02,
+                (Math.random() - 0.5) * 0.02
             );
         }
 
         hitboxPoint = hitboxPoint.add(hitboxMotion);
 
-        double minMotionXZ = 0.005;
-        double maxMotionXZ = 0.025;
+        double minMotionXZ = 0.003;
+        double maxMotionXZ = 0.012;
         double minMotionY = 0.003;
-        double maxMotionY = 0.02;
+        double maxMotionY = 0.015;
 
         double mx = hitboxMotion.x;
         double my = hitboxMotion.y;
@@ -715,9 +778,9 @@ public class KillAura {
             mx = (minMotionXZ + Math.random() * (maxMotionXZ - minMotionXZ));
         }
 
-        if (hitboxPoint.y >= height - 0.1) {
+        if (hitboxPoint.y >= height - 0.15) {
             my = -(minMotionY + Math.random() * (maxMotionY - minMotionY));
-        } else if (hitboxPoint.y <= 0.2) {
+        } else if (hitboxPoint.y <= 0.25) {
             my = (minMotionY + Math.random() * (maxMotionY - minMotionY));
         }
 
@@ -728,10 +791,10 @@ public class KillAura {
         }
 
         hitboxMotion = new net.minecraft.world.phys.Vec3(mx, my, mz);
-        hitboxPoint = hitboxPoint.add((Math.random() - 0.5) * 0.015, 0, (Math.random() - 0.5) * 0.015);
+        hitboxPoint = hitboxPoint.add((Math.random() - 0.5) * 0.008, 0, (Math.random() - 0.5) * 0.008);
 
         double clampedX = Math.clamp(hitboxPoint.x, -halfW, halfW);
-        double clampedY = Math.clamp(hitboxPoint.y, 0.15, Math.max(height - 0.05, 0.2));
+        double clampedY = Math.clamp(hitboxPoint.y, 0.25, Math.max(height - 0.15, 0.3));
         double clampedZ = Math.clamp(hitboxPoint.z, -halfW, halfW);
         hitboxPoint = new net.minecraft.world.phys.Vec3(clampedX, clampedY, clampedZ);
 
@@ -746,15 +809,20 @@ public class KillAura {
         var eyePos = player.getEyePosition();
         var lookVec = RotationUtility.getLookVector(yaw, pitch);
         var endPos = eyePos.add(lookVec.scale(reach + 0.5));
-        double inflate = lenient ? 0.35 : 0.1;
+        boolean fastMove = Modules.enabled(Speed.class) || player.getDeltaMovement().horizontalDistance() > 0.15;
+        double inflate = lenient ? 0.35 : (fastMove ? 0.20 : 0.10);
 
         var currentBox = target.getBoundingBox().inflate(inflate);
         if (currentBox.contains(eyePos)) return true;
         if (currentBox.clip(eyePos, endPos).isPresent()) return true;
 
-        if (lenient || "Alternative".equals(rayTraceMode)) {
-            var prevBox = target.getBoundingBox().move(target.xOld - target.getX(), target.yOld - target.getY(), target.zOld - target.getZ()).inflate(inflate + 0.05);
-            if (prevBox.contains(eyePos) || prevBox.clip(eyePos, endPos).isPresent()) return true;
+        var prevBox = target.getBoundingBox().move(target.xOld - target.getX(), target.yOld - target.getY(), target.zOld - target.getZ()).inflate(inflate + 0.05);
+        if (prevBox.contains(eyePos) || prevBox.clip(eyePos, endPos).isPresent()) return true;
+
+        if (fastMove) {
+            var mobVel = target.getDeltaMovement();
+            var nextBox = target.getBoundingBox().move(mobVel.x, mobVel.y, mobVel.z).inflate(inflate + 0.05);
+            if (nextBox.contains(eyePos) || nextBox.clip(eyePos, endPos).isPresent()) return true;
         }
 
         if (lenient) {

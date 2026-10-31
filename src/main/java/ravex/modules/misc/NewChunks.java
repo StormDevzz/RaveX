@@ -3,7 +3,6 @@ import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
-import ravex.utility.nativelib.NativeLibraryUtility;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockUpdatePacket;
@@ -43,8 +42,6 @@ public class NewChunks {
     private final Set<ChunkPos> visitedChunks = new HashSet<>();
     private final Set<ChunkPos> old112Chunks = new HashSet<>();
     private final Set<ChunkPos> analyzedChunks = new HashSet<>();
-    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_chunkexploit");
-    private static native int nativeAnalyzeChunk(String[] blockNames, int[] blockYs);
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
@@ -90,19 +87,7 @@ public class NewChunks {
                 }
             }
         }
-        int result = 0;
-        if (NATIVE.isLoaded()) {
-            try {
-                String[] names = sampledNames.toArray(new String[0]);
-                int[] ys = new int[sampledYs.size()];
-                for (int i = 0; i < ys.length; i++) {
-                    ys[i] = sampledYs.get(i);
-                }
-                result = nativeAnalyzeChunk(names, ys);
-            } catch (Throwable t) {
-                result = 0;
-            }
-        }
+        int result = analyzeChunk(sampledNames, sampledYs);
         if (result == 2) {
             old112Chunks.add(pos);
             if (notify) {
@@ -120,9 +105,45 @@ public class NewChunks {
                     }
                 });
             }
-        } else {
+        } else if (hasFlowingFluid(chunk)) {
+            // flowing fluids mean this chunk was simulated before
+            visitedChunks.add(pos);
+        } else if (hasDeepslateBelowZero(chunk)) {
             loadedChunks.add(pos);
+        } else {
+            visitedChunks.add(pos);
         }
+    }
+
+    // 1.18+ chunks have deepslate below y=0, old ones do not
+    private boolean hasDeepslateBelowZero(net.minecraft.world.level.chunk.LevelChunk chunk) {
+        ChunkPos pos = chunk.getPos();
+        for (int y = chunk.getMinY(); y < -2; y += 4) {
+            for (int x = 0; x < 16; x += 4) {
+                for (int z = 0; z < 16; z += 4) {
+                    net.minecraft.core.BlockPos bp = new net.minecraft.core.BlockPos(pos.getMinBlockX() + x, y, pos.getMinBlockZ() + z);
+                    String name = BuiltInRegistries.BLOCK.getKey(chunk.getBlockState(bp).getBlock()).getPath();
+                    if (name.contains("deepslate")) return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean hasFlowingFluid(net.minecraft.world.level.chunk.LevelChunk chunk) {
+        ChunkPos pos = chunk.getPos();
+        int minY = Math.max(chunk.getMinY(), -64);
+        int maxY = Math.min(chunk.getMaxY(), 320);
+        for (int y = minY; y < maxY; y += 4) {
+            for (int x = 0; x < 16; x += 2) {
+                for (int z = 0; z < 16; z += 2) {
+                    net.minecraft.core.BlockPos bp = new net.minecraft.core.BlockPos(pos.getMinBlockX() + x, y, pos.getMinBlockZ() + z);
+                    var fluid = chunk.getFluidState(bp);
+                    if (!fluid.isEmpty() && !fluid.isSource()) return true;
+                }
+            }
+        }
+        return false;
     }
     @Subscribe
     public void onPacketEvent(PacketEvent event) {
@@ -208,6 +229,30 @@ public class NewChunks {
         visitedChunks.clear();
         old112Chunks.clear();
         analyzedChunks.clear();
+    }
+    private static int analyzeChunk(List<String> names, List<Integer> ys) {
+        for (String name : names) {
+            if (name.contains("deepslate") || name.contains("copper") || name.contains("tuff")
+                || name.contains("raw_") || name.contains("glow_") || name.contains("kelp")
+                || name.contains("seagrass") || name.contains("sea_pickle") || name.contains("bamboo")
+                || name.contains("sweet_berry") || name.contains("campfire") || name.contains("barrel")
+                || name.contains("smoker") || name.contains("blast_") || name.contains("lantern")
+                || name.contains("bee_") || name.contains("crying_") || name.contains("respawn_")
+                || name.contains("amethyst") || name.contains("calcite") || name.contains("dripleaf")
+                || name.contains("spore_") || name.contains("mangrove") || name.contains("cherry")
+                || name.contains("pale_") || name.contains("trial_") || name.contains("vault")
+                || name.contains("crafter")) {
+                return 0;
+            }
+        }
+        boolean bedrockAtZero = false;
+        boolean belowZero = false;
+        for (int i = 0; i < names.size(); i++) {
+            int y = ys.get(i);
+            if (y == 0 && "bedrock".equals(names.get(i))) bedrockAtZero = true;
+            if (y < 0) belowZero = true;
+        }
+        return bedrockAtZero && !belowZero ? 2 : 0;
     }
 
 

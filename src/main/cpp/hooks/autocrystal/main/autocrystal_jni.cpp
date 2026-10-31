@@ -1,5 +1,6 @@
 #include "autocrystal_jni.hpp"
 #include "autocrystal.hpp"
+#include "../../../common/include/jni_raii.hpp"
 
 #include <vector>
 #include <cstdint>
@@ -12,17 +13,18 @@ static std::vector<Vec3> parseBlockData(JNIEnv* env, jdoubleArray arr) {
     std::vector<Vec3> result;
     if (!arr) return result;
     jsize len = env->GetArrayLength(arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
     if (len < 3) return result;
 
-    jdouble* data = (jdouble*)env->GetPrimitiveArrayCritical(arr, nullptr);
-    if (!data) return result;
+    JniDoubleElements guard(env, arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
+    if (!guard) return result;
 
+    const jdouble* data = guard.get();
     result.reserve(len / 3);
     for (jsize i = 0; i + 2 < len; i += 3) {
         result.push_back({data[i], data[i+1], data[i+2]});
     }
-
-    env->ReleasePrimitiveArrayCritical(arr, data, JNI_ABORT);
     return result;
 }
 
@@ -30,11 +32,14 @@ static std::vector<CrystalEntity> parseCrystalData(JNIEnv* env, jdoubleArray arr
     std::vector<CrystalEntity> result;
     if (!arr) return result;
     jsize len = env->GetArrayLength(arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
     if (len < 4) return result;
 
-    jdouble* data = (jdouble*)env->GetPrimitiveArrayCritical(arr, nullptr);
-    if (!data) return result;
+    JniDoubleElements guard(env, arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
+    if (!guard) return result;
 
+    const jdouble* data = guard.get();
     result.reserve(len / 4);
     for (jsize i = 0; i + 3 < len; i += 4) {
         CrystalEntity e;
@@ -45,8 +50,6 @@ static std::vector<CrystalEntity> parseCrystalData(JNIEnv* env, jdoubleArray arr
         e.shouldBreak = false;
         result.push_back(e);
     }
-
-    env->ReleasePrimitiveArrayCritical(arr, data, JNI_ABORT);
     return result;
 }
 
@@ -54,11 +57,14 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     EntityStats s{};
     if (!arr) return s;
     jsize len = env->GetArrayLength(arr);
+    if (ravex::jni::checkAndClearException(env)) return s;
     if (len < 15) return s;
 
-    jdouble* data = (jdouble*)env->GetPrimitiveArrayCritical(arr, nullptr);
-    if (!data) return s;
+    JniDoubleElements guard(env, arr);
+    if (ravex::jni::checkAndClearException(env)) return s;
+    if (!guard) return s;
 
+    const jdouble* data = guard.get();
     s.armorValue           = data[0];
     s.toughness            = data[1];
     s.blastProtectionEpf   = data[2];
@@ -74,8 +80,6 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     s.motionY              = data[12];
     s.motionZ              = data[13];
     s.totemCount           = data[14];
-
-    env->ReleasePrimitiveArrayCritical(arr, data, JNI_ABORT);
     return s;
 }
 
@@ -95,7 +99,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     jdoubleArray crystalData,
     jdouble placeRange, jdouble placeWallRange,
     jdouble breakRange, jdouble breakWallRange,
-    jdouble minTargetDmg, jdouble maxSelfDmg,
+    jdouble minTargetDmg, jdouble maxSelfDmg, jdouble antiSuicideMinHp,
     jdouble selfDmgWeight, jboolean antiSuicide,
     jboolean antiSuicideCheckBreaking, jboolean antiSuicideIgnoreWithTotem,
     jboolean armorBreaker, jdouble armorPercent,
@@ -122,6 +126,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     config.breakWallRange   = breakWallRange;
     config.minTargetDamage  = minTargetDmg;
     config.maxSelfDamage    = maxSelfDmg;
+    config.antiSuicideMinHealth = antiSuicideMinHp;
     config.selfDamageWeight = selfDmgWeight;
     config.antiSuicide      = (antiSuicide == JNI_TRUE);
     config.antiSuicideCheckBreaking = (antiSuicideCheckBreaking == JNI_TRUE);
@@ -149,6 +154,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
 
     jdoubleArray out = env->NewDoubleArray(18);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     jdouble buf[18] = {
         result.shouldPlace ? 1.0 : 0.0,
@@ -172,6 +178,7 @@ Java_ravex_modules_combat_AutoCrystal_nativeTick(
     };
 
     env->SetDoubleArrayRegion(out, 0, 18, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }
 
@@ -199,8 +206,10 @@ Java_ravex_modules_combat_AutoCrystal_nativeCalcDamage(
 
     jdoubleArray out = env->NewDoubleArray(1);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     jdouble buf[1] = { dmg };
     env->SetDoubleArrayRegion(out, 0, 1, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }

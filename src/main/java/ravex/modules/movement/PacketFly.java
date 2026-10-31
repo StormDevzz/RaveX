@@ -1,8 +1,5 @@
 package ravex.modules.movement;
 
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientboundPlayerPositionPacket;
-import net.minecraft.network.protocol.game.ServerboundMovePlayerPacket;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.mcwrapper.MinecraftWrapper;
@@ -30,7 +27,7 @@ public class PacketFly {
     public boolean antiKick = true;
 
     private int tpId = -1;
-    private final Set<Packet<?>> allowedMoves = new HashSet<>();
+    private final Set<Object> allowedMoves = new HashSet<>();
     private final Map<Integer, double[]> allowedTeleports = new HashMap<>();
 
     public void onEnable() {
@@ -128,8 +125,8 @@ public class PacketFly {
             double py = baseY + motionY * i;
             double pz = baseZ + motionZ * i;
 
-            ServerboundMovePlayerPacket.Pos packet = new ServerboundMovePlayerPacket.Pos(px, py, pz, onGround, hCollision);
-            ServerboundMovePlayerPacket.Pos bounds = new ServerboundMovePlayerPacket.Pos(px, py + 512, pz, true, hCollision);
+            var packet = NetworkUtility.makeMovePos(px, py, pz, onGround, hCollision);
+            var bounds = NetworkUtility.makeMovePos(px, py + 512, pz, true, hCollision);
             allowedMoves.add(packet);
             allowedMoves.add(bounds);
             NetworkUtility.sendPacket(packet);
@@ -150,8 +147,8 @@ public class PacketFly {
         if (!Modules.enabled(PacketFly.class)) return;
 
         if (event.isSend()) {
-            Packet<?> packet = event.getPacket();
-            if (packet instanceof ServerboundMovePlayerPacket move && move.hasPosition()) {
+            var packet = event.getPacket();
+            if (NetworkUtility.isPositionMove(packet)) {
                 if (!allowedMoves.contains(packet)) {
                     event.setCancelled(true);
                 }
@@ -159,10 +156,11 @@ public class PacketFly {
             return;
         }
 
-        Packet<?> packet = event.getPacket();
-        if (packet instanceof ClientboundPlayerPositionPacket posPacket) {
-            int id = posPacket.id();
-            var position = posPacket.change().position();
+        var packet = event.getPacket();
+        if (NetworkUtility.isPlayerPositionPacket(packet)) {
+            int id = NetworkUtility.playerPositionId(packet);
+            var position = NetworkUtility.playerPosition(packet);
+            if (position == null) return;
             double[] saved = allowedTeleports.get(id);
             if (saved != null
                 && Math.abs(position.x - saved[0]) < 1.0E-4

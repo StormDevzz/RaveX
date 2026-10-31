@@ -1,0 +1,242 @@
+package ravex.mixin.player;
+
+import java.awt.Rectangle;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen;
+import net.minecraft.client.input.MouseButtonEvent;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.inventory.ChestMenu;
+import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.Slot;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
+import org.lwjgl.glfw.GLFW;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.Modules;
+import ravex.modules.misc.FastItem;
+import ravex.modules.misc.StashFinder;
+import ravex.modules.player.ChestHelper;
+import ravex.modules.render.ToolTips;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.render.Render2DUtility;
+
+@Mixin(AbstractContainerScreen.class)
+public class MixinAbstractContainerScreen {
+
+    private long fastItemLastMove = 0;
+    private final Map<Rectangle, Slot> shulkerPanelRects = new HashMap<>();
+
+    @Shadow
+    protected int leftPos;
+    @Shadow
+    protected int imageWidth;
+    @Shadow
+    protected int imageHeight;
+    @Shadow
+    public int topPos;
+
+    @Inject(method = "mouseClicked", at = @At("HEAD"), cancellable = true)
+    private void onMouseClickedHead(MouseButtonEvent event, boolean handled, CallbackInfoReturnable<Boolean> cir) {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
+
+        if (Modules.enabled(ToolTips.class)) {
+            ToolTips toolTips = Modules.get(ToolTips.class);
+            if (toolTips != null && toolTips.shulkerRegear) {
+                for (Map.Entry<Rectangle, Slot> entry : shulkerPanelRects.entrySet()) {
+                    if (!entry.getKey().contains(event.x(), event.y())) continue;
+                    Slot slot = entry.getValue();
+                    if (slot == null || !slot.hasItem()) break;
+                    if (slot.index >= screen.getMenu().slots.size() || screen.getMenu().slots.get(slot.index) != slot) break;
+                    ItemStack stack = slot.getItem();
+                    if (!toolTips.isShulker(stack) || !toolTips.hasItems(stack)) break;
+
+                    if (event.button() == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && toolTips.middleClickOpen) {
+                        var mc = MinecraftWrapper.getInstance();
+                        if (mc.player != null) {
+                            mc.setScreen(ravex.gui.screen.PeekScreen.create(stack, mc.player.getInventory(), screen));
+                            cir.setReturnValue(true);
+                            return;
+                        }
+                    } else if (event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                        ((AccessorContainerScreen) screen).invokeSlotClicked(slot, slot.index, 0, ClickType.QUICK_MOVE);
+                        cir.setReturnValue(true);
+                        return;
+                    }
+                }
+            }
+        }
+
+        if (event.button() == GLFW.GLFW_MOUSE_BUTTON_MIDDLE && Modules.enabled(ToolTips.class)) {
+            ToolTips toolTips = Modules.get(ToolTips.class);
+            if (toolTips != null && toolTips.middleClickOpen) {
+                Slot hovered = ((AccessorContainerScreen) screen).invokeGetHoveredSlot(event.x(), event.y());
+                if (hovered != null && hovered.hasItem()) {
+                    ItemStack stack = hovered.getItem();
+                    if (toolTips.isShulker(stack) && toolTips.hasItems(stack)) {
+                        var mc = MinecraftWrapper.getInstance();
+                        if (mc.player != null) {
+                            mc.setScreen(ravex.gui.screen.PeekScreen.create(stack, mc.player.getInventory(), screen));
+                            cir.setReturnValue(true);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+
+        if (Modules.enabled(ToolTips.class)) {
+            ToolTips toolTips = Modules.get(ToolTips.class);
+            if (toolTips != null && event.button() == GLFW.GLFW_MOUSE_BUTTON_LEFT) {
+                if (toolTips.onMouseClicked(screen, (int) event.x(), (int) event.y(), event.button())) {
+                    cir.setReturnValue(true);
+                    return;
+                }
+            }
+        }
+
+        if (Modules.get(ChestHelper.class).onMouseClicked(screen, (int) event.x(), (int) event.y()))
+            cir.setReturnValue(true);
+    }
+
+    @Inject(method = "render", at = @At("TAIL"))
+    private void onRenderTail(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks, CallbackInfo ci) {
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
+        shulkerPanelRects.clear();
+        Modules.get(ChestHelper.class).onRenderButtons(screen, graphics, mouseX, mouseY);
+
+        if (Modules.enabled(ToolTips.class)) {
+            ToolTips toolTips = Modules.get(ToolTips.class);
+                if (toolTips != null) {
+                    toolTips.onRenderContainer(screen, graphics, mouseX, mouseY);
+                    if (toolTips.shulkerRegear) {
+                        renderShulkerPreviewAlways(screen, graphics, toolTips);
+                    }
+                }
+            }
+        }
+
+        if (Modules.enabled(StashFinder.class)) {
+            var menu = screen.getMenu();
+            var mc = MinecraftWrapper.getInstance();
+            if (mc.player != null && menu instanceof ChestMenu) {
+                List<ItemStack> contents = new ArrayList<>();
+                int containerSize = Math.min(menu.slots.size() - 36, 54);
+                for (int i = 0; i < containerSize; i++) {
+                    contents.add(menu.slots.get(i).getItem());
+                }
+                BlockPos pos = StashFinder.getRememberedPos();
+                if (pos == null) pos = mc.player.blockPosition();
+                Modules.get(StashFinder.class).onContainerOpened(pos, contents);
+            }
+        }
+    }
+
+    private void renderShulkerPanels(AbstractContainerScreen<?> screen, GuiGraphics graphics, ToolTips toolTips, int mouseX, int mouseY) {
+        if (screen instanceof CreativeModeInventoryScreen) return;
+        var mc = MinecraftWrapper.getInstance();
+        if (mc.player == null) return;
+
+        List<Slot> shulkers = new ArrayList<>();
+        for (Slot slot : screen.getMenu().slots) {
+            ItemStack stack = slot.getItem();
+            if (stack.isEmpty() || !toolTips.isShulker(stack) || !toolTips.hasItems(stack)) continue;
+            shulkers.add(slot);
+        }
+        if (shulkers.isEmpty()) return;
+
+        var font = MinecraftWrapper.getWrapper().getFont();
+        int panelW = 176;
+        int panelH = 66;
+        int gap = 4;
+        int screenW = mc.getWindow().getGuiScaledWidth();
+        int screenH = mc.getWindow().getGuiScaledHeight();
+
+        int leftX = this.leftPos - panelW - 8;
+        int rightX = this.leftPos + this.imageWidth + 8;
+        boolean leftColumn = leftX >= 2;
+        int currentX = leftColumn ? leftX : rightX;
+        if (currentX + panelW > screenW - 2) {
+            currentX = Math.max(2, screenW - panelW - 2);
+        }
+
+        int y = Math.max(14, this.topPos);
+        for (Slot slot : shulkers) {
+            if (y + panelH > screenH - 2) {
+                if (leftColumn && rightX + panelW <= screenW - 2) {
+                    leftColumn = false;
+                    currentX = rightX;
+                    y = Math.max(14, this.topPos);
+                } else {
+                    break;
+                }
+            }
+            boolean hovered = mouseX >= currentX && mouseX < currentX + panelW
+                    && mouseY >= y && mouseY < y + panelH;
+            renderShulkerPanel(graphics, font, slot.getItem(), currentX, y, hovered);
+            shulkerPanelRects.put(new Rectangle(currentX, y, panelW, panelH), slot);
+            y += panelH + gap;
+        }
+    }
+
+    private void renderShulkerPanel(GuiGraphics graphics, net.minecraft.client.gui.Font font, ItemStack stack, int px, int py, boolean hovered) {
+        int color = ToolTips.getBoxColor(stack);
+        int panel = (color & 0x00FFFFFF) | (hovered ? 0xB8000000 : 0x95000000);
+        int border = (color & 0x00FFFFFF) | (hovered ? 0xFF000000 : 0xD0000000);
+        Render2DUtility.drawRound(graphics, px, py, 174, 60, 4, panel);
+        Render2DUtility.drawRoundBorder(graphics, px, py, 174, 60, 4, hovered ? 2 : 1, border);
+        graphics.drawString(font, "\u00a77" + stack.getHoverName().getString(), px + 3, py - 10,
+                hovered ? 0xFFFFFFFF : 0xFFCCCCCC, false);
+
+        ItemContainerContents contents = stack.get(DataComponents.CONTAINER);
+        if (contents == null) return;
+        List<ItemStack> items = contents.stream().toList();
+        for (int row = 0; row < 3; row++) {
+            for (int col = 0; col < 9; col++) {
+                int index = row * 9 + col;
+                int sx = px + col * 18 + 3;
+                int sy = py + row * 18 + 3;
+                Render2DUtility.drawRound(graphics, sx, sy, 16, 16, 2, 0x15FFFFFF);
+                if (index < items.size()) {
+                    ItemStack it = items.get(index);
+                    if (it != null && !it.isEmpty()) {
+                        graphics.renderItem(it, sx, sy);
+                        graphics.renderItemDecorations(font, it, sx, sy);
+                    }
+                }
+            }
+        }
+    }
+
+    @Inject(method = "mouseDragged", at = @At("TAIL"))
+    private void ravexFastItemDrag(MouseButtonEvent event, double dragX, double dragY, CallbackInfoReturnable<Boolean> cir) {
+        if (!Modules.enabled(FastItem.class)) return;
+        if (event.button() != 0) return;
+        AbstractContainerScreen<?> screen = (AbstractContainerScreen<?>)(Object)this;
+        var mc = MinecraftWrapper.getInstance();
+        if (mc.player == null || mc.gameMode == null) return;
+        if (!mc.hasShiftDown()) return;
+        long delay = Modules.get(FastItem.class).getDelayMs();
+        long now = System.currentTimeMillis();
+        if (delay > 0 && now - fastItemLastMove < delay) return;
+        Slot slot = ((AccessorContainerScreen) screen).invokeGetHoveredSlot(event.x(), event.y());
+        if (slot == null || !slot.hasItem()) return;
+        if (screen instanceof CreativeModeInventoryScreen
+                && slot.container == AccessorCreativeModeInventoryScreen.getContainer()) {
+            return;
+        }
+        fastItemLastMove = now;
+        ((AccessorContainerScreen) screen).invokeSlotClicked(slot, slot.index, event.button(), InventoryUtility.QUICK_MOVE);
+    }
+}

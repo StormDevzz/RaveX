@@ -11,6 +11,7 @@ public class CAddonManager {
     private static boolean nativeLoaded = false;
     private static boolean initialized = false;
 
+    // the loader is posix only, it uses dlopen, windows never reaches these
     private static native void nativeInitCAddons(String[] paths);
     private static native void nativeUnloadCAddons();
     private static native void nativeTickCAddons();

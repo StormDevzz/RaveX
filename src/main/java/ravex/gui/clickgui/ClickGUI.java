@@ -20,11 +20,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import ravex.manager.LayoutManager;
+import ravex.mcwrapper.MinecraftWrapper;
+import ravex.modules.client.ClickGui;
 
 import ravex.modules.Modules;
 
 public class ClickGUI extends Screen {
     public static ModuleButton bindingModuleButton = null;
+    // bumped each frame so panels can cache their visible list
+    public static long frameId = 0L;
     public static String hoveredDescription = null;
     public static String searchQuery = "";
     public static ravex.parameter.ColorParameter activeColorParameter = null;
@@ -34,6 +38,21 @@ public class ClickGUI extends Screen {
     public static ParameterElement activeKeybindElement = null;
     public static boolean isDraggingSlider = false;
     public static float bindReveal = 0f;
+    private static ClickGUI INSTANCE = null;
+    private static boolean scaleAnimating = false;
+
+    public static boolean isScaleAnimating() {
+        return scaleAnimating;
+    }
+
+    public static ClickGUI getOrCreate() {
+        if (INSTANCE == null) {
+            INSTANCE = new ClickGUI();
+        } else {
+            INSTANCE.prepareForOpen();
+        }
+        return INSTANCE;
+    }
 
     public static Identifier getCategoryTexture(String cat) {
         return ravex.utility.render.TextureLoaderUtility.getCategoryTexture(cat);
@@ -45,13 +64,15 @@ public class ClickGUI extends Screen {
 
 
     private final List<CategoryPanel> panels = new ArrayList<>();
-    private final long initTime;
+    private long initTime;
     private double smoothedMaxH = 200.0;
     private int panelStartY = 65;
     private float currentScale = -1;
 
     private boolean closing = false;
     private long closingStartTime = 0;
+    private boolean layoutDirty = false;
+    private boolean layoutSavedOnClose = false;
     private float tooltipAlpha = 0.0f;
     private String activeTooltipText = "";
 
@@ -72,6 +93,10 @@ public class ClickGUI extends Screen {
     private boolean configsHovered;
     private boolean resetLayoutHovered;
     private boolean hudEditorHovered;
+    private final float[] toolbarHover = new float[5];
+    private final float[] toolbarHoverFrom = new float[5];
+    private final float[] toolbarHoverTarget = new float[5];
+    private final long[] toolbarHoverStart = new long[5];
 
     private final float[] starX   = new float[120];
     private final float[] starY   = new float[120];
@@ -89,7 +114,9 @@ public class ClickGUI extends Screen {
 
     public ClickGUI() {
         super(Component.literal(ravex.utility.misc.LanguageUtility.t("gui_title")));
+        INSTANCE = this;
         this.initTime = System.currentTimeMillis();
+        scaleAnimating = true;
 
         int panelW = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth;
         int spacing = 10;
@@ -103,6 +130,85 @@ public class ClickGUI extends Screen {
             panels.add(p);
             panelIndex++;
         }
+    }
+
+    public void prepareForOpen() {
+        this.initTime = System.currentTimeMillis();
+        this.closing = false;
+        this.closingStartTime = 0L;
+        this.layoutSavedOnClose = false;
+        this.currentScale = -1f;
+        this.tooltipAlpha = 0.0f;
+        this.activeTooltipText = "";
+        hoveredDescription = null;
+        this.searchFocused = false;
+        this.searchAnimProgress = 0f;
+        this.searchResultAnim = 0f;
+        this.searchBarOpenAnim = 0f;
+        this.toolbarAnim = 0f;
+        this.descPanelAnim = 0f;
+        this.tipsAnim = 0f;
+        this.gearTipAnim = 0f;
+        bindReveal = 0f;
+        activeColorParameter = null;
+        activeColorPalette = null;
+        activeStringParameterElement = null;
+        activeNumberParameterElement = null;
+        activeKeybindElement = null;
+        bindingModuleButton = null;
+        isDraggingSlider = false;
+        scaleAnimating = true;
+        for (int i = 0; i < 5; i++) {
+            toolbarHover[i] = 0f;
+            toolbarHoverFrom[i] = 0f;
+            toolbarHoverTarget[i] = 0f;
+            toolbarHoverStart[i] = 0L;
+        }
+        for (CategoryPanel p : panels) {
+            p.onGuiOpen();
+        }
+    }
+
+    private boolean blurApplied = false;
+    private int blurRadiusApplied = -1;
+    private int savedBlurRadius = -1;
+
+        // the vanilla menu blur option drives the world blur here
+    private void syncBlurOptions() {
+        var cfg = ModuleManager.get(ravex.modules.client.ClickGui.class);
+        var option = MinecraftWrapper.getWrapper().getOptions().menuBackgroundBlurriness();
+        boolean want = cfg.blur;
+        int radius = want ? (int) Math.round(cfg.blurRadius) : 0;
+        if (blurApplied && savedBlurRadius >= 0) {
+            if (!want) {
+                restoreBlur();
+            } else if (blurRadiusApplied != radius) {
+                if (option.get() != radius) {
+                    option.set(radius);
+                }
+                blurRadiusApplied = radius;
+            }
+            return;
+        }
+        if (want) {
+            savedBlurRadius = option.get();
+            if (savedBlurRadius != radius) {
+                option.set(radius);
+            }
+            blurApplied = true;
+            blurRadiusApplied = radius;
+        }
+    }
+
+    private void restoreBlur() {
+        if (!blurApplied || savedBlurRadius < 0) return;
+        var option = MinecraftWrapper.getWrapper().getOptions().menuBackgroundBlurriness();
+        if (option.get() != savedBlurRadius) {
+            option.set(savedBlurRadius);
+        }
+        blurApplied = false;
+        blurRadiusApplied = -1;
+        savedBlurRadius = -1;
     }
 
     @Override
@@ -214,19 +320,20 @@ public class ClickGUI extends Screen {
 
         if (closing) {
             long closingElapsed = System.currentTimeMillis() - closingStartTime;
-            if (closingElapsed < 150) {
-                float closingProgress = closingElapsed / 150.0f;
-                float easeIn = closingProgress * closingProgress;
-                animScale = 1.0f + easeIn * 1.5f;
-            }
+            float closingProgress = Math.min(1.0f, closingElapsed / 150.0f);
+            float easeIn = closingProgress * closingProgress;
+            animScale = 1.0f + easeIn * 1.5f;
         }
 
+        float targetScale = (float) ModuleManager.get(ravex.modules.client.ClickGui.class).guiScale;
         float responsiveScale = getResponsiveScale();
+        scaleAnimating = closing || elapsed < 130L || isDraggingSlider || Math.abs(responsiveScale - targetScale) > 0.002f;
         return animScale * responsiveScale;
     }
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTicks) {
+        frameId++;
         int originalMouseX = mouseX;
         int originalMouseY = mouseY;
         if (activeColorPalette != null) {
@@ -238,6 +345,12 @@ public class ClickGUI extends Screen {
         smoothedMaxH += (targetMaxH - smoothedMaxH) * 0.35;
 
         cachedActiveColor = ColorUtility.getActiveColor();
+
+        syncBlurOptions();
+        if (ModuleManager.get(ravex.modules.client.ClickGui.class).blur) {
+            // marks the current gui layer as blurred
+            this.renderBlurredBackground(graphics);
+        }
 
         boolean drawBg = ModuleManager.get(ravex.modules.client.ClickGui.class).drawBackground;
         if (drawBg) {
@@ -321,21 +434,55 @@ public class ClickGUI extends Screen {
             boolean[] hovArr = { macrosHovered, profilesHovered, configsHovered, resetLayoutHovered, hudEditorHovered };
 
             int btnR = Math.min(8, mgH / 2);
+            long hoverNow = System.currentTimeMillis();
             for (int i = 0; i < 5; i++) {
                 int bx  = bxArr[i];
                 boolean h = hovArr[i];
 
-                int bg = h ? ColorUtility.withAlpha(cachedActiveColor, 40) : 0x18000000;
-                Render2DUtility.drawRound(graphics, bx, mgY, mgW, mgH, btnR, ColorUtility.applyAlpha(bg, toolbarAnim));
-                if (h) {
-                    Render2DUtility.drawRound(graphics, bx, mgY, mgW, mgH, btnR, ColorUtility.applyAlpha(ColorUtility.withAlpha(cachedActiveColor, 20), toolbarAnim));
+                // timed tween, it eases in fast and returns slow and soft
+                float hoverTarget = h ? 1f : 0f;
+                if (hoverTarget != toolbarHoverTarget[i]) {
+                    toolbarHoverTarget[i] = hoverTarget;
+                    toolbarHoverFrom[i] = toolbarHover[i];
+                    toolbarHoverStart[i] = hoverNow;
+                }
+                float hoverDur = hoverTarget > 0f ? 120f : 260f;
+                float hoverProgress = Math.min(1f, (hoverNow - toolbarHoverStart[i]) / hoverDur);
+                float eased = hoverProgress * hoverProgress * (3f - 2f * hoverProgress);
+                toolbarHover[i] = toolbarHoverFrom[i] + (hoverTarget - toolbarHoverFrom[i]) * eased;
+                float hv = toolbarHover[i];
+                float by = mgY - hv * 1.0f;
+
+                if (hv > 0.01f) {
+                    // soft halo around the button
+                    Render2DUtility.drawRound(graphics, bx - 1, (int) by - 1, mgW + 2, mgH + 2, btnR + 1,
+                            ColorUtility.applyAlpha(ColorUtility.withAlpha(cachedActiveColor, 30), hv * 0.55f * toolbarAnim));
+                }
+
+                int bg = ColorUtility.interpolate(0x18000000, ColorUtility.withAlpha(cachedActiveColor, 40), hv);
+                Render2DUtility.drawRound(graphics, bx, (int) by, mgW, mgH, btnR, ColorUtility.applyAlpha(bg, toolbarAnim));
+                if (hv > 0.01f) {
+                    Render2DUtility.drawRound(graphics, bx, (int) by, mgW, mgH, btnR,
+                            ColorUtility.applyAlpha(ColorUtility.withAlpha(cachedActiveColor, 20), hv * toolbarAnim));
+                }
+                if (ModuleManager.get(ClickGui.class).buttonOutlines) {
+                    // same border as the module buttons, so the toolbar matches the style
+                    Render2DUtility.drawSmoothRoundOutline(graphics, bx, (int) by, mgW, mgH, btnR, 1,
+                        ColorUtility.applyAlpha(ModuleManager.get(ClickGui.class).outlineColor, toolbarAnim));
                 }
 
                 int textW = FontRenderUtility.getStringWidth(labArr[i]);
-                int textY = mgY + (mgH - FontRenderUtility.getFontHeight()) / 2;
+                int textY = (int) by + (mgH - FontRenderUtility.getFontHeight()) / 2;
                 int textX = bx + (mgW - textW) / 2;
+                int textColor = ColorUtility.interpolate(0xFF808090, 0xFFFFFFFF, hv);
                 FontRenderUtility.drawString(graphics, labArr[i], textX, textY,
-                        ColorUtility.applyAlpha(h ? 0xFFFFFFFF : 0xFF808090, toolbarAnim), false);
+                        ColorUtility.applyAlpha(textColor, toolbarAnim), false);
+            }
+        } else {
+            for (int i = 0; i < 5; i++) {
+                toolbarHover[i] = 0f;
+                toolbarHoverFrom[i] = 0f;
+                toolbarHoverTarget[i] = 0f;
             }
         }
 
@@ -343,10 +490,16 @@ public class ClickGUI extends Screen {
 
         float finalScale = getAdaptiveScale();
         if (closing && (System.currentTimeMillis() - closingStartTime >= 150)) {
+            scaleAnimating = false;
             for (ravex.modules.Module m : ravex.manager.ModuleManager.INSTANCE.getModules()) {
                 m.setGearAngle(0f, System.currentTimeMillis());
             }
-            ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
+            var wrapper = ravex.mcwrapper.MinecraftWrapper.getWrapper();
+            if (wrapper.getPlayer() == null) {
+                ScreenUtility.setToTitle(wrapper);
+            } else {
+                ScreenUtility.closeScreen(wrapper);
+            }
             return;
         }
 
@@ -385,6 +538,10 @@ public class ClickGUI extends Screen {
             panel.render(graphics, mx, my, searchQuery);
         }
 
+        if (activeColorPalette == null) {
+            updateHoverCursor(mouseX, mouseY, mx, my);
+        }
+
         pose.popMatrix();
 
         renderBeginnerTips(graphics);
@@ -393,7 +550,7 @@ public class ClickGUI extends Screen {
             activeTooltipText = hoveredDescription != null ? hoveredDescription : "";
             if (!activeTooltipText.isEmpty()) {
                 int maxW = 200;
-                List<String> lines = wrapText(activeTooltipText, maxW);
+                List<String> lines = wrapTextCached(activeTooltipText, maxW);
                 int lineH = FontRenderUtility.getFontHeight() + 2;
                 int padX = 8;
                 int padY = 6;
@@ -403,13 +560,15 @@ public class ClickGUI extends Screen {
                     if (lw > tw) tw = lw;
                 }
                 tw = Math.min(tw + padX * 2, maxW + padX * 2);
-                int th = lines.size() * lineH;
+                int th = lines.size() * lineH + padY * 2;
 
                 int descY = getToolbarY() + getToolbarHeight() + 8;
                 if (descY + th > this.height - 4) descY = this.height - 4 - th;
                 int descX = (this.width - tw) / 2;
 
                 int da = (int)(descPanelAnim * 255);
+
+                drawDescriptionBackground(graphics, descX, descY, tw, th, descPanelAnim);
 
                 int ly = descY + padY;
                 for (String line : lines) {
@@ -431,7 +590,7 @@ public class ClickGUI extends Screen {
                 int ox = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetX;
                 int oy = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).tooltipOffsetY;
                 int maxW = 200;
-                List<String> lines = wrapText(activeTooltipText, maxW);
+                List<String> lines = wrapTextCached(activeTooltipText, maxW);
                 int lineH = FontRenderUtility.getFontHeight() + 2;
                 int padX = 8;
                 int padY = 6;
@@ -450,12 +609,9 @@ public class ClickGUI extends Screen {
                 if (tx < 0) tx = 2;
                 if (ty < 0) ty = 2;
 
-                int to = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).descriptionOpacity;
-                int ba = (int)(tooltipAlpha * to);
                 int ta = (int)(tooltipAlpha * 255);
 
-
-
+                drawDescriptionBackground(graphics, tx, ty, tw, th, tooltipAlpha);
 
                 int ly = ty + padY;
                 for (String line : lines) {
@@ -583,15 +739,6 @@ public class ClickGUI extends Screen {
             }
         }
 
-        int underlinePad = 8;
-        float underlineBase = Math.max(focusEase, searchQuery.isEmpty() ? 0f : 0.35f);
-        float underlineW = (barW - underlinePad * 2) * underlineBase;
-        if (underlineW > 1f) {
-            int underA = (int) (160 * underlineBase * openA);
-            graphics.fill(barX + underlinePad, barY + barH - 2, barX + underlinePad + (int) underlineW, barY + barH - 1,
-                ColorUtility.withAlpha(active, underA));
-        }
-
         int resultCount = 0;
         if (!searchQuery.isEmpty()) {
             for (var panel : panels) {
@@ -689,10 +836,43 @@ public class ClickGUI extends Screen {
 
         for (CategoryPanel panel : panels) {
             if (panel.mouseClicked(mx, my, event.button(), this.minecraft)) {
+                if (panel.isDragging()) {
+                    layoutDirty = true;
+                }
                 return true;
             }
         }
         return super.mouseClicked(event, handled);
+    }
+
+    private void updateHoverCursor(int rawX, int rawY, int mx, int my) {
+        if (bindingModuleButton != null) {
+            // crosshair while waiting for a key bind
+            ravex.utility.misc.CursorUtility.setCrosshair();
+            return;
+        }
+        if (searchBarOpenAnim > 0.5f) {
+            int barW = Math.min(200, this.width - 60);
+            int barX = (this.width - barW) / 2;
+            int barH = getSearchBarHeight();
+            int barY = getSearchBarY();
+            if (rawX >= barX && rawX <= barX + barW && rawY >= barY && rawY <= barY + barH) {
+                ravex.utility.misc.CursorUtility.setIbeam();
+                return;
+            }
+        }
+        for (CategoryPanel panel : panels) {
+            if (panel.isHeaderHovered(mx, my) || panel.isModuleHovered(mx, my)) {
+                ravex.utility.misc.CursorUtility.setHand();
+                return;
+            }
+        }
+        if (toolbarAnim > 0.01f
+                && (macrosHovered || profilesHovered || configsHovered || resetLayoutHovered || hudEditorHovered)) {
+            ravex.utility.misc.CursorUtility.setHand();
+            return;
+        }
+        ravex.utility.misc.CursorUtility.reset();
     }
 
     @Override
@@ -784,7 +964,16 @@ public class ClickGUI extends Screen {
             return true;
         }
 
-        if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_RIGHT_SHIFT) {
+        int configuredBind = GLFW.GLFW_KEY_RIGHT_SHIFT;
+        try {
+            ravex.modules.Module cgMod = ModuleManager.delegate(ravex.modules.client.ClickGui.class);
+            if (cgMod != null && cgMod.getKeyBind() != GLFW.GLFW_KEY_UNKNOWN) {
+                configuredBind = cgMod.getKeyBind();
+            }
+        } catch (Exception ignored) {}
+
+        if (key == GLFW.GLFW_KEY_ESCAPE || key == GLFW.GLFW_KEY_RIGHT_SHIFT || key == configuredBind) {
+            ravex.RaveX.markClickGuiKeyHandled();
             this.onClose();
             return true;
         }
@@ -823,7 +1012,9 @@ public class ClickGUI extends Screen {
         }
         if (searchFocused) {
             String text = event.codepointAsString();
-            if (!text.isEmpty() && text.charAt(0) >= 32 && text.charAt(0) < 127) {
+            // any printable char, so Cyrillic can be typed straight into search
+            // searchUtility handles layout swap, translit and diacritics itself
+            if (!text.isEmpty() && text.charAt(0) >= 32 && text.charAt(0) != 127) {
                 searchQuery += text;
             }
             return true;
@@ -862,14 +1053,21 @@ public class ClickGUI extends Screen {
 
     @Override
     public boolean mouseReleased(MouseButtonEvent event) {
-        saveLayout();
+        if (layoutDirty) {
+            saveLayout();
+            layoutDirty = false;
+        }
         return super.mouseReleased(event);
     }
 
     @Override
     public void onClose() {
         isDraggingSlider = false;
-        saveLayout();
+        if (!layoutSavedOnClose) {
+            saveLayout();
+            layoutSavedOnClose = true;
+            layoutDirty = false;
+        }
         ModuleButton.expandedModules.clear();
         for (CategoryPanel p : panels) {
             p.resetExpansion();
@@ -883,14 +1081,19 @@ public class ClickGUI extends Screen {
         if (!closing) {
             closing = true;
             closingStartTime = System.currentTimeMillis();
-            ravex.manager.ConfigManager.INSTANCE.save("default");
+            scaleAnimating = true;
+            ravex.manager.ConfigManager.INSTANCE.saveAsync("default");
         }
     }
 
     @Override
     public void removed() {
         isDraggingSlider = false;
-        saveLayout();
+        scaleAnimating = false;
+        if (!layoutSavedOnClose && layoutDirty) {
+            saveLayout();
+            layoutDirty = false;
+        }
         if (activeNumberParameterElement != null) {
             activeNumberParameterElement.applyInput();
             activeNumberParameterElement = null;
@@ -898,7 +1101,40 @@ public class ClickGUI extends Screen {
         for (CategoryPanel p : panels) {
             p.resetExpansion();
         }
+        restoreBlur();
         super.removed();
+    }
+
+    // shared by the click gui and the hud editor, keeps the tooltip backdrop light
+    private static final float DESCRIPTION_BG_ALPHA_SCALE = 0.5f;
+
+    public static void drawDescriptionBackground(GuiGraphics graphics, int x, int y, int w, int h, float alpha) {
+        if (alpha <= 0f || w <= 0 || h <= 0) return;
+        ClickGui cfg = ModuleManager.get(ClickGui.class);
+        int bgAlpha = (int) (cfg.descriptionOpacity * alpha * DESCRIPTION_BG_ALPHA_SCALE);
+        if (bgAlpha > 0) {
+            Render2DUtility.drawRound(graphics, x, y, w, h, 4,
+                ColorUtility.withAlpha(0x0A0A14, bgAlpha));
+        }
+        if (cfg.outlines) {
+            Render2DUtility.drawSmoothRoundOutline(graphics, x, y, w, h, 4, 1,
+                ColorUtility.applyAlpha(cfg.outlineColor, alpha / 2f));
+        }
+    }
+
+    private static String cachedWrapText;
+    private static int cachedWrapWidth;
+    private static List<String> cachedWrapLines;
+
+    private static List<String> wrapTextCached(String text, int maxWidthPx) {
+        if (text.equals(cachedWrapText) && maxWidthPx == cachedWrapWidth && cachedWrapLines != null) {
+            return cachedWrapLines;
+        }
+        List<String> lines = wrapText(text, maxWidthPx);
+        cachedWrapText = text;
+        cachedWrapWidth = maxWidthPx;
+        cachedWrapLines = lines;
+        return lines;
     }
 
     private static List<String> wrapText(String text, int maxWidthPx) {

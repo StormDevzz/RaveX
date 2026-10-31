@@ -5,6 +5,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.Identifier;
 import ravex.modules.Module;
 import ravex.modules.client.ClickGui;
+import ravex.mcwrapper.MinecraftWrapper;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.animate.AnimationUtility;
@@ -25,6 +26,8 @@ public class ModuleButton {
     private static long lastGearTick = System.currentTimeMillis();
     private static float frameDt = 1f / 60f;
     private static final int MAX_INLINE_HEIGHT = 800;
+    // polled once per frame, not per button
+    private static boolean lmbDown = false;
 
     public static float getFrameDt() {
         return frameDt;
@@ -33,6 +36,7 @@ public class ModuleButton {
     private float inlineScrollTarget = 0f;
     private float inlineScrollAnim = 0f;
     private float searchReveal = 1.0f;
+    private float lastRevealH = 1.0f;
     private boolean matchesSearch = true;
 
     public static void tickAllGears() {
@@ -40,6 +44,13 @@ public class ModuleButton {
         float dt = Math.min(100f, now - lastGearTick) / 1000f;
         lastGearTick = now;
         frameDt = dt;
+        try {
+            lmbDown = org.lwjgl.glfw.GLFW.glfwGetMouseButton(
+                MinecraftWrapper.getWrapper().getWindow().handle(),
+                org.lwjgl.glfw.GLFW.GLFW_MOUSE_BUTTON_LEFT) == org.lwjgl.glfw.GLFW.GLFW_PRESS;
+        } catch (Throwable ignored) {
+            lmbDown = false;
+        }
         float speed = (float) ModuleManager.get(ClickGui.class).gearRotationSpeed;
         if (speed > 0) {
             for (Module m : expandedModules) {
@@ -60,6 +71,7 @@ public class ModuleButton {
     }
 
     private final Module module;
+    private final String searchKey;
     private final List<ParameterElement> parameterElements = new ArrayList<>();
     private float hoverProgress = 0.0f;
     private float enableAnim = 0.0f;
@@ -88,23 +100,53 @@ public class ModuleButton {
         flashPeak = peak;
         flashStartMs = System.currentTimeMillis();
     }
-    private static double circleX = 0;
-    private static double circleY = 0;
+
+    // wobble when a right click finds no settings
+    private long shakeStartNs = -1L;
+    private static final long SHAKE_MS = 240L;
+
+    private float updateShake() {
+        if (shakeStartNs < 0L) return 0f;
+        float t = (System.nanoTime() - shakeStartNs) / (SHAKE_MS * 1_000_000f);
+        if (t >= 1f) {
+            shakeStartNs = -1L;
+            return 0f;
+        }
+        return (float) Math.sin(t * Math.PI * 6.0) * 3.5f * (1f - t);
+    }
+
+    public void triggerShake() {
+        shakeStartNs = System.nanoTime();
+    }
+    private double circleX = -1;
+    private double circleY = -1;
+    private final Render2DUtility.HoverGlowRenderer glowRenderer;
     private boolean lastHovered = false;
     private boolean wasEnabled = false;
-    private float sheenProgress = 1.0f;
-    private static final float SHEEN_SPEED = 0.05f;
+    private long enableStartNs = -1L;
+    private float enableFrom = 0f;
+    private static final long ENABLE_MS = 240L;
+    private static final long DISABLE_MS = 180L;
+    private float pressAnim = 0.0f;
+    private static final float PRESS_SCALE_MIN = 0.93f;
+    private static final float PRESS_DOWN_SPEED = 18f;
+    private static final float PRESS_UP_SPEED = 10f;
 
     public ModuleButton(Module module) {
         this.module = module;
+        this.searchKey = module.getName() + " " + ravex.utility.misc.LanguageUtility.moduleName(module.getName());
+        this.glowRenderer = new Render2DUtility.HoverGlowRenderer("btn_glow_" + module.getName());
         wasEnabled = module.getEnabled();
         if (module.getKeyBind() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN) {
             bindAnim = 1.0f;
         }
         for (Parameter<?> p : module.getParameters()) {
-            parameterElements.add(new ParameterElement(p));
+            parameterElements.add(new ParameterElement(p, module.getName()));
         }
     }
+
+    // built once, search pass runs each frame
+    public String getSearchKey() { return searchKey; }
 
     public boolean isExpanded() { return expanded || expandAnim > 0.001f; }
 
@@ -116,6 +158,27 @@ public class ModuleButton {
         expandedModules.remove(module);
     }
 
+    public void onGuiOpen() {
+        collapse();
+        expandAnim = 0f;
+        hoverProgress = 0f;
+        hoverGlow = 0f;
+        circleX = -1;
+        circleY = -1;
+        lastHovered = false;
+        pressAnim = 0f;
+        flashStartMs = -1L;
+        shakeStartNs = -1L;
+        wasEnabled = module.getEnabled();
+        enableAnim = wasEnabled && !"Settings".equals(module.getName()) ? 1.0f : 0.0f;
+        enableStartNs = -1L;
+        bindAnim = module.getKeyBind() != org.lwjgl.glfw.GLFW.GLFW_KEY_UNKNOWN ? 1.0f : 0.0f;
+        bindingShowAnim = 0.0f;
+        searchReveal = 1.0f;
+        lastRevealH = 1.0f;
+        matchesSearch = true;
+    }
+
     public float getSearchReveal() { return searchReveal; }
 
     public void updateSearchReveal(boolean matches, boolean hasQuery) {
@@ -125,6 +188,18 @@ public class ModuleButton {
             searchReveal = Math.min(target, searchReveal + 0.35f);
         else if (searchReveal > target)
             searchReveal = Math.max(target, searchReveal - 0.30f);
+        // same factor as the panel height math
+        lastRevealH = (!hasQuery || matches) ? 1.0f : searchReveal;
+    }
+
+    // row height this frame, also used to skip offscreen rows
+    public int getLayoutHeight(int panelWidth) {
+        int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
+        int row = Math.max(1, (int) (btnH * lastRevealH)) + 2;
+        if (!parameterElements.isEmpty() && expandAnim > 0.01f) {
+            row += (int) (getExpandedHeight(panelWidth) * lastRevealH);
+        }
+        return row;
     }
 
     public int getExpandedHeight(int panelWidth) {
@@ -174,10 +249,40 @@ public class ModuleButton {
 
     public void render(GuiGraphics graphics, int x, int y, int width, int mouseX, int mouseY, int[] currentYOut, String searchQuery, int viewTop, int viewBot) {
         int currentY = currentYOut[0];
-        if (searchReveal < 0.001f) return;
+        if (lastRevealH < 0.001f) {
+            // search hidden rows still take layout space
+            currentYOut[0] = currentY + getLayoutHeight(width);
+            return;
+        }
         int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
-        boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + btnH
+        int btnRadius = Math.min((int) ModuleManager.get(ClickGui.class).cornerRadius, btnH / 2);
+        int btnX = x + 2;
+        int btnW = width - 4;
+
+        boolean inRect = mouseX >= btnX && mouseX <= btnX + btnW && mouseY >= currentY && mouseY <= currentY + btnH
             && currentY + btnH > viewTop && currentY < viewBot;
+        boolean hovered = inRect;
+        if (inRect && btnRadius > 0) {
+            if (mouseX < btnX + btnRadius) {
+                float dx = (btnX + btnRadius) - mouseX;
+                if (mouseY < currentY + btnRadius) {
+                    float dy = (currentY + btnRadius) - mouseY;
+                    if (dx * dx + dy * dy > btnRadius * btnRadius) hovered = false;
+                } else if (mouseY > currentY + btnH - btnRadius) {
+                    float dy = mouseY - (currentY + btnH - btnRadius);
+                    if (dx * dx + dy * dy > btnRadius * btnRadius) hovered = false;
+                }
+            } else if (mouseX > btnX + btnW - btnRadius) {
+                float dx = mouseX - (btnX + btnW - btnRadius);
+                if (mouseY < currentY + btnRadius) {
+                    float dy = (currentY + btnRadius) - mouseY;
+                    if (dx * dx + dy * dy > btnRadius * btnRadius) hovered = false;
+                } else if (mouseY > currentY + btnH - btnRadius) {
+                    float dy = mouseY - (currentY + btnH - btnRadius);
+                    if (dx * dx + dy * dy > btnRadius * btnRadius) hovered = false;
+                }
+            }
+        }
 
         if (hovered) {
             ClickGUI.hoveredDescription = module.getDescription();
@@ -191,21 +296,40 @@ public class ModuleButton {
         lastHovered = hovered;
 
         float targetAnim = module.getEnabled() ? 1.0f : 0.0f;
-        if (enableAnim < targetAnim) {
-            enableAnim = Math.min(targetAnim, enableAnim + 0.30f);
-        } else if (enableAnim > targetAnim) {
-            enableAnim = Math.max(targetAnim, enableAnim - 0.35f);
-        }
-
         if (module.getEnabled() != wasEnabled) {
-            sheenProgress = 0.0f;
+            enableFrom = enableAnim;
+            enableStartNs = System.nanoTime();
         }
         wasEnabled = module.getEnabled();
+        boolean enabledNow = module.getEnabled();
+
+        // eased over real time, so it feels the same at any fps
+        // settings stays functional, always drawn as off
+        if ("Settings".equals(module.getName())) {
+            enableAnim = 0f;
+            enableStartNs = -1L;
+        } else if (enableStartNs >= 0L) {
+            long durNs = (enabledNow ? ENABLE_MS : DISABLE_MS) * 1_000_000L;
+            float t = Math.min(1f, (System.nanoTime() - enableStartNs) / (float) durNs);
+            enableAnim = enableFrom + (targetAnim - enableFrom) * AnimationUtility.Easing.QUART_BOTH.apply(t);
+            if (t >= 1f) enableStartNs = -1L;
+        } else {
+            enableAnim = targetAnim;
+        }
+
+        // shrink while LMB held, spring back on release
+        float pressTarget = (hovered && lmbDown) ? 1.0f : 0.0f;
+        float pressSpeed = pressTarget > pressAnim ? PRESS_DOWN_SPEED : PRESS_UP_SPEED;
+        float pressStep = 1f - (float) Math.exp(-getFrameDt() * pressSpeed);
+        pressAnim += (pressTarget - pressAnim) * pressStep;
+        if (Math.abs(pressTarget - pressAnim) < 0.003f) pressAnim = pressTarget;
+        float pressEased = AnimationUtility.Easing.CUBIC_OUT.apply(Math.max(0f, Math.min(1f, pressAnim)));
+        float pressScale = 1f - (1f - PRESS_SCALE_MIN) * pressEased;
+        boolean scaled = pressScale < 0.999f;
 
         int activeColor = ColorUtility.getActiveColor();
         int btnAlpha = (int) ModuleManager.get(ClickGui.class).buttonOpacity;
         int disabledBg = ColorUtility.withAlpha(0x252530, btnAlpha);
-        int btnRadius = Math.min((int) ModuleManager.get(ClickGui.class).cornerRadius, btnH / 2);
 
         int mergedBg = disabledBg;
         if (enableAnim > 0.01f) {
@@ -221,62 +345,77 @@ public class ModuleButton {
             int flashAlpha = (int) (flash * Math.min(40, btnAlpha / 3));
             mergedBg = ColorUtility.overlay(mergedBg, ColorUtility.withAlpha(activeColor, flashAlpha));
         }
+        if (pressEased > 0.01f) {
+            int pressAlpha = (int) (pressEased * 45);
+            mergedBg = ColorUtility.overlay(mergedBg, ColorUtility.withAlpha(0x000000, pressAlpha));
+        }
 
-        Render2DUtility.drawRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, mergedBg);
+        // centered scale keeps the plate inside the rounded bounds
+        // layout keeps full size, list never jumps while pressed
+        float shakeX = updateShake();
+        boolean shaking = shakeX != 0f;
+        float pressCx = btnX + btnW / 2f;
+        float pressCy = currentY + btnH / 2f;
+        if (scaled || shaking) {
+            graphics.pose().pushMatrix();
+            if (scaled) {
+                graphics.pose().translate(pressCx, pressCy);
+                graphics.pose().scale(pressScale, pressScale);
+                graphics.pose().translate(-pressCx, -pressCy);
+            }
+            if (shaking) {
+                graphics.pose().translate(shakeX, 0f);
+            }
+        }
 
-        if (sheenProgress < 1.0f) {
-            sheenProgress = Math.min(1.0f, sheenProgress + SHEEN_SPEED);
-            float bandW = width * 0.35f;
-            float travel = width + bandW * 2f;
-            float bandX = x - bandW + sheenProgress * travel;
-            float fade = 1.0f - sheenProgress * sheenProgress;
-            int sheenAlpha = (int) (fade * 70);
-            if (sheenAlpha > 0) {
-                int lead = ColorUtility.withAlpha(0xFFFFFFFF, sheenAlpha);
-                int trail = ColorUtility.withAlpha(activeColor, 0);
-                Render2DUtility.pushScissor(graphics, x + 2, currentY, width - 4, btnH);
-                graphics.pose().pushMatrix();
-                graphics.pose().translate(x + width / 2f, currentY + btnH / 2f);
-                graphics.pose().rotate(-0.35f);
-                float bw = bandW;
-                float bh = (float) btnH * 3f;
-                float localX = bandX - (x + width / 2f);
-                graphics.fillGradient(
-                    (int) localX, (int) (-bh / 2f),
-                    (int) (localX + bw), (int) (bh / 2f),
-                    trail, lead);
-                graphics.fillGradient(
-                    (int) (localX + bw), (int) (-bh / 2f),
-                    (int) (localX + bw * 2f), (int) (bh / 2f),
-                    lead, trail);
-                graphics.pose().popMatrix();
-                Render2DUtility.popScissor(graphics);
+        // plain rounded path while animating, pixel perfect otherwise
+        if (scaled || shaking) {
+            Render2DUtility.drawRound(graphics, btnX, currentY, btnW, btnH, btnRadius, mergedBg);
+        } else {
+            Render2DUtility.drawPixelPerfectRound(graphics, btnX, currentY, btnW, btnH, btnRadius, mergedBg);
+        }
+        if (ModuleManager.get(ClickGui.class).buttonOutlines) {
+            int outlineCol = ModuleManager.get(ClickGui.class).outlineColor;
+            if (scaled || shaking) {
+                Render2DUtility.drawSmoothRoundOutline(graphics, btnX, currentY, btnW, btnH, btnRadius, 1, outlineCol);
+            } else {
+                // same snap as the body, border sits exactly on the edge
+                Render2DUtility.drawPixelPerfectRoundBorder(graphics, btnX, currentY, btnW, btnH, btnRadius, 1, outlineCol);
             }
         }
 
         if (hovered) {
             hoverGlow = Math.min(1.0f, hoverGlow + 0.12f);
-            circleX += (x + width / 2.0 - circleX) * 0.25;
-            circleY += (currentY + btnH / 2.0 - circleY) * 0.25;
+            float targetGX = (float) mouseX;
+            float targetGY = currentY + btnH / 2.0f;
+            if (circleX < 0) {
+                circleX = targetGX;
+                circleY = targetGY;
+            } else {
+                circleX += (targetGX - circleX) * 0.28;
+                circleY += (targetGY - circleY) * 0.28;
+            }
         } else {
             hoverGlow = Math.max(0.0f, hoverGlow - 0.10f);
+            if (hoverGlow <= 0.01f) {
+                circleX = -1;
+            }
         }
         if (hoverGlow > 0.01f) {
-            int alpha = (int) (hoverGlow * 120);
+            int alpha = (int) (hoverGlow * 125);
             int whiteGlow = ColorUtility.withAlpha(0xFFFFFFFF, alpha);
-            Render2DUtility.pushScissor(graphics, x + 2, currentY, width - 4, btnH);
-            Render2DUtility.drawGaussianShadow(graphics, (float) mouseX - 8, (float) mouseY - 8, 16, 16, 11, whiteGlow);
-            Render2DUtility.popScissor(graphics);
+            glowRenderer.render(graphics, btnX, currentY, btnW, btnH, btnRadius,
+                (float) circleX, (float) circleY, 26.0f, 13.0f, whiteGlow);
         }
 
-        if (searchQuery != null && !searchQuery.isEmpty()
-            && ravex.utility.misc.SearchUtility.matches(module.getName() + " " + ravex.utility.misc.LanguageUtility.moduleName(module.getName()), searchQuery)) {
+        if (searchQuery != null && !searchQuery.isEmpty() && matchesSearch) {
             int searchBg = ColorUtility.overlay(mergedBg, ColorUtility.withAlpha(activeColor, 30));
             Render2DUtility.drawRound(graphics, x + 2, currentY, width - 4, btnH, btnRadius, searchBg);
         }
 
         int baseColor = ColorUtility.interpolate(0xFFB0B0C0, activeColor, enableAnim);
-        int textColor = hovered ? 0xFFFFFFFF : baseColor;
+        // label brightens with hoverProgress, not the hover flag
+        int textColor = ColorUtility.interpolate(baseColor, 0xFFFFFFFF, AnimationUtility.Easing.CUBIC_OUT.apply(hoverProgress));
 
         String displayName = ravex.utility.misc.LanguageUtility.moduleName(module.getName());
         boolean binding = ClickGUI.bindingModuleButton == this;
@@ -349,14 +488,16 @@ public class ModuleButton {
                 float openProgress = AnimationUtility.Easing.CUBIC_OUT.apply(expandAnim);
                 float angle = openProgress * 90f + module.getGearAngle();
                 var pose = graphics.pose();
-                pose.pushMatrix();
-                pose.translate(iconX + iconSize / 2f, iconY + iconSize / 2f);
                 if (Math.abs(angle) > 0.01f) {
+                    pose.pushMatrix();
+                    pose.translate(iconX + iconSize / 2f, iconY + iconSize / 2f);
                     pose.rotate(angle * (float)Math.PI / 180f);
+                    pose.translate(-(iconX + iconSize / 2f), -(iconY + iconSize / 2f));
+                    graphics.blit(settingsTex, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
+                    pose.popMatrix();
+                } else {
+                    graphics.blit(settingsTex, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
                 }
-                pose.translate(-(iconX + iconSize / 2f), -(iconY + iconSize / 2f));
-                graphics.blit(settingsTex, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
-                pose.popMatrix();
             } else {
                 String indicator = expanded ? "-" : "+";
                 FontRenderUtility.drawString(graphics, indicator, x + width - 12, textY, 0xFF7A7A8A, true);
@@ -369,6 +510,10 @@ public class ModuleButton {
             int iconX = x + width - iconSize - 4;
             int iconY = currentY + btnH - iconSize - 2;
             graphics.blit(modIcon, iconX, iconY, iconX + iconSize, iconY + iconSize, 0.0f, 1.0f, 0.0f, 1.0f);
+        }
+
+        if (scaled || shaking) {
+            graphics.pose().popMatrix();
         }
 
         currentY += btnH + 2;
@@ -438,12 +583,13 @@ public class ModuleButton {
         }
 
         boolean searching = searchQuery != null && !searchQuery.isEmpty();
-        float revealH = (!searching || matchesSearch) ? 1.0f : searchReveal;
+        float revealH = lastRevealH;
         if (revealH < 0.99f) {
             int fadeAlpha = (int)((1.0f - revealH) * 200);
             Render2DUtility.drawRound(graphics, x + 2, currentYOut[0], width - 4, btnH, Math.min((int) ModuleManager.get(ClickGui.class).cornerRadius, btnH / 2), (fadeAlpha << 24) | 0x050510);
         }
-        currentYOut[0] = currentYOut[0] + (int)((currentY - currentYOut[0]) * revealH);
+        // same value the panel height math uses
+        currentYOut[0] = currentYOut[0] + getLayoutHeight(width);
     }
 
     private void renderBindingLabel(GuiGraphics graphics, int x, int width, int y, int textColor, float alpha) {
@@ -513,7 +659,6 @@ public class ModuleButton {
         if (mouseX >= x && mouseX <= x + width && mouseY >= currentY && mouseY <= currentY + totalH) {
             if (mouseY <= currentY + btnH) {
                 if (button == 0) {
-                    sheenProgress = 0.0f;
                     module.toggle();
                 } else if (button == 1 && !module.getParameters().isEmpty()) {
                     expanded = !expanded;
@@ -529,6 +674,9 @@ public class ModuleButton {
                         triggerFlash(0.55f);
                         EventBusHolder.get().post(new SoundEvent(SoundEvent.Type.SETTINGS_CLOSE, 0.6f));
                     }
+                } else if (button == 1) {
+                    ravex.utility.sound.SoundUtility.playNoSettings();
+                    triggerShake();
                 } else if (button == 2) {
                     if (ClickGUI.bindingModuleButton != null && ClickGUI.bindingModuleButton != this) {
                         ClickGUI.bindingModuleButton = null;

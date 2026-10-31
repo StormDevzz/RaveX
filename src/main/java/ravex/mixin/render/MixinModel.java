@@ -28,6 +28,11 @@ public class MixinModel {
         }
 
         if (Shaders.RENDERING_HAND.get()) {
+            // first person hand shader pipeline
+            Shaders handShaders = Modules.get(Shaders.class);
+            if (handShaders != null && handShaders.hand) {
+                return new NativeAnimateVertexConsumerUtility(consumer, handShaders.appliedColor(), true);
+            }
             return consumer;
         }
 
@@ -37,7 +42,7 @@ public class MixinModel {
         boolean isPlayerModel = className.contains("player") || className.contains("humanoid");
 
         if (isPlayerModel && Modules.get(Shaders.class).players) {
-            return new NativeAnimateVertexConsumerUtility(consumer, Modules.get(Shaders.class).fillColor, false);
+            return new NativeAnimateVertexConsumerUtility(consumer, Modules.get(Shaders.class).appliedColor(), false);
         }
 
         return consumer;
@@ -48,7 +53,7 @@ public class MixinModel {
         at = @At("HEAD")
     )
     private void onRenderHead(PoseStack poseStack, VertexConsumer consumer, int light, int overlay, int tint, CallbackInfo ci) {
-        if (Modules.enabled(Shaders.class) && Modules.get(Shaders.class).throughWalls) {
+        if (Modules.enabled(Shaders.class)) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
 
@@ -83,7 +88,7 @@ public class MixinModel {
             } catch (Exception ignored) {}
         }
 
-        if (Modules.enabled(Shaders.class) && Modules.get(Shaders.class).throughWalls) {
+        if (Modules.enabled(Shaders.class)) {
             Model self = (Model)(Object)this;
             String className = self.getClass().getSimpleName().toLowerCase();
 

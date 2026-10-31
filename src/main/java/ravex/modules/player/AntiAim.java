@@ -8,22 +8,24 @@ import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "AntiAim", category = "Player")
 public class AntiAim {
-    @Parameter(name = "YawMode", modes = {"Spin", "Jitter", "Static", "Random"})
+    @Parameter(name = "YawMode", modes = {"Spin", "Jitter", "Static", "Random", "None"})
     public String yawMode = "Spin";
-    @Parameter(name = "PitchMode", modes = {"Down", "Up", "Jitter", "Static", "None"})
-    public String pitchMode = "Down";
-    @Parameter(name = "YawSpeed", min = 1.0, max = 90.0, step = 1.0)
+    @Parameter(name = "SpinSpeed", min = 1.0, max = 90.0, step = 1.0, visible = "yawMode=Spin")
     public double yawSpeed = 30.0;
+    @Parameter(name = "YawJitter", min = 5.0, max = 180.0, step = 5.0, visible = "yawMode=Jitter||yawMode=Random")
+    public double yawJitterAmount = 90.0;
     @Parameter(name = "YawOffset", min = -180.0, max = 180.0, step = 1.0)
     public double yawOffset = 0.0;
+
+    @Parameter(name = "PitchMode", modes = {"Down", "Up", "Jitter", "Static", "None"})
+    public String pitchMode = "Down";
+    @Parameter(name = "PitchJitter", min = 5.0, max = 90.0, step = 5.0, visible = "pitchMode=Jitter")
+    public double pitchJitterAmount = 90.0;
+    @Parameter(name = "StaticPitch", min = -90.0, max = 90.0, step = 1.0, visible = "pitchMode=Static")
+    public double staticPitch = 0.0;
     @Parameter(name = "PitchOffset", min = -90.0, max = 90.0, step = 1.0)
     public double pitchOffset = 0.0;
-    @Parameter(name = "StaticPitch", min = -90.0, max = 90.0, step = 1.0)
-    public double staticPitch = 0.0;
-    @Parameter(name = "YawJitter", min = 5.0, max = 180.0, step = 5.0)
-    public double yawJitterAmount = 90.0;
-    @Parameter(name = "PitchJitter", min = 5.0, max = 90.0, step = 5.0)
-    public double pitchJitterAmount = 90.0;
+
     @Parameter(name = "Silent")
     public boolean silent = true;
 

@@ -7,23 +7,17 @@ import org.joml.Matrix4fc;
 import org.joml.Matrix3x2fc;
 import org.joml.Vector3f;
 import org.joml.Vector3fc;
-import ravex.manager.HandShaderManager;
-import ravex.manager.PlayerShaderManager;
 import ravex.modules.Modules;
 import ravex.modules.render.Shaders;
-import ravex.utility.shaders.EffectInput;
-import ravex.utility.shaders.EffectOutput;
-import ravex.utility.shaders.EffectType;
-import ravex.utility.shaders.ShaderConfig;
-import ravex.utility.shaders.ShaderPipeline;
+import ravex.utility.shaders.ShaderFx;
 
 public class NativeAnimateVertexConsumerUtility implements VertexConsumer {
     private final VertexConsumer delegate;
-    private final int fillColor;
-    private final ShaderPipeline pipeline;
+    private final int baseColor;
+    private final int alpha;
+    private final int effect;
     private final float time;
     private final boolean effectActive;
-    private final EffectInput effectInput = new EffectInput();
     private float offX;
     private float offY;
     private float offZ;
@@ -42,78 +36,31 @@ public class NativeAnimateVertexConsumerUtility implements VertexConsumer {
 
     public NativeAnimateVertexConsumerUtility(VertexConsumer delegate, int fillColor, boolean isHand) {
         this.delegate = delegate;
-        this.fillColor = fillColor;
-        if (isHand) {
-            if (!HandShaderManager.isInitialized()) HandShaderManager.init();
-            pipeline = HandShaderManager.getPipeline();
-        } else {
-            if (!PlayerShaderManager.isInitialized()) PlayerShaderManager.init();
-            pipeline = PlayerShaderManager.getPipeline();
-        }
-        this.time = Shaders.tickTime();
+        this.baseColor = fillColor;
         Shaders shaders = Modules.get(Shaders.class);
-        boolean active = false;
+        int resolvedAlpha = (fillColor >> 24) & 0xFF;
+        int resolvedEffect = ShaderFx.STATIC;
         if (shaders != null) {
-            ShaderConfig cfg = shaders.createConfig();
-            pipeline.setConfig(cfg);
-            active = cfg.effect != EffectType.NONE;
+            resolvedEffect = shaders.fx();
+            resolvedAlpha = shaders.appliedAlpha();
         }
-        effectActive = active;
+        this.alpha = resolvedAlpha;
+        this.effect = resolvedEffect;
+        this.time = Shaders.tickTime();
+        this.effectActive = resolvedEffect != ShaderFx.STATIC && ShaderFx.available();
     }
 
-    private int computeEffectColor(float x, float y, float z, float nx, float ny, float nz, float u, float v) {
+    // the effect itself runs in the native engine, java only forwards the vertex
+    private int shade(float x, float y, float z, float nx, float ny, float nz, float u, float v) {
         offX = 0f;
         offY = 0f;
         offZ = 0f;
-        if (!effectActive) return fillColor;
-
-        effectInput.vertex.position.x = x;
-        effectInput.vertex.position.y = y;
-        effectInput.vertex.position.z = z;
-        effectInput.vertex.normal.x = nx;
-        effectInput.vertex.normal.y = ny;
-        effectInput.vertex.normal.z = nz;
-        effectInput.vertex.uv.x = u;
-        effectInput.vertex.uv.y = v;
-        effectInput.worldPos.x = x;
-        effectInput.worldPos.y = y;
-        effectInput.worldPos.z = z;
-        effectInput.localPos.x = x;
-        effectInput.localPos.y = y;
-        effectInput.localPos.z = z;
-        effectInput.normalizedTime = time;
-        effectInput.deltaTime = 0f;
-        effectInput.intensity = 1f;
-
-        EffectOutput out = pipeline.processVertex(effectInput);
-        float blend = out.alpha;
-        if (blend < 0f) blend = 0f;
-        if (blend > 1f) blend = 1f;
-
-        float br = ((fillColor >> 16) & 0xFF) / 255f;
-        float bg = ((fillColor >> 8) & 0xFF) / 255f;
-        float bb = (fillColor & 0xFF) / 255f;
-        float ba = ((fillColor >> 24) & 0xFF) / 255f;
-
-        float r = br * (1f - blend) + out.color.r * blend;
-        float g = bg * (1f - blend) + out.color.g * blend;
-        float b = bb * (1f - blend) + out.color.b * blend;
-
-        if (out.glow > 0f) {
-            offX = out.offset.x * out.glow;
-            offY = out.offset.y * out.glow;
-            offZ = out.offset.z * out.glow;
-        }
-
-        int ir = (int) (r * 255f);
-        int ig = (int) (g * 255f);
-        int ib = (int) (b * 255f);
-        int ia = (int) (ba * 255f);
-        if (ir > 255) ir = 255;
-        if (ig > 255) ig = 255;
-        if (ib > 255) ib = 255;
-        if (ia > 255) ia = 255;
-        return (ia << 24) | (ir << 16) | (ig << 8) | ib;
+        if (!effectActive) return (alpha << 24) | (baseColor & 0x00FFFFFF);
+        int packed = ShaderFx.vertex(effect, time, baseColor, alpha, x, y, z, nx, ny, nz, u, v);
+        offX = ShaderFx.offsetX();
+        offY = ShaderFx.offsetY();
+        offZ = ShaderFx.offsetZ();
+        return packed;
     }
 
     @Override
@@ -127,19 +74,19 @@ public class NativeAnimateVertexConsumerUtility implements VertexConsumer {
 
     @Override
     public VertexConsumer setColor(int r, int g, int b, int a) {
-        delegate.setColor(computeEffectColor(curX, curY, curZ, curNormX, curNormY, curNormZ, curU, curV));
+        delegate.setColor(shade(curX, curY, curZ, curNormX, curNormY, curNormZ, curU, curV));
         return this;
     }
 
     @Override
     public VertexConsumer setColor(int color) {
-        delegate.setColor(computeEffectColor(curX, curY, curZ, curNormX, curNormY, curNormZ, curU, curV));
+        delegate.setColor(shade(curX, curY, curZ, curNormX, curNormY, curNormZ, curU, curV));
         return this;
     }
 
     @Override
     public VertexConsumer setColor(float r, float g, float b, float a) {
-        delegate.setColor(computeEffectColor(curX, curY, curZ, curNormX, curNormY, curNormZ, curU, curV));
+        delegate.setColor(shade(curX, curY, curZ, curNormX, curNormY, curNormZ, curU, curV));
         return this;
     }
 
@@ -201,7 +148,7 @@ public class NativeAnimateVertexConsumerUtility implements VertexConsumer {
 
     @Override
     public void addVertex(float x, float y, float z, int color, float u, float v, int overlay, int light, float normalX, float normalY, float normalZ) {
-        int finalColor = computeEffectColor(x, y, z, normalX, normalY, normalZ, u, v);
+        int finalColor = shade(x, y, z, normalX, normalY, normalZ, u, v);
         delegate.addVertex(x + offX, y + offY, z + offZ, finalColor, u, v, overlay, light, normalX, normalY, normalZ);
     }
 

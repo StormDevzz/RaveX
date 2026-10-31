@@ -1,13 +1,11 @@
 package ravex.modules.player;
 import ravex.event.network.PacketEvent;
 import ravex.event.Subscribe;
-import ravex.mixin.network.AccessorServerboundMovePlayerPacket;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.network.protocol.game.ServerboundPlayerCommandPacket;
-import net.minecraft.network.protocol.Packet;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.utility.network.NetworkUtility;
 
 @Module(name = "AntiHunger", category = "Player")
 public class AntiHunger {
@@ -29,31 +27,26 @@ public class AntiHunger {
     public void onPacket(PacketEvent event) {
         if (!Modules.enabled(AntiHunger.class) || !event.isSend()) return;
         String m = mode;
-        Packet<?> packet = event.getPacket();
+        var packet = event.getPacket();
 
         if ("UNCP".equals(m)) {
-            if (packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket) {
+            if (NetworkUtility.isMovePacket(packet)) {
                 uncpCounter++;
                 if (uncpCounter % uncpDelay != 0) {
-                    ((AccessorServerboundMovePlayerPacket) movePacket).setOnGround(false);
+                    NetworkUtility.setMoveOnGround(packet, false);
                 }
             }
-            if (packet instanceof ServerboundPlayerCommandPacket) {
+            if (NetworkUtility.isCommandPacket(packet)) {
                 event.setCancelled(true);
             }
             return;
         }
 
-        if (packet instanceof net.minecraft.network.protocol.game.ServerboundMovePlayerPacket movePacket) {
-            ((AccessorServerboundMovePlayerPacket) movePacket).setOnGround(false);
+        if (NetworkUtility.isMovePacket(packet)) {
+            NetworkUtility.setMoveOnGround(packet, false);
         }
 
-        if (packet instanceof ServerboundPlayerCommandPacket cmd) {
-            var action = cmd.getAction();
-            boolean sprintAction = action == ServerboundPlayerCommandPacket.Action.START_SPRINTING
-                                || action == ServerboundPlayerCommandPacket.Action.STOP_SPRINTING;
-            if (!sprintAction) return;
-
+        if (NetworkUtility.isSprintCommand(packet)) {
             if ("NCP".equals(m)) {
                 event.setCancelled(true);
             } else if ("NCPStrict".equals(m) && !canSprint()) {

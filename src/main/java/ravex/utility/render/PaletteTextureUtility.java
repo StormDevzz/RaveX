@@ -18,6 +18,7 @@ public final class PaletteTextureUtility {
     private static NativeImage svImage;
     private static DynamicTexture svTexture;
     private static int svKey = -1;
+    private static long svLastUpload = 0L;
 
     private static Identifier alphaId;
     private static NativeImage alphaImage;
@@ -49,16 +50,20 @@ public final class PaletteTextureUtility {
             MinecraftWrapper.getWrapper().getTextureManager().register(svId, svTexture);
             svKey = -1;
         }
-        int key = Math.round(hue * 255);
-        if (svKey != key) {
+        // hue is quantized, rebuilds throttled while dragging
+        int key = Math.round(hue * 127.5f);
+        long now = System.currentTimeMillis();
+        if (svKey != key && now - svLastUpload >= 33L) {
+            float quantizedHue = key / 128.0f;
             for (int y = 0; y < SIZE; y++) {
                 float v = 1.0f - y / (float) (SIZE - 1);
                 for (int x = 0; x < SIZE; x++) {
-                    svImage.setPixel(x, y, Color.HSBtoRGB(hue, x / (float) (SIZE - 1), v));
+                    svImage.setPixel(x, y, Color.HSBtoRGB(quantizedHue, x / (float) (SIZE - 1), v));
                 }
             }
             svTexture.upload();
             svKey = key;
+            svLastUpload = now;
         }
         return svId;
     }

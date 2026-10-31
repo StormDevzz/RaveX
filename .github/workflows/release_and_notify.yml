@@ -251,6 +251,20 @@ jobs:
           name: kickx-launcher-linux
           path: dist/launcher-linux/
 
+      # Step 2.5: Fetch the Baritone build the client integrates with.
+      # RaveX reflects against baritone.api.BaritoneAPI, and Baritone 1.17.0 is
+      # the release built for Minecraft 1.21.11, so it is pinned and shipped with
+      # every release instead of being left for the user to hunt down.
+      - name: Download Baritone for Minecraft 1.21.11
+        run: |
+          BARITONE_VERSION="1.17.0"
+          BARITONE_FILE="baritone-api-fabric-${BARITONE_VERSION}.jar"
+          BARITONE_URL="https://github.com/cabaletta/baritone/releases/download/v${BARITONE_VERSION}/${BARITONE_FILE}"
+          mkdir -p dist
+          curl -fL --retry 3 --retry-delay 2 -o "dist/${BARITONE_FILE}" "${BARITONE_URL}"
+          ls -lh "dist/${BARITONE_FILE}"
+          echo "BARITONE_FILE=dist/${BARITONE_FILE}" >> $GITHUB_ENV
+
       # Step 3: Setup Java
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -373,13 +387,18 @@ jobs:
             "dist/KickX-Launcher-Linux.tar.gz" \
             "dist/launcher-windows/KickXSetup.exe" \
             "dist/launcher-windows/kickx_launcher.exe" \
-            "dist/kickx-launcher-linux"; do
+            "dist/kickx-launcher-linux" \
+            "${BARITONE_FILE}"; do
             if [ -f "$f" ]; then VERIFY_FILES+=("$f"); fi
           done
 
           # Release notes = tracked notes + auto-generated verification appendix.
           cp .github/RELEASE_NOTES.md dist/RELEASE_NOTES_FULL.md
           {
+            echo ""
+            echo "## Bundled Baritone"
+            echo ""
+            echo "This release ships \`${BARITONE_FILE}\` - drop it into \`mods\` next to RaveX and the \`Baritone\`, \`PauseBaritone\` and the Baritone mode of \`AutoWalk\` unlock automatically."
             echo ""
             echo "## File verification"
             echo ""
@@ -423,8 +442,8 @@ jobs:
           
           # Create new release with compile artifact + launchers attached
           echo "Creating new release with launchers..."
-          echo "Files: $JAR $LAUNCHER_FILES ${EXTRA_ASSETS[*]} SHA256SUMS.txt kickx-version.txt"
-          if gh release create "$TAG" "$JAR" $LAUNCHER_FILES "${EXTRA_ASSETS[@]}" dist/SHA256SUMS.txt dist/kickx-version.txt --title "RaveX $VERSION" --notes-file dist/RELEASE_NOTES_FULL.md --latest; then
+          echo "Files: $JAR $BARITONE_FILE $LAUNCHER_FILES ${EXTRA_ASSETS[*]} SHA256SUMS.txt kickx-version.txt"
+          if gh release create "$TAG" "$JAR" "$BARITONE_FILE" $LAUNCHER_FILES "${EXTRA_ASSETS[@]}" dist/SHA256SUMS.txt dist/kickx-version.txt --title "RaveX $VERSION" --notes-file dist/RELEASE_NOTES_FULL.md --latest; then
             echo "release_status=created" >> $GITHUB_OUTPUT
             echo "release_tag=$TAG" >> $GITHUB_OUTPUT
             echo "release_version=$VERSION" >> $GITHUB_OUTPUT

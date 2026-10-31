@@ -1,5 +1,6 @@
 #include "anchoraura_jni.hpp"
 #include "anchoraura.hpp"
+#include "../../../common/include/jni_raii.hpp"
 #include <vector>
 
 using namespace ravex;
@@ -8,17 +9,18 @@ static std::vector<Vec3> parseBlockData(JNIEnv* env, jdoubleArray arr) {
     std::vector<Vec3> result;
     if (!arr) return result;
     jsize len = env->GetArrayLength(arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
     if (len < 3) return result;
 
-    jdouble* data = (jdouble*)env->GetPrimitiveArrayCritical(arr, nullptr);
-    if (!data) return result;
+    JniDoubleElements guard(env, arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
+    if (!guard) return result;
 
+    const jdouble* data = guard.get();
     result.reserve(len / 3);
     for (jsize i = 0; i + 2 < len; i += 3) {
         result.push_back({data[i], data[i+1], data[i+2]});
     }
-
-    env->ReleasePrimitiveArrayCritical(arr, data, JNI_ABORT);
     return result;
 }
 
@@ -26,11 +28,14 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     EntityStats s{};
     if (!arr) return s;
     jsize len = env->GetArrayLength(arr);
+    if (ravex::jni::checkAndClearException(env)) return s;
     if (len < 15) return s;
 
-    jdouble* data = (jdouble*)env->GetPrimitiveArrayCritical(arr, nullptr);
-    if (!data) return s;
+    JniDoubleElements guard(env, arr);
+    if (ravex::jni::checkAndClearException(env)) return s;
+    if (!guard) return s;
 
+    const jdouble* data = guard.get();
     s.armorValue           = data[0];
     s.toughness            = data[1];
     s.blastProtectionEpf   = data[2];
@@ -46,8 +51,6 @@ static EntityStats parseStats(JNIEnv* env, jdoubleArray arr) {
     s.motionY              = data[12];
     s.motionZ              = data[13];
     s.totemCount           = data[14];
-
-    env->ReleasePrimitiveArrayCritical(arr, data, JNI_ABORT);
     return s;
 }
 

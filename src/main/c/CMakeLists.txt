@@ -15,6 +15,7 @@ pkg_check_modules(DBUS REQUIRED dbus-1)
 pkg_check_modules(CURL REQUIRED libcurl)
 
 add_subdirectory(common)
+add_subdirectory(addon)
 
 function(add_ravex_c_module name)
     cmake_parse_arguments(MOD "" "" "SOURCES;INCLUDES;LIBS" ${ARGN})
@@ -39,4 +40,5 @@ function(add_ravex_c_module name)
     )
 endfunction()
 
-add_subdirectory(hooks/mediaquery)
+# mediaquery lives in the cpp tree now, one implementation for both platforms
+# add_subdirectory(hooks/mediaquery)

@@ -20,4 +20,13 @@ public class MixinScreenEffectRenderer {
             ci.cancel();
         }
     }
+
+    @Inject(method = "renderItemActivationAnimation", at = @At("HEAD"), cancellable = true)
+    private void onTotemOverlay(PoseStack poseStack, float partialTick, net.minecraft.client.renderer.SubmitNodeCollector submitNodeCollector, CallbackInfo ci) {
+        ravex.modules.render.Animations m = Modules.get(ravex.modules.render.Animations.class);
+        if (m == null || !Modules.enabled(ravex.modules.render.Animations.class)) return;
+        if (!m.totemGroup || "Vanilla".equals(m.totemMode)) return;
+        // own overlay draws in the Gui pass
+        ci.cancel();
+    }
 }

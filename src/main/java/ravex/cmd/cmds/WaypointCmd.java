@@ -5,9 +5,27 @@ import ravex.modules.client.Commands;
 import java.util.Locale;
 import ravex.manager.ModuleManager;
 import ravex.mcwrapper.MinecraftWrapper;
+import java.util.List;
 public class WaypointCmd extends Cmd {
     public WaypointCmd() {
         super("waypoint", "Manage waypoints", "wp");
+    }
+
+    @Override
+    public List<String> getSubcommandSuggestions(String[] args) {
+        if (args.length == 2) {
+            return List.of("add", "list", "remove", "delete", "clear");
+        }
+        if (args.length >= 3) {
+            String sub = args[1].toLowerCase(Locale.ROOT);
+            if (sub.equals("add") && args.length == 3) {
+                return List.of("<name>");
+            }
+            if ((sub.equals("remove") || sub.equals("delete")) && args.length == 3) {
+                return List.of("<name>");
+            }
+        }
+        return List.of();
     }
     @Override
     public void execute(String[] args) {

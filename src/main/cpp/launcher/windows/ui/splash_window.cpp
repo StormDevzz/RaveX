@@ -237,9 +237,7 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             HDC hdc = BeginPaint(hwnd, &ps);
             if (!g_splash.bgBrush) g_splash.bgBrush = CreateSolidBrush(g_splash.theme.bg);
             RECT crc; GetClientRect(hwnd, &crc);
-            // double-buffered paint: compose background + spinner + logo off-screen
-            // and blit once. Direct GDI+ repaints every 16 ms used to make the
-            // spinner dots visibly flicker.
+            // double-buffered: direct 16 ms GDI+ repaints made the spinner flicker
             HDC mem = CreateCompatibleDC(hdc);
             HBITMAP memBmp = (mem && (crc.right > 0) && (crc.bottom > 0))
                 ? CreateCompatibleBitmap(hdc, crc.right, crc.bottom) : nullptr;

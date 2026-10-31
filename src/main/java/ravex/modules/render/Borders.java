@@ -1,7 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.world.level.ChunkPos;
 import ravex.mcwrapper.MinecraftWrapper;
 
 @Module(name = "Borders", category = "Render")
@@ -18,14 +17,14 @@ public class Borders {
     public double lineWidth = 1.5;
     @Parameter(name = "RenderDist", min = 16, max = 128, step = 16)
     public double renderDistance = 64;
-    private ChunkPos lastChunk;
+    private net.minecraft.world.level.ChunkPos lastChunk;
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null || mc.getLevel() == null) return;
         lastChunk = player.chunkPosition();
     }
-    public ChunkPos getCurrentChunk() {
+    public net.minecraft.world.level.ChunkPos getCurrentChunk() {
         return lastChunk;
     }
 }

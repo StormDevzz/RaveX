@@ -10,6 +10,14 @@ public class ConfigCmd extends Cmd {
     public ConfigCmd() {
         super("config", "Manage configs", "cfg");
     }
+
+    @Override
+    public List<String> getSubcommandSuggestions(String[] args) {
+        if (args.length == 2) {
+            return List.of("save", "load", "list", "delete");
+        }
+        return List.of();
+    }
     @Override
     public void execute(String[] args) {
         String pref = ModuleManager.get(Commands.class).prefix;

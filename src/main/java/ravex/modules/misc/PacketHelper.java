@@ -9,27 +9,30 @@ import ravex.utility.network.NetworkUtility;
 import ravex.modules.Modules;
 @Module(name = "PacketHelper", category = "Misc")
 public class PacketHelper {
-    @Parameter(name = "Logging")
+    @Parameter(name = "Logging", group = true)
+    public boolean groupLogging = true;
+    @Parameter(name = "LogEnabled", visible = "groupLogging")
     public boolean loggingEnabled = false;
-    @Parameter(name = "Cancel")
-    public boolean cancelEnabled = false;
-
-    @Parameter(name = "LogOutgoing")
+    @Parameter(name = "Outgoing", visible = "groupLogging && logEnabled")
     public boolean logOutgoing = true;
-    @Parameter(name = "LogIncoming")
+    @Parameter(name = "Incoming", visible = "groupLogging && logEnabled")
     public boolean logIncoming = false;
-    @Parameter(name = "LogToChat")
+    @Parameter(name = "ToChat", visible = "groupLogging && logEnabled")
     public boolean logToChat = true;
 
-    @Parameter(name = "CancelMove")
+    @Parameter(name = "Cancel", group = true)
+    public boolean groupCancel = true;
+    @Parameter(name = "CancelEnabled", visible = "groupCancel")
+    public boolean cancelEnabled = false;
+    @Parameter(name = "CancelMove", visible = "groupCancel && cancelEnabled")
     public boolean cancelMove = false;
-    @Parameter(name = "CancelInput")
+    @Parameter(name = "CancelInput", visible = "groupCancel && cancelEnabled")
     public boolean cancelInput = false;
-    @Parameter(name = "CancelInteract")
+    @Parameter(name = "CancelInteract", visible = "groupCancel && cancelEnabled")
     public boolean cancelInteract = false;
-    @Parameter(name = "CancelSwing")
+    @Parameter(name = "CancelSwing", visible = "groupCancel && cancelEnabled")
     public boolean cancelSwing = false;
-    @Parameter(name = "CancelUse")
+    @Parameter(name = "CancelUse", visible = "groupCancel && cancelEnabled")
     public boolean cancelUse = false;
 
     @Subscribe
@@ -67,8 +70,4 @@ public class PacketHelper {
         if (NetworkUtility.isUsePacket(packet) && cancelUse) return true;
         return false;
     }
-
-
-
-
 }

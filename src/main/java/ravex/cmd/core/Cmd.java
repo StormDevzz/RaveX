@@ -1,4 +1,5 @@
 package ravex.cmd.core;
+import java.util.List;
 public abstract class Cmd {
     public static boolean process(String message) {
         return CmdReg.INSTANCE.process0(message);
@@ -18,4 +19,8 @@ public abstract class Cmd {
     public String getName() { return name; }
     public String getDescription() { return description; }
     public String[] getAliases() { return aliases; }
+
+    public List<String> getSubcommandSuggestions(String[] args) {
+        return List.of();
+    }
 }

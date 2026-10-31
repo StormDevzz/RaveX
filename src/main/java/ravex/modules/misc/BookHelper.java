@@ -27,6 +27,8 @@ public class BookHelper {
     public double maxPages = 100.0;
     @Parameter(name = "BookTitle")
     public String bookTitle = "";
+    @Parameter(name = "SignFill", visible = "mode=Fill")
+    public boolean signFill = false;
     public void onEnable() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getConnection() == null) {
@@ -67,6 +69,13 @@ public class BookHelper {
                 );
                 InventoryUtility.setWrittenBookContent(stack, modified);
                 ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_updated", titleFilterable.raw(), newAuthorStr));
+                // keep the server in sync with the same packet
+                List<String> editedPages = new ArrayList<>();
+                var access = new net.minecraft.client.gui.screens.inventory.BookViewScreen.BookAccess(modified.getPages(false));
+                for (int i = 0; i < access.getPageCount(); i++) {
+                    editedPages.add(access.getPage(i).getString());
+                }
+                NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, editedPages, Optional.of(titleFilterable.raw())));
             } else {
                 ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_noread"));
             }
@@ -108,14 +117,16 @@ public class BookHelper {
             pages.add(fullPage);
         }
         String title = bookTitle;
-        if (title == null) title = "";
-        if (title.isEmpty()) {
-            NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, pages, Optional.empty()));
-        } else {
-            if (title.length() > 32) title = title.substring(0, 32);
+        if (signFill && (title == null || title.isEmpty())) title = newTitle;
+        boolean sign = signFill && title != null && !title.isEmpty();
+        if (sign && title.length() > 32) title = title.substring(0, 32);
+        if (sign) {
             NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, pages, Optional.of(title)));
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_signed", title));
+        } else {
+            NetworkUtility.sendPacket(new ServerboundEditBookPacket(slot, pages, Optional.empty()));
+            ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_filled", count));
         }
-        ClientAlertUtility.alert(ravex.utility.misc.LanguageUtility.t("book_filled", count));
     }
 
 

@@ -1,13 +1,11 @@
 package ravex.modules.world.nuker;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import ravex.modules.world.GhostBlocks;
 import ravex.parameter.ActionParameter;
+import ravex.utility.misc.block.BlockUtility;
 import ravex.utility.misc.PhysicUtility;
 import ravex.utility.nativelib.NativeLibraryUtility;
 import ravex.utility.player.SwingUtility;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import java.util.ArrayList;
 import java.util.List;
 import com.google.gson.JsonArray;
@@ -24,6 +22,8 @@ public class Nuker {
     public double range = 5.0;
     @Parameter(name = "Mode", modes = {"Sphere", "Cube"})
     public String mode = "Sphere";
+    @Parameter(name = "List", modes = {"Whitelist", "Blacklist"})
+    public String listMode = "Whitelist";
     @Parameter(name = "Delay", min = 50, max = 1000, step = 50)
     public double delay = 200;
     @Parameter(name = "AutoDisable")
@@ -31,15 +31,18 @@ public class Nuker {
     @Parameter(name = "Render")
     public boolean render = true;
     @Parameter(name = "Color", color = true, visible = "render")
-    public int color = 0x3FFF4444;
+    public int color = 0x3F40A9F8;
     public final ActionParameter blocks = new ActionParameter("Blocks", () -> {
         MinecraftWrapper.getWrapper().setScreen(
             ravex.gui.browser.            BlockBrowserScreen.forNuker(MinecraftWrapper.getWrapper().getCurrentScreen())
         );
     });
     public static net.minecraft.core.BlockPos currentTarget = null;
+    public static final ravex.utility.player.rotation.SilentRotationUtility silentRotation =
+        new ravex.utility.player.rotation.SilentRotationUtility();
+    private net.minecraft.core.BlockPos aimedTarget = null;
     private long lastBreakTime = 0;
-    private net.minecraft.core.BlockPos currentMiningTarget = null;
+    private static net.minecraft.core.BlockPos currentMiningTarget = null;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_nuker");
     public static native int[] nativeFindBlocks(
         double px, double py, double pz,
@@ -50,8 +53,8 @@ public class Nuker {
     );
     public void saveExtra(JsonObject obj) {
         JsonArray arr = new JsonArray();
-        for (Identifier id : NukerData.INSTANCE.getSelectedBlocks()) {
-            arr.add(id.toString());
+        for (String id : NukerData.INSTANCE.getSelectedBlocks()) {
+            arr.add(id);
         }
         obj.add("selectedBlocks", arr);
     }
@@ -60,17 +63,27 @@ public class Nuker {
         NukerData.INSTANCE.clear();
         JsonArray arr = obj.getAsJsonArray("selectedBlocks");
         for (int i = 0; i < arr.size(); i++) {
-            Identifier id = Identifier.tryParse(arr.get(i).getAsString());
-            NukerData.INSTANCE.select(id);
+            String id = arr.get(i).getAsString();
+            if (id.indexOf(':') > 0) NukerData.INSTANCE.select(id);
         }
     }
     public void onDisable() {
         var mc = MinecraftWrapper.getWrapper();
-        if (currentMiningTarget != null && mc.getGameMode() != null) {
-            mc.getGameMode().stopDestroyBlock();
-        }
         currentMiningTarget = null;
         currentTarget = null;
+        aimedTarget = null;
+        silentRotation.hasRotation = false;
+        if (mc.getGameMode() != null) {
+            mc.getGameMode().stopDestroyBlock();
+        }
+    }
+    public static boolean ownsMining() {
+        if (!Modules.enabled(Nuker.class) || currentMiningTarget == null) return false;
+        var mc = MinecraftWrapper.getWrapper();
+        return mc.getLevel() != null && !mc.getLevel().getBlockState(currentMiningTarget).isAir();
+    }
+    public static boolean blocksVanillaMining(net.minecraft.core.BlockPos pos) {
+        return ownsMining() && !pos.equals(currentMiningTarget);
     }
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
@@ -83,6 +96,7 @@ public class Nuker {
                 currentTarget = null;
             } else {
                 net.minecraft.core.Direction dir = getDirection(mc.getPlayer().getEyePosition(), currentMiningTarget);
+                silentRotation.setAnglesTo(mc, PhysicUtility.centerOf(currentMiningTarget));
                 mc.getGameMode().continueDestroyBlock(currentMiningTarget, dir);
                 SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
                 lastBreakTime = now;
@@ -105,8 +119,10 @@ public class Nuker {
                     net.minecraft.core.BlockPos pos = new net.minecraft.core.BlockPos(x, y, z);
                     net.minecraft.world.level.block.state.BlockState state = mc.getLevel().getBlockState(pos);
                     if (state.isAir() || state.getDestroySpeed(mc.getLevel(), pos) < 0) continue;
-                    Identifier id = BuiltInRegistries.BLOCK.getKey(state.getBlock());
-                    if (NukerData.INSTANCE.isSelected(id)) {
+                    var blockId = BlockUtility.getIdentifier(state.getBlock());
+                    boolean selected = blockId != null && NukerData.INSTANCE.isSelected(blockId.toString());
+                    // whitelist breaks the list, blacklist the rest
+                    if ("Whitelist".equals(listMode) ? selected : !selected) {
                         candidates.add(pos);
                     }
                 }
@@ -114,9 +130,13 @@ public class Nuker {
         }
         if (candidates.isEmpty()) {
             currentTarget = null;
+            silentRotation.hasRotation = false;
             if (autoDisable) Modules.setEnabled(Nuker.class, false);
             return;
         }
+        double reach = interactionReach(mc, range);
+        boolean sphere = "Sphere".equals(mode);
+        double limit = sphere ? Math.min(reach, range) : reach;
         net.minecraft.core.BlockPos target = null;
         if (NATIVE.isLoaded()) {
             try {
@@ -129,27 +149,35 @@ public class Nuker {
                     by[i] = candidates.get(i).getY();
                     bz[i] = candidates.get(i).getZ();
                 }
-                int modeVal = "Sphere".equals(mode) ? 0 : 1;
+                int modeVal = sphere ? 0 : 1;
                 net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition();
                 int[] result = nativeFindBlocks(
                     eye.x, eye.y, eye.z,
-                    r, modeVal,
+                    limit, modeVal,
                     bx, by, bz, cnt
                 );
-                if (result.length >= 3) {
+                if (result != null && result.length >= 3) {
                     target = new net.minecraft.core.BlockPos(result[0], result[1], result[2]);
                 }
-            } catch (Exception e) {
+            } catch (Throwable ignored) {
                 target = null;
             }
         }
         if (target == null) {
-            target = fallbackFindTarget(candidates, mc);
+            target = fallbackFindTarget(candidates, mc, limit, sphere);
         }
         if (target != null) {
-            if (!target.equals(currentMiningTarget)) {
-                if (currentMiningTarget != null) {
-                    mc.getGameMode().stopDestroyBlock();
+            if (!target.equals(aimedTarget)) {
+                // rotation already sent, keep breaking the old aim
+                boolean keepAimed = aimedTarget != null
+                    && candidates.contains(aimedTarget)
+                    && targetDistSq(mc.getPlayer().getEyePosition(), aimedTarget, sphere) <= limit * limit;
+                if (keepAimed) {
+                    target = aimedTarget;
+                } else {
+                    aimedTarget = target;
+                    silentRotation.setAnglesTo(mc, PhysicUtility.centerOf(target));
+                    return;
                 }
             }
             currentMiningTarget = target;
@@ -157,34 +185,43 @@ public class Nuker {
             net.minecraft.core.Direction dir = getDirection(mc.getPlayer().getEyePosition(), target);
             mc.getGameMode().startDestroyBlock(target, dir);
             SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
-            GhostBlocks.markMined(target);
             lastBreakTime = now;
         }
     }
-    private net.minecraft.core.BlockPos fallbackFindTarget(List<net.minecraft.core.BlockPos> candidates, MinecraftWrapper mc) {
-        boolean sphere = "Sphere".equals(mode);
+    private static double interactionReach(MinecraftWrapper mc, double range) {
+        double reach = 4.5;
+        try {
+            reach = mc.getPlayer().getAttributeValue(
+                net.minecraft.world.entity.ai.attributes.Attributes.BLOCK_INTERACTION_RANGE);
+        } catch (Throwable ignored) {
+        }
+        return Math.max(1.0, Math.min(range, reach - 0.01));
+    }
+    private net.minecraft.core.BlockPos fallbackFindTarget(List<net.minecraft.core.BlockPos> candidates,
+                                                           MinecraftWrapper mc, double limit, boolean sphere) {
         net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition();
-        double rSq = range * range;
+        double rSq = limit * limit;
         net.minecraft.core.BlockPos closest = null;
         double closestDist = Double.MAX_VALUE;
         for (net.minecraft.core.BlockPos pos : candidates) {
-            if (sphere) {
-                net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(pos);
-                double distSq = eye.distanceToSqr(center);
-                if (distSq > rSq) continue;
-                if (distSq < closestDist) {
-                    closestDist = distSq;
-                    closest = pos;
-                }
-            } else {
-                double dist = eye.distanceTo(PhysicUtility.centerOf(pos));
-                if (dist < closestDist) {
-                    closestDist = dist;
-                    closest = pos;
-                }
+            double distSq = targetDistSq(eye, pos, sphere);
+            if (distSq > rSq) continue;
+            if (distSq < closestDist) {
+                closestDist = distSq;
+                closest = pos;
             }
         }
         return closest;
+    }
+    private static double targetDistSq(net.minecraft.world.phys.Vec3 eye,
+                                       net.minecraft.core.BlockPos pos, boolean sphere) {
+        return sphere ? eye.distanceToSqr(PhysicUtility.centerOf(pos)) : distToBoxSq(eye, pos);
+    }
+    private static double distToBoxSq(net.minecraft.world.phys.Vec3 eye, net.minecraft.core.BlockPos pos) {
+        double dx = Math.max(Math.max(pos.getX() - eye.x, 0.0), eye.x - pos.getX() - 1.0);
+        double dy = Math.max(Math.max(pos.getY() - eye.y, 0.0), eye.y - pos.getY() - 1.0);
+        double dz = Math.max(Math.max(pos.getZ() - eye.z, 0.0), eye.z - pos.getZ() - 1.0);
+        return dx * dx + dy * dy + dz * dz;
     }
     public static net.minecraft.core.Direction getDirection(net.minecraft.world.phys.Vec3 eye, net.minecraft.core.BlockPos pos) {
         net.minecraft.world.phys.Vec3 center = PhysicUtility.centerOf(pos);
@@ -202,13 +239,13 @@ public class Nuker {
             }
         } else if (absX <= absY && absX <= absZ) {
             if (absY >= absZ) {
-                return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
+                return dy > 0 ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
             } else {
                 return dz > 0 ? net.minecraft.core.Direction.SOUTH : net.minecraft.core.Direction.NORTH;
             }
         } else {
             if (absY >= absX) {
-                return dy > 0 ? net.minecraft.core.Direction.DOWN : net.minecraft.core.Direction.UP;
+                return dy > 0 ? net.minecraft.core.Direction.UP : net.minecraft.core.Direction.DOWN;
             } else {
                 return dx > 0 ? net.minecraft.core.Direction.EAST : net.minecraft.core.Direction.WEST;
             }

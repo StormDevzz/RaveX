@@ -1,16 +1,20 @@
 #include "trap_jni.hpp"
 #include "trap.hpp"
+#include "../../../common/include/jni_raii.hpp"
 #include <vector>
 
 static std::vector<BlockPos> parseBlockData(JNIEnv* env, jdoubleArray arr) {
     std::vector<BlockPos> result;
     if (!arr) return result;
     jsize len = env->GetArrayLength(arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
     if (len < 3) return result;
 
-    jdouble* data = env->GetDoubleArrayElements(arr, nullptr);
-    if (!data) return result;
+    JniDoubleElements guard(env, arr);
+    if (ravex::jni::checkAndClearException(env)) return result;
+    if (!guard) return result;
 
+    const jdouble* data = guard.get();
     for (jsize i = 0; i + 2 < len; i += 3) {
         result.push_back({
             static_cast<int>(data[i]),
@@ -18,8 +22,6 @@ static std::vector<BlockPos> parseBlockData(JNIEnv* env, jdoubleArray arr) {
             static_cast<int>(data[i+2])
         });
     }
-
-    env->ReleaseDoubleArrayElements(arr, data, JNI_ABORT);
     return result;
 }
 
@@ -44,6 +46,7 @@ Java_ravex_modules_combat_Trap_nativeCalculateTrap(
 
     jdoubleArray out = env->NewDoubleArray(8);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     jdouble buf[8] = {
         result.found ? 1.0 : 0.0,
@@ -57,5 +60,6 @@ Java_ravex_modules_combat_Trap_nativeCalculateTrap(
     };
 
     env->SetDoubleArrayRegion(out, 0, 8, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }

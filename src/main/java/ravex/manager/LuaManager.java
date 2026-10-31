@@ -392,8 +392,12 @@ public class LuaManager {
             var rp = ModuleManager.get(ravex.modules.client.RichPresence.class);
             if (rp != null && rp.largeImage != null) {
                 String val = rp.largeImage;
-                if ("icon".equals(val)) {
+                if ("icon".equalsIgnoreCase(val)) {
                     return "ravexdc";
+                }
+                if ("video".equalsIgnoreCase(val)) {
+                    // raw url, discord adds the media proxy itself
+                    return "https://pomf2.lain.la/f/igp9j8tp.gif";
                 }
                 return val;
             }

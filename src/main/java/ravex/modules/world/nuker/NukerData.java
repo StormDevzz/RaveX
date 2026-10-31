@@ -1,44 +1,45 @@
 package ravex.modules.world.nuker;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.block.Block;
 import java.util.LinkedHashSet;
 import java.util.Set;
 public class NukerData {
     public static final NukerData INSTANCE = new NukerData();
-    private final Set<Identifier> selectedBlocks = new LinkedHashSet<>();
+    // ids stored as namespace:path strings
+    private final Set<String> selectedBlocks = new LinkedHashSet<>();
     private NukerData() {
         selectDefault();
     }
     private void selectDefault() {
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.STONE));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.COBBLESTONE));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.DIRT));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.GRAVEL));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.SAND));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.OAK_LOG));
-        selectedBlocks.add(BuiltInRegistries.BLOCK.getKey(net.minecraft.world.level.block.Blocks.OAK_LEAVES));
+        selectedBlocks.add("minecraft:stone");
+        selectedBlocks.add("minecraft:cobblestone");
+        selectedBlocks.add("minecraft:dirt");
+        selectedBlocks.add("minecraft:grass_block");
+        selectedBlocks.add("minecraft:gravel");
+        selectedBlocks.add("minecraft:sand");
+        selectedBlocks.add("minecraft:oak_log");
+        selectedBlocks.add("minecraft:oak_leaves");
     }
-    public Set<Identifier> getSelectedBlocks() {
+    public Set<String> getSelectedBlocks() {
         return selectedBlocks;
     }
-    public boolean isSelected(Block block) {
-        return selectedBlocks.contains(BuiltInRegistries.BLOCK.getKey(block));
+    public boolean isSelected(String id) {
+        return id != null && selectedBlocks.contains(id);
     }
-    public boolean isSelected(Identifier id) {
-        return selectedBlocks.contains(id);
+    public boolean isSelected(net.minecraft.resources.Identifier id) {
+        return id != null && isSelected(id.toString());
     }
-    public void toggle(Identifier id) {
-        if (selectedBlocks.contains(id)) {
-            selectedBlocks.remove(id);
-        } else {
+    public void toggle(String id) {
+        if (id == null) return;
+        if (!selectedBlocks.remove(id)) {
             selectedBlocks.add(id);
         }
     }
-    public void select(Identifier id) {
-        selectedBlocks.add(id);
+    public void toggle(net.minecraft.resources.Identifier id) {
+        if (id != null) toggle(id.toString());
     }
-    public void deselect(Identifier id) {
+    public void select(String id) {
+        if (id != null) selectedBlocks.add(id);
+    }
+    public void deselect(String id) {
         selectedBlocks.remove(id);
     }
     public void clear() {

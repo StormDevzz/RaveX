@@ -22,6 +22,7 @@ import ravex.event.client.SoundEvent;
 
 public class ParameterElement {
     private final Parameter<?> parameter;
+    private final String moduleName;
     private boolean isDragging = false;
     private float toggleAnimProgress = 0f;
     private long toggleLastUpdate = 0;
@@ -35,8 +36,9 @@ public class ParameterElement {
     private long lastAnimTime = 0;
     private double lastSliderValue = Double.NaN;
 
-    public ParameterElement(Parameter<?> parameter) {
+    public ParameterElement(Parameter<?> parameter, String moduleName) {
         this.parameter = parameter;
+        this.moduleName = moduleName;
         this.expandAnimProgress = parameter.isVisible() ? 1.0f : 0.0f;
         this.dropdownAnimProgress = parameter.isExpanded() ? 1.0f : 0.0f;
     }
@@ -167,7 +169,13 @@ public class ParameterElement {
         updateAnimations();
         if (height <= 0) return;
 
-        Render2DUtility.pushScissor(graphics, x, y, width, height);
+        // scissor only while animating, settled rows cannot overflow
+        boolean settled = expandAnimProgress >= 0.999f
+            && (dropdownAnimProgress <= 0.001f || dropdownAnimProgress >= 0.999f);
+        boolean clipped = !settled;
+        if (clipped) {
+            Render2DUtility.pushScissor(graphics, x, y, width, height);
+        }
 
         int activeColor = ColorUtility.getActiveColor();
         boolean hovered = mouseX >= x && mouseX <= x + width && mouseY >= y && mouseY <= y + height;
@@ -178,11 +186,36 @@ public class ParameterElement {
         boolean switchless = ModuleManager.get(ravex.modules.client.ClickGui.class).switchless;
 
         if (parameter instanceof GroupParameter gp) {
+            // only Animations puts a switch on group headers
+            boolean groupSwitch = "Animations".equals(moduleName);
             int baseCol = ColorUtility.interpolate(0xFF808090, 0xFFE0E0F0, toggleAnimProgress);
             int textCol = hovered ? 0xFFFFFFFF : baseCol;
-            drawNameFit(graphics, gp.getName(), x + 8, y + 7, width - 28, textCol);
+            drawNameFit(graphics, gp.getName(), x + 8, y + 7, width - 16 - (groupSwitch ? 30 : 22), textCol);
 
-            float chevCx = x + width - 13f;
+            if (groupSwitch) {
+                int swW = 22;
+                int swH = 11;
+                int swX = x + width - swW - 8 - 14;
+                int swY = y + (height - swH) / 2;
+                int trackColor = ColorUtility.interpolate(0xFF2A2A3A, activeColor, toggleAnimProgress);
+                graphics.pose().pushMatrix();
+                graphics.pose().translate((float) swX, (float) swY);
+                Render2DUtility.drawRound(graphics, 0, 0, swW, swH, swH / 2, trackColor);
+                graphics.pose().popMatrix();
+
+                float knobSize = 9f;
+                float knobRange = swW - knobSize - 2;
+                float knobDrawX = swX + 1f + toggleAnimProgress * knobRange;
+                float knobDrawY = swY + 1f;
+
+                Identifier knobTex = Render2DUtility.getSmoothCircle();
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(knobDrawX, knobDrawY);
+                graphics.blit(RenderPipelines.GUI_TEXTURED, knobTex, 0, 0, 0f, 0f, (int) knobSize, (int) knobSize, (int) knobSize, (int) knobSize, 0xFFFFFFFF);
+                graphics.pose().popMatrix();
+            }
+
+            float chevCx = x + width - 10f;
             float chevCy = y + height / 2f;
             float angle = gp.getChevronAngle();
             int chevCol = hovered ? ColorUtility.interpolate(0xFFA0A0B0, activeColor, toggleAnimProgress)
@@ -405,21 +438,9 @@ public class ParameterElement {
             int glowColor = ColorUtility.withAlpha(argb, (int) (40 + 120 * alpha01));
             Render2DUtility.drawGaussianShadow(graphics, chipX - 2, chipY - 2, chipSize + 4, chipSize + 4, 8, glowColor);
 
-            if (alpha01 < 0.98f) {
-                int cell = 2;
-                for (int cy = 0; cy < chipSize; cy += cell) {
-                    for (int cx = 0; cx < chipSize; cx += cell) {
-                        boolean light = ((cx / cell) + (cy / cell)) % 2 == 0;
-                        int chk = light ? 0xFFB0B0BC : 0xFF70707C;
-                        int px0 = chipX + cx;
-                        int py0 = chipY + cy;
-                        int px1 = Math.min(px0 + cell, chipX + chipSize);
-                        int py1 = Math.min(py0 + cell, chipY + chipSize);
-                        graphics.fill(px0, py0, px1, py1, chk);
-                    }
-                }
-            }
-            graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, argb);
+            // hue preview must be opaque, a translucent fill looks black
+            int chipColor = 0xFF000000 | (argb & 0x00FFFFFF);
+            graphics.fill(chipX, chipY, chipX + chipSize, chipY + chipSize, chipColor);
             int borderCol = hovered ? ColorUtility.withAlpha(activeColor, 160) : ColorUtility.withAlpha(activeColor, 45);
             Render2DUtility.drawBorder(graphics, chipX - 1, chipY - 1, chipSize + 2, chipSize + 2, 1, borderCol);
 
@@ -446,33 +467,38 @@ public class ParameterElement {
             String keyText = isListening ? "..." : KeybindParameter.getKeyName(kp.getValue());
             float bAnim = bindListenAnim;
             int rightEdge = x + width - 8;
-            int keyCol = ColorUtility.interpolate(activeColor, 0xFF00FF00, bAnim);
+            int keyCol = activeColor;
+            int pillW = 0;
+            int pillH = 0;
+            int pillX = 0;
+            int pillY = 0;
             if (bAnim > 0.01f) {
                 int textW = FontRenderUtility.getStringWidth(keyText);
-                int pillW = textW + 10;
-                int pillH = FontRenderUtility.getFontHeight() + 6;
-                int pillX = rightEdge - pillW;
-                int pillY = y + (22 - pillH) / 2;
+                pillW = textW + 10;
+                pillH = FontRenderUtility.getFontHeight() + 6;
+                pillX = rightEdge - pillW;
+                pillY = y + (22 - pillH) / 2;
                 float pulse = 0.5f + 0.5f * (float) Math.sin(System.currentTimeMillis() * 0.004);
                 int pillA = (int) ((30 + 50 * pulse) * bAnim);
                 int pillBorderA = (int) ((60 + 70 * pulse) * bAnim);
-                Render2DUtility.drawPixelPerfectRound(graphics, pillX, pillY, pillW, pillH, pillH / 2, ColorUtility.withAlpha(0xFF00381A, pillA));
-                Render2DUtility.drawPixelPerfectRoundBorder(graphics, pillX, pillY, pillW, pillH, pillH / 2, 1, ColorUtility.withAlpha(0xFF00FF66, pillBorderA));
+                Render2DUtility.drawPixelPerfectRound(graphics, pillX, pillY, pillW, pillH, pillH / 2, ColorUtility.withAlpha(activeColor, pillA));
+                Render2DUtility.drawPixelPerfectRoundBorder(graphics, pillX, pillY, pillW, pillH, pillH / 2, 1, ColorUtility.withAlpha(activeColor, pillBorderA));
             }
             if (isListening) {
-                int dotW = FontRenderUtility.getStringWidth(".");
-                int gap = 2;
-                int totalW = dotW * 3 + gap * 2;
-                int dotsX = rightEdge - totalW;
+                int dotSize = 3;
+                int gap = 3;
+                int totalW = dotSize * 3 + gap * 2;
+                int startX = pillX + (pillW - totalW) / 2;
+                int dotY = pillY + (pillH - dotSize) / 2;
+                Identifier dotTex = Render2DUtility.getSmoothCircle();
                 long now = System.currentTimeMillis();
                 for (int i = 0; i < 3; i++) {
                     double phase = now * 0.008 - i * 0.85;
                     float wave = (float) (0.5 + 0.5 * Math.sin(phase));
                     float eased = AnimationUtility.Easing.CUBIC_OUT.apply(wave);
-                    int dotA = (int) ((0.2f + 0.8f * eased) * 255 * bAnim);
-                    int dx = dotsX + i * (dotW + gap);
-                    int dy = y + 7 + (eased > 0.5f ? 0 : 1);
-                    FontRenderUtility.drawString(graphics, ".", dx, dy, ColorUtility.withAlpha(0xFF00FF00, dotA), true);
+                    int dotA = (int) ((0.25f + 0.75f * eased) * 255 * bAnim);
+                    graphics.blit(RenderPipelines.GUI_TEXTURED, dotTex, startX + i * (dotSize + gap), dotY,
+                        0f, 0f, dotSize, dotSize, dotSize, dotSize, ColorUtility.withAlpha(activeColor, dotA));
                 }
             } else {
                 drawValueFit(graphics, keyText, rightEdge, y + 7, x + 8 + kpNameW + 6, keyCol);
@@ -482,7 +508,9 @@ public class ParameterElement {
             String text = ravex.utility.misc.LanguageUtility.paramName(parameter.getName()) + ": " + parameter.getValue();
             drawNameFit(graphics, text, x + 8, y + 7, width - 16, 0xFFC0C0D0);
         }
-        Render2DUtility.popScissor(graphics);
+        if (clipped) {
+            Render2DUtility.popScissor(graphics);
+        }
     }
 
     public boolean mouseClicked(double mouseX, double mouseY, int button, int x, int y, int width, int height) {
@@ -567,6 +595,9 @@ public class ParameterElement {
                 return true;
             } else if (parameter instanceof BooleanParameter bp) {
                 bp.setValue(!bp.getValue());
+                if (bp.getValue() && "SelectEntity".equals(parameter.getName())) {
+                    ravex.modules.misc.AutoLog.openBrowser();
+                }
                 playSound();
                 return true;
             } else if (parameter instanceof ModeParameter mp) {
@@ -591,6 +622,12 @@ public class ParameterElement {
                 playSound();
                 return true;
             } else if (parameter instanceof ravex.parameter.StringParameter sp) {
+                // autoLog entity field opens the browser, not a text box
+                if ("Entity".equals(parameter.getName())) {
+                    ravex.modules.misc.AutoLog.openBrowser();
+                    playSound();
+                    return true;
+                }
                 if (ClickGUI.activeStringParameterElement != null && ClickGUI.activeStringParameterElement.getParameter() == sp) {
                     ClickGUI.activeStringParameterElement = null;
                 } else {

@@ -6,8 +6,8 @@ import ravex.modules.annotations.Parameter;
 public class ClickGui {
     @Parameter(name = "Background")
     public boolean drawBackground = true;
-    @Parameter(name = "ColorMode", modes = {"Positive", "Fade", "Rainbow", "DoubleColor"})
-    public String colorMode = "Positive";
+    @Parameter(name = "ColorMode", modes = {"Static", "Fade", "Rainbow", "DoubleColor"})
+    public String colorMode = "Static";
     @Parameter(name = "Speed", min = 2, max = 54, step = 1)
     public double colorSpeed = 18;
     @Parameter(name = "Color1", color = true)
@@ -23,9 +23,11 @@ public class ClickGui {
     @Parameter(name = "Switchless")
     public boolean switchless = true;
     @Parameter(name = "Outlines")
-    public boolean outlines = false;
+    public boolean outlines = true;
     @Parameter(name = "OutlineColor", color = true, visible = "outlines")
     public int outlineColor = 0x30FFFFFF;
+    @Parameter(name = "ButtonOutlines")
+    public boolean buttonOutlines = true;
     @Parameter(name = "ButtonHeight", min = 8, max = 30, step = 1)
     public double buttonHeight = 18;
     @Parameter(name = "PanelWidth", min = 70, max = 300, step = 5)
@@ -36,7 +38,7 @@ public class ClickGui {
     public boolean moduleCounter = true;
     @Parameter(name = "ShowImage")
     public boolean companionImage = false;
-    @Parameter(name = "ImageType", modes = {"Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow", "Cutieeee", "Cutiemonster", "Furik", "Godofcoding", "Terrydavis"})
+    @Parameter(name = "ImageType", modes = {"Femboy", "Wypher1", "Boykgun", "Cutie", "Kiss", "Laying", "Licking", "Pillow", "Cutieeee", "Cutiemonster", "Furik", "Godofcoding", "Terrydavis"}, visible = "companionImage")
     public String companionType = "Femboy";
     @Parameter(name = "GuiScale", min = 0.5, max = 1.0, step = 0.05)
     public double guiScale = 0.85;
@@ -57,12 +59,16 @@ public class ClickGui {
     @Parameter(name = "TooltipOffsetY", min = 0, max = 30, step = 1)
     public double tooltipOffsetY = 8;
     @Parameter(name = "ShowToolbar")
-    public boolean showToolbar = false;
+    public boolean showToolbar = true;
     @Parameter(name = "DescriptionPanel")
     public boolean descriptionPanel = false;
     @Parameter(name = "ShowGear")
-    public boolean showGear = false;
+    public boolean showGear = true;
     @Parameter(name = "ShowTips")
     public boolean showTips = true;
+    @Parameter(name = "Blur")
+    public boolean blur = false;
+    @Parameter(name = "BlurRadius", min = 1, max = 10, step = 1, visible = "blur")
+    public double blurRadius = 8;
 
 }

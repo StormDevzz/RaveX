@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "holefill.hpp"
 
 extern "C" {
@@ -20,6 +21,7 @@ Java_ravex_modules_combat_HoleFill_nativeFindHoles(
     jsize len = static_cast<jsize>(holes.size()) * 3;
     jintArray result = env->NewIntArray(len);
     if (!result) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     std::vector<jint> buffer(holes.size() * 3);
     for (size_t i = 0; i < holes.size(); i++) {
@@ -29,6 +31,7 @@ Java_ravex_modules_combat_HoleFill_nativeFindHoles(
     }
 
     env->SetIntArrayRegion(result, 0, len, buffer.data());
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return result;
 }
 

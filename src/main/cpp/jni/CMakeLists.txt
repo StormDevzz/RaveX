@@ -10,9 +10,12 @@ target_link_libraries(ravex_jni PRIVATE
     ravex_optimize
     ravex_manager
     ravex_github_tools
-    ravex_brand
     ${JNI_LIBRARIES}
 )
+
+if(TARGET ravex_brand)
+    target_link_libraries(ravex_jni PRIVATE ravex_brand)
+endif()
 
 if(TARGET ravex_lua)
     target_link_libraries(ravex_jni PRIVATE ravex_lua)
@@ -33,6 +36,9 @@ target_include_directories(ravex_jni PRIVATE
 if(WIN32)
     target_link_libraries(ravex_jni PRIVATE winmm ravex_optimize_windows)
     target_include_directories(ravex_jni PRIVATE ${CMAKE_SOURCE_DIR}/plugins/optimize/windows)
+    if(MINGW)
+        target_link_options(ravex_jni PRIVATE -Wl,--allow-multiple-definition)
+    endif()
 endif()
 
 if(NOT WIN32)

@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "burrow.hpp"
 
 extern "C" {
@@ -16,8 +17,10 @@ Java_ravex_modules_combat_Burrow_nativeCalculate(
     auto result = ravex::calculateBurrow(px, py, pz, height, autoCenter == JNI_TRUE);
     jdoubleArray arr = env->NewDoubleArray(4);
     if (!arr) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     jdouble buf[] = {result.targetX, result.targetZ, result.liftY, result.angle};
     env->SetDoubleArrayRegion(arr, 0, 4, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return arr;
 }
 

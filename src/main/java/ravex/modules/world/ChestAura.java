@@ -17,7 +17,7 @@ public class ChestAura {
     @Parameter(name = "Render")
     public boolean render = true;
     @Parameter(name = "Color", color = true, visible = "render")
-    public int highlightColor = 0xFF00FF88;
+    public int highlightColor = 0xFF40A9F8;
     @Parameter(name = "FadeDuration", min = 0.1, max = 3.0, step = 0.1)
     public double fadeSpeed = 1.0;
     @Parameter(name = "Filled")

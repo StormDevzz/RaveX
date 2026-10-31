@@ -58,55 +58,102 @@ private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("rave
         });
     }
     public static String getModuleParams(String name) {
-        ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
-        if (m == null) return "";
-        List<Parameter<?>> params = m.getParameters();
-        if (params.isEmpty()) return "";
-        StringBuilder sb = new StringBuilder();
-        for (Parameter<?> p : params) {
-            String pname = p.getName();
-            if (p instanceof BooleanParameter) {
-                sb.append("bool:").append(pname).append(":").append(p).append("|");
-            } else if (p instanceof NumberParameter np) {
-                sb.append("num:").append(pname).append(":").append(np)
-                  .append(":").append(np.getMin()).append(":").append(np.getMax()).append(":").append(np.getStep()).append("|");
-            } else if (p instanceof ModeParameter mp) {
-                sb.append("mode:").append(pname).append(":").append(mp).append(":");
-                for (String opt : mp.getModes()) {
-                    sb.append(opt).append(",");
+        try {
+            ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
+            if (m == null) return "";
+            StringBuilder sb = new StringBuilder();
+            for (Parameter<?> p : m.getParameters()) {
+                String pname = safeParam(p.getName());
+                // clickgui group headers become section titles
+                if (p instanceof GroupParameter) {
+                    sb.append("group:").append(pname).append('|');
+                    continue;
                 }
-                sb.append("|");
-            } else if (p instanceof StringParameter) {
-                sb.append("str:").append(pname).append(":").append(p).append("|");
-            } else if (p instanceof ActionParameter) {
-                sb.append("action:").append(pname).append("|");
-            } else if (p instanceof ColorParameter) {
-                sb.append("color:").append(pname).append(":").append(p).append("|");
+                if (!p.isVisible()) continue;
+                if (p instanceof BooleanParameter) {
+                    sb.append("bool:").append(pname).append(':')
+                      .append(Boolean.TRUE.equals(p.getValue())).append('|');
+                } else if (p instanceof NumberParameter np) {
+                    sb.append("num:").append(pname).append(':')
+                      .append(numText(np.getValue())).append(':')
+                      .append(numText(np.getMin())).append(':')
+                      .append(numText(np.getMax())).append(':')
+                      .append(numText(np.getStep())).append('|');
+                } else if (p instanceof ModeParameter mp) {
+                    sb.append("mode:").append(pname).append(':')
+                      .append(safeParam(String.valueOf(mp.getValue()))).append(':');
+                    for (String opt : mp.getModes()) {
+                        sb.append(safeParam(opt)).append(',');
+                    }
+                    sb.append('|');
+                } else if (p instanceof StringParameter) {
+                    sb.append("str:").append(pname).append(':')
+                      .append(safeParam(String.valueOf(p.getValue()))).append('|');
+                } else if (p instanceof MultiSelectParameter msp) {
+                    sb.append("multi:").append(pname).append(':');
+                    for (String selected : msp.getValue()) {
+                        sb.append(safeParam(selected)).append(',');
+                    }
+                    sb.append(':');
+                    for (String opt : msp.getOptions()) {
+                        sb.append(safeParam(opt)).append(',');
+                    }
+                    sb.append('|');
+                } else if (p instanceof ActionParameter) {
+                    sb.append("action:").append(pname).append('|');
+                } else if (p instanceof ColorParameter) {
+                    sb.append("color:").append(pname).append(':')
+                      .append(p.getValue()).append('|');
+                }
             }
+            if (sb.isEmpty()) return "";
+            sb.setLength(sb.length() - 1);
+            return sb.toString();
+        } catch (Exception e) {
+            return "";
         }
-        if (!sb.isEmpty()) sb.setLength(sb.length() - 1);
-        return sb.toString();
+    }
+    private static String safeParam(String text) {
+        if (text == null) return "";
+        return text.replace('|', '/').replace(':', ';').replace('\n', ' ').replace('\r', ' ');
+    }
+    private static String numText(Double value) {
+        if (value == null || !Double.isFinite(value)) return "0";
+        return Double.toString(value);
     }
     @SuppressWarnings("unchecked")
     public static void setModuleParam(String name, String paramName, String value) {
-        ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
-        if (m == null) return;
-        for (Parameter<?> p : m.getParameters()) {
-            if (!p.getName().equals(paramName)) continue;
-            if (p instanceof BooleanParameter bp) {
-                bp.setValue(Boolean.parseBoolean(value));
-            } else if (p instanceof NumberParameter np) {
-                np.setValue(Double.parseDouble(value));
-            } else if (p instanceof ModeParameter mp) {
-                mp.setValue(value);
-            } else if (p instanceof StringParameter sp) {
-                sp.setValue(value);
-            } else if (p instanceof ActionParameter ap) {
-                ap.getValue().run();
-            } else if (p instanceof ColorParameter cp) {
-                cp.setValue(Integer.parseInt(value));
+        try {
+            ravex.modules.Module m = ravex.manager.ModuleManager.INSTANCE.getByName(name);
+            if (m == null) return;
+            for (Parameter<?> p : m.getParameters()) {
+                if (!p.getName().equals(paramName)) continue;
+                if (p instanceof BooleanParameter bp) {
+                    bp.setValue(Boolean.parseBoolean(value));
+                } else if (p instanceof NumberParameter np) {
+                    double v = Double.parseDouble(value);
+                    if (Double.isFinite(v)) np.setValue(v);
+                } else if (p instanceof ModeParameter mp) {
+                    mp.setValue(value);
+                } else if (p instanceof StringParameter sp) {
+                    sp.setValue(value);
+                } else if (p instanceof MultiSelectParameter msp) {
+                    List<String> want = java.util.Arrays.asList(value.split(","));
+                    for (String opt : msp.getOptions()) {
+                        if (want.contains(opt)) {
+                            msp.select(opt);
+                        } else {
+                            msp.deselect(opt);
+                        }
+                    }
+                } else if (p instanceof ActionParameter ap) {
+                    MinecraftWrapper.getWrapper().execute(ap.getValue());
+                } else if (p instanceof ColorParameter cp) {
+                    cp.setValue((int) Long.parseLong(value));
+                }
+                break;
             }
-            break;
+        } catch (Exception ignored) {
         }
     }
     private static native void openDesktopGui(String[] names, boolean[] states);

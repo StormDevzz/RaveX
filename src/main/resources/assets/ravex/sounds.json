@@ -46,5 +46,13 @@
   "done": {
     "category": "master",
     "sounds": [ "ravex:done" ]
+  },
+  "onboarding_done": {
+    "category": "master",
+    "sounds": [ "ravex:onboarding_done" ]
+  },
+  "no_settings": {
+    "category": "master",
+    "sounds": [ "ravex:no_settings" ]
   }
 }

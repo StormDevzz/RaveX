@@ -1,16 +1,16 @@
 package ravex.cmd.cmds;
 import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
+import ravex.manager.ModuleManager;
+import ravex.modules.client.Commands;
 public class CalcCmd extends Cmd {
     public CalcCmd() {
         super("calc", "Calculate a math expression");
     }
     @Override
     public void execute(String[] args) {
-        if (args.length < 2) {
-            CmdReg.print("§9[§bRaveX§9] §cUsage: .calc <expression>   e.g. .calc 3*(4+2)/6");
-            return;
-        }
+        String p = ModuleManager.get(Commands.class).prefix;
+        if (args.length < 2) { CmdReg.print("§9[§bRaveX§9] §cUsage: " + p + "calc <expression>   e.g. " + p + "calc 3*(4+2)/6"); return; }
         String expr = String.join("", java.util.Arrays.copyOfRange(args, 1, args.length)).replace(",", ".");
         try {
             double result = evalExpr(expr, new int[]{0});

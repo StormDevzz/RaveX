@@ -6,6 +6,7 @@ run/
 !.vscode/settings.json
 !.vscode/extensions.json
 !.vscode/tasks.json
+.vs/
 .idea/
 .classpath
 .project

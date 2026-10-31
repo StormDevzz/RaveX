@@ -200,7 +200,6 @@ public class BlockBrowserScreen extends Screen {
 
         boolean transitioning = tabTransition < 1f;
 
-        SearchBrowserScreen.setAtlasFilter(FilterMode.LINEAR);
         if (transitioning && !previousFiltered.isEmpty()) {
             float oldOffX = -swipeDirection * tabTransition * gw;
             int oldCols = Math.max(4, (gw + 2) / 28);
@@ -234,7 +233,6 @@ public class BlockBrowserScreen extends Screen {
         } else {
             renderGrid(g, sr, er, cols, gx, gy, cell, amx, amy, true, selColor, selHovColor, hovColor, false, alpha);
         }
-        SearchBrowserScreen.setAtlasFilter(FilterMode.NEAREST);
 
         Render2DUtility.popScissor(g);
 

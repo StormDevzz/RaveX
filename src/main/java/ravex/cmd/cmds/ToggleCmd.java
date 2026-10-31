@@ -3,13 +3,15 @@ import ravex.cmd.core.Cmd;
 import ravex.cmd.core.CmdReg;
 import ravex.manager.ModuleManager;
 import ravex.modules.Module;
+import ravex.modules.client.Commands;
 public class ToggleCmd extends Cmd {
     public ToggleCmd() {
         super("toggle", "Toggle a module on/off");
     }
     @Override
     public void execute(String[] args) {
-        if (args.length < 2) { CmdReg.print("§9[§bRaveX§9] §cUsage: .toggle <module>"); return; }
+        String p = ModuleManager.get(Commands.class).prefix;
+        if (args.length < 2) { CmdReg.print("§9[§bRaveX§9] §cUsage: " + p + "toggle <module>"); return; }
         Module m = ModuleManager.INSTANCE.getByName(args[1]);
         if (m == null) { CmdReg.print("§9[§bRaveX§9] §cModule not found: §e" + args[1]); return; }
         m.toggle();

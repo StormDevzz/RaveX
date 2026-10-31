@@ -5,6 +5,7 @@ import net.minecraft.resources.Identifier;
 import ravex.utility.render.ColorUtility;
 import ravex.modules.Module;
 import ravex.parameter.Parameter;
+import ravex.gui.clickgui.ParameterElement;
 import ravex.utility.render.FontRenderUtility;
 import ravex.utility.render.Render2DUtility;
 import ravex.utility.render.TextureLoaderUtility;
@@ -18,21 +19,30 @@ import java.util.List;
 
 public class HudModuleEntry {
     private final Module module;
-    private final List<HudParameterEntry> paramEntries = new ArrayList<>();
+    private final List<ParameterElement> paramEntries = new ArrayList<>();
+    private final Render2DUtility.HoverGlowRenderer glowRenderer;
     private float hoverProgress;
     private float enableAnim;
     private boolean lastHovered;
+    private boolean wasEnabled;
+    private long enableStartNs = -1L;
+    private float enableFrom = 0f;
+    private boolean enableForward = true;
+    private static final long ENABLE_MS = 240L;
+    private static final long DISABLE_MS = 180L;
 
     public HudModuleEntry(Module module) {
         this.module = module;
+        this.glowRenderer = new Render2DUtility.HoverGlowRenderer("hud_glow_" + module.getName());
         this.enableAnim = module.getEnabled() ? 1f : 0f;
+        this.wasEnabled = module.getEnabled();
         for (Parameter<?> p : module.getParameters()) {
-            paramEntries.add(new HudParameterEntry(p));
+            paramEntries.add(new ParameterElement(p, module.getName()));
         }
     }
 
     public Module getModule() { return module; }
-    public List<HudParameterEntry> getParamEntries() { return paramEntries; }
+    public List<ParameterElement> getParamEntries() { return paramEntries; }
 
     public void render(GuiGraphics g, int x, int y, int width, boolean hovered, boolean enabled, int alpha, int accentColor, int mouseX, int mouseY, boolean expanded, float expandAnim) {
         if (hovered) {
@@ -46,10 +56,21 @@ public class HudModuleEntry {
         lastHovered = hovered;
 
         float targetAnim = enabled ? 1.0f : 0.0f;
-        if (enableAnim < targetAnim) {
-            enableAnim = Math.min(targetAnim, enableAnim + 0.25f);
-        } else if (enableAnim > targetAnim) {
-            enableAnim = Math.max(targetAnim, enableAnim - 0.30f);
+        if (enabled != wasEnabled) {
+            enableForward = enabled;
+            enableFrom = enableAnim;
+            enableStartNs = System.nanoTime();
+        }
+        wasEnabled = enabled;
+
+        // same eased timing as the click gui
+        if (enableStartNs >= 0L) {
+            long durNs = (enableForward ? ENABLE_MS : DISABLE_MS) * 1_000_000L;
+            float t = Math.min(1f, (System.nanoTime() - enableStartNs) / (float) durNs);
+            enableAnim = enableFrom + (targetAnim - enableFrom) * AnimationUtility.Easing.QUART_BOTH.apply(t);
+            if (t >= 1f) enableStartNs = -1L;
+        } else {
+            enableAnim = targetAnim;
         }
 
         int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
@@ -66,13 +87,17 @@ public class HudModuleEntry {
         }
 
         Render2DUtility.drawPixelPerfectRound(g, x, y, width, btnH, btnRadius, mergedBg);
+        if (ModuleManager.get(ClickGui.class).outlines) {
+            // outline alpha scaled, not replaced, like the click gui
+            Render2DUtility.drawPixelPerfectRoundBorder(g, x, y, width, btnH, btnRadius, 1,
+                ColorUtility.applyAlpha(ModuleManager.get(ClickGui.class).outlineColor, alpha / 255f));
+        }
 
         if (hoverProgress > 0.01f) {
-            int glowAlpha = (int) (hoverProgress * 100 * (alpha / 255f));
+            int glowAlpha = (int) (hoverProgress * 120 * (alpha / 255f));
             int whiteGlow = ColorUtility.withAlpha(0xFFFFFFFF, glowAlpha);
-            Render2DUtility.pushScissor(g, x, y, width, btnH);
-            Render2DUtility.drawGaussianShadow(g, (float) mouseX - 8, (float) mouseY - 8, 16, 16, 10, whiteGlow);
-            Render2DUtility.popScissor(g);
+            glowRenderer.render(g, x, y, width, btnH, btnRadius,
+                (float) mouseX, (float) (y + btnH / 2.0f), 26.0f, 13.0f, whiteGlow);
         }
 
         int baseColor = ColorUtility.interpolate(0xFFB0B0C0, accentColor, enableAnim);
@@ -113,35 +138,9 @@ public class HudModuleEntry {
 
     public int getExpandedParamCount() {
         int count = 0;
-        for (HudParameterEntry pe : paramEntries) {
-            if (pe.getExpandProgress() > 0.005f) count++;
+        for (ParameterElement pe : paramEntries) {
+            if (pe.getExpandAnimProgress() > 0.005f) count++;
         }
         return count;
-    }
-
-    public boolean mouseClickedParam(int mouseX, int mouseY, int x, int y, int width) {
-        int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
-        int cy = y + btnH;
-        for (HudParameterEntry pe : paramEntries) {
-            if (!pe.getParam().isVisible()) continue;
-            int ph = pe.getHeight();
-            if (ph <= 0) { cy += ph; continue; }
-            if (pe.mouseClicked(mouseX, mouseY, x + 2, cy, width - 4, 0)) return true;
-            cy += ph;
-        }
-        return false;
-    }
-
-    public HudParameterEntry getParamAt(int mouseX, int mouseY, int x, int y, int width) {
-        int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
-        int cy = y + btnH;
-        for (HudParameterEntry pe : paramEntries) {
-            if (!pe.getParam().isVisible()) continue;
-            int ph = pe.getHeight();
-            if (ph <= 0) { cy += ph; continue; }
-            if (mouseX >= x + 2 && mouseX <= x + width - 2 && mouseY >= cy && mouseY <= cy + ph) return pe;
-            cy += ph;
-        }
-        return null;
     }
 }

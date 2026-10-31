@@ -4,20 +4,19 @@ import ravex.utility.misc.ScreenUtility;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
-import net.minecraft.network.protocol.game.ServerboundContainerClosePacket;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import ravex.gui.clickgui.ClickGUI;
 import ravex.modules.movement.GuiMove;
 import ravex.modules.Modules;
+import ravex.mcwrapper.MinecraftWrapper;
 
 @Mixin(Minecraft.class)
 public abstract class MixinGuiMove {
 
-    @Inject(method = "tick", at = @At("TAIL"))
+    @Inject(method = "tick", at = @At("HEAD"))
     private void onTickGuiMove(CallbackInfo ci) {
         GuiMove gw = Modules.get(GuiMove.class);
         if (!Modules.enabled(GuiMove.class)) return;
@@ -25,17 +24,17 @@ public abstract class MixinGuiMove {
         Minecraft mc = (Minecraft)(Object)this;
         if (mc.screen == null || mc.player == null || mc.getWindow() == null) return;
         if (ScreenUtility.isChatScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper())) return;
+        if (gw.disableInClickGui && mc.screen instanceof ClickGUI) return;
 
-        switch (gw.mode) {
-            case "Grim" -> handleGrim(mc, gw);
-            case "NCPStrict" -> handleNCPStrict(mc, gw);
-            case "NoClick" -> handleNoClick(mc, gw);
-            case "Matrix" -> handleMatrix(mc, gw);
-            default -> handleVanilla(mc, gw);
+        if ("NoClick".equals(gw.mode)) {
+            handleNoClick(mc, gw);
+        } else {
+            handleMove(mc, gw);
         }
     }
 
-    private void handleVanilla(Minecraft mc, GuiMove gw) {
+    // container stays open server side, clicks keep working
+    private void handleMove(Minecraft mc, GuiMove gw) {
         forceMoveKeys(mc);
         if (!gw.noJump) forceBinding(mc, mc.options.keyJump);
         if (!gw.noSprint) forceBinding(mc, mc.options.keySprint);
@@ -44,46 +43,6 @@ public abstract class MixinGuiMove {
 
     private void handleNoClick(Minecraft mc, GuiMove gw) {
         forceMoveKeys(mc);
-        if (gw.sneak) forceBinding(mc, mc.options.keyShift);
-    }
-
-    private void handleNCPStrict(Minecraft mc, GuiMove gw) {
-        Screen current = mc.screen;
-        if (current instanceof AbstractContainerScreen && current != gw.closedScreen) {
-            gw.closedScreen = current;
-            int id = mc.player.containerMenu.containerId;
-            mc.getConnection().send(new ServerboundContainerClosePacket(id));
-        }
-        forceMoveKeys(mc);
-        if (!gw.noJump) forceBinding(mc, mc.options.keyJump);
-        if (!gw.noSprint) forceBinding(mc, mc.options.keySprint);
-        if (gw.sneak) forceBinding(mc, mc.options.keyShift);
-    }
-
-    private void handleMatrix(Minecraft mc, GuiMove gw) {
-        forceMoveKeys(mc);
-        if (!gw.noJump) forceBinding(mc, mc.options.keyJump);
-        if (!gw.noSprint) forceBinding(mc, mc.options.keySprint);
-        if (gw.sneak) forceBinding(mc, mc.options.keyShift);
-    }
-
-    private void handleGrim(Minecraft mc, GuiMove gw) {
-        Screen current = mc.screen;
-        if (current instanceof AbstractContainerScreen && current != gw.closedScreen) {
-            gw.closedScreen = current;
-            int id = mc.player.containerMenu.containerId;
-            mc.getConnection().send(new ServerboundContainerClosePacket(id));
-            gw.grimCooldown = 2;
-        }
-
-        if (gw.grimCooldown > 0) {
-            gw.grimCooldown--;
-            return;
-        }
-
-        forceMoveKeys(mc);
-        if (!gw.noJump) forceBinding(mc, mc.options.keyJump);
-        if (!gw.noSprint) forceBinding(mc, mc.options.keySprint);
         if (gw.sneak) forceBinding(mc, mc.options.keyShift);
     }
 

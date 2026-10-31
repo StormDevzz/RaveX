@@ -2,8 +2,8 @@ package ravex.modules.movement;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
 import ravex.utility.misc.PhysicUtility;
+import ravex.utility.movement.MoveUtility;
 import ravex.utility.network.NetworkUtility;
-import net.minecraft.world.phys.HitResult;
 import ravex.mcwrapper.MinecraftWrapper;
 
 
@@ -15,13 +15,18 @@ public class ClickTP {
     public String mode = "Instant";
     @Parameter(name = "Range", min = 10.0, max = 200.0, step = 5.0)
     public double range = 50.0;
-    @Parameter(name = "Cooldown", min = 100, max = 2000, step = 50)
-    public double cooldown = 500;
+    @Parameter(name = "Cooldown", min = 0, max = 2000, step = 50)
+    public double cooldown = 100;
     private long lastClick = 0;
+    private boolean lastUseDown = false;
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;
-        if (!mc.getOptions().keyUse.isDown()) return;
+        // fire on the press edge only
+        boolean useDown = mc.getOptions().keyUse.isDown();
+        boolean pressed = useDown && !lastUseDown;
+        lastUseDown = useDown;
+        if (!pressed) return;
         long now = System.currentTimeMillis();
         if (now - lastClick < (long) cooldown) return;
         lastClick = now;
@@ -34,22 +39,12 @@ public class ClickTP {
         }
     }
     private net.minecraft.world.phys.Vec3 getTarget(MinecraftWrapper mc) {
-        HitResult hit = mc.getHitResult();
-        if (hit != null) {
-            if (hit.getType() == HitResult.Type.BLOCK) {
-                net.minecraft.world.phys.BlockHitResult blockHit = (net.minecraft.world.phys.BlockHitResult) hit;
-                net.minecraft.core.BlockPos pos = blockHit.getBlockPos();
-                return PhysicUtility.centerOf(pos).add(0, 0.5, 0);
-            }
-            if (hit.getType() == HitResult.Type.ENTITY) {
-                net.minecraft.world.phys.EntityHitResult entityHit = (net.minecraft.world.phys.EntityHitResult) hit;
-                return entityHit.getEntity().position();
-            }
-        }
-        double dist = range;
-        net.minecraft.world.phys.Vec3 eye = mc.getPlayer().getEyePosition(1.0F);
-        net.minecraft.world.phys.Vec3 look = mc.getPlayer().getViewVector(1.0F);
-        return eye.add(look.x * dist, look.y * dist, look.z * dist);
+        var target = MoveUtility.targetFromHit(mc.getHitResult(), 0.5, 0.0);
+        if (target != null) return target;
+        // only onto a real block along the look ray, never the void
+        var clip = PhysicUtility.raycastFromEyes(range);
+        if (clip == null) return null;
+        return PhysicUtility.centerOf(clip.getBlockPos()).add(0, 0.5, 0);
     }
     private void teleportInstant(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         var p = mc.getPlayer();
@@ -59,14 +54,15 @@ public class ClickTP {
     private void teleportBlink(MinecraftWrapper mc, net.minecraft.world.phys.Vec3 target) {
         var p = mc.getPlayer();
         double x = p.getX(), y = p.getY(), z = p.getZ();
-        double dx = (target.x - x) / 10.0;
-        double dy = (target.y - y) / 10.0;
-        double dz = (target.z - z) / 10.0;
-        for (int i = 0; i < 10; i++) {
-            x += dx;
-            y += dy;
-            z += dz;
-            NetworkUtility.sendMoveRelative(x, y, z, true, p.horizontalCollision);
+        double dx = target.x - x;
+        double dy = target.y - y;
+        double dz = target.z - z;
+        double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+        // small steps so the server can follow the path
+        int steps = Math.max(1, Math.min(20, (int) Math.ceil(dist)));
+        for (int i = 1; i <= steps; i++) {
+            double t = i / (double) steps;
+            NetworkUtility.sendMoveRelative(x + dx * t, y + dy * t, z + dz * t, true, p.horizontalCollision);
         }
         p.setPos(target.x, target.y, target.z);
     }

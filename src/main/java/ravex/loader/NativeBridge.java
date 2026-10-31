@@ -137,7 +137,7 @@ public class NativeBridge {
     }
 
     private static final String LOADER_SHA256_LINUX = "91df4b7a1f307a7467a31e89ee8153d262cda4b0ca3bad8d0c482e56c13de505";
-    private static final String LOADER_SHA256_WINDOWS = "84f9b122fa98ab81bcb2cc498dc4f3e29f56d7b683108dd3f6f1af9ecb2fd092";
+    private static final String LOADER_SHA256_WINDOWS = "9977e6592a4bac41145e6f0dec9e64e5488c6e88a08464bde0e2e26eea3d3ea8";
 
     private static String getExpectedLoaderHash() {
         return isWindows() ? LOADER_SHA256_WINDOWS : LOADER_SHA256_LINUX;

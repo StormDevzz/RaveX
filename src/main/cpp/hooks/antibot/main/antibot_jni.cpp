@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <cstring>
+#include "../../../common/include/jni_raii.hpp"
 #include "antibot.hpp"
 
 extern "C" {
@@ -16,9 +17,10 @@ Java_ravex_modules_combat_AntiBot_nativeAnalyze(
     jdouble mx, jdouble my, jdouble mz, jdouble dist,
     jboolean pingCheck, jboolean nameCheck, jboolean moveCheck)
 {
-    const char* nameCStr = env->GetStringUTFChars(jName, nullptr);
-    std::string name(nameCStr);
-    env->ReleaseStringUTFChars(jName, nameCStr);
+    JniStringUtfChars nameGuard(env, jName);
+    if (!nameGuard) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
+    std::string name(nameGuard.get());
 
     double confidence = ravex::analyze(name, ticks, x, y, z, mx, my, mz, dist,
                                        pingCheck == JNI_TRUE,
@@ -27,8 +29,10 @@ Java_ravex_modules_combat_AntiBot_nativeAnalyze(
 
     jdoubleArray result = env->NewDoubleArray(1);
     if (!result) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     jdouble val = confidence;
     env->SetDoubleArrayRegion(result, 0, 1, &val);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return result;
 }
 

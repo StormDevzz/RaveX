@@ -1,7 +1,6 @@
 package ravex.modules.render;
 import ravex.modules.annotations.Module;
 import ravex.modules.annotations.Parameter;
-import net.minecraft.client.gui.GuiGraphics;
 import ravex.event.Subscribe;
 import ravex.event.combat.AttackEvent;
 
@@ -14,7 +13,7 @@ public class Crosshair {
     @Parameter(name = "Mode", modes = {"Normal", "Circle", "Triangle"})
     public String mode = "Normal";
     @Parameter(name = "Color", color = true)
-    public int color = 0xFFFFFFFF;
+    public int color = 0xFF40A9F8;
     @Parameter(name = "DotColor", color = true, visible = "dot")
     public int dotColor = 0xFFFF3333;
     @Parameter(name = "Size", min = 2.0, max = 10.0, step = 0.5)
@@ -53,7 +52,7 @@ public class Crosshair {
     public void onTick() {
     }
 
-    public void render(GuiGraphics graphics) {
+    public void render(net.minecraft.client.gui.GuiGraphics graphics) {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getWindow() == null || mc.getPlayer() == null) return;
 
@@ -71,7 +70,7 @@ public class Crosshair {
         float hitSpin = 0f;
         float hitScale = 1.0f;
         float hitFlashProgress = 0f;
-        if (elapsed < dur) {
+        if (dynamic && elapsed < dur) {
             float progress = elapsed / dur;
             float overshoot = 1.0f + 0.3f * (float) Math.sin(progress * Math.PI * 2) * (1.0f - progress);
             hitSpread = (float) hitEffect * (1.0f - progress) * overshoot;
@@ -82,7 +81,7 @@ public class Crosshair {
             hitSpread = 0;
         }
 
-        boolean hasTarget = targetEffect && mc.getCrosshairPickEntity() != null && mc.getCrosshairPickEntity().isAlive();
+        boolean hasTarget = dynamic && targetEffect && mc.getCrosshairPickEntity() != null && mc.getCrosshairPickEntity().isAlive();
         if (hasTarget) {
             targetProgress = Math.min(1.0f, targetProgress + delta * 6.0f);
         } else {
@@ -146,7 +145,7 @@ public class Crosshair {
         return Math.min(spread, moveEff * 2);
     }
 
-    private void renderNormal(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
+    private void renderNormal(net.minecraft.client.gui.GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
         float end = gap + size;
         float len = end - gap;
         if (len <= 0f || thick <= 0f) return;
@@ -166,13 +165,13 @@ public class Crosshair {
         g.pose().popMatrix();
     }
 
-    private void blitBar(GuiGraphics g, net.minecraft.resources.Identifier tex, float x, float y, int w, int h, int color) {
+    private void blitBar(net.minecraft.client.gui.GuiGraphics g, net.minecraft.resources.Identifier tex, float x, float y, int w, int h, int color) {
         int px = Math.round(x - w * 0.5f);
         int py = Math.round(y - h * 0.5f);
         g.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, tex, px, py, 0f, 0f, w, h, w, h, color);
     }
 
-    private void renderCircle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
+    private void renderCircle(net.minecraft.client.gui.GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
         float radius = gap + size;
         float thicknessRatio = thick / radius;
         net.minecraft.resources.Identifier ringTex = ravex.utility.render.Render2DUtility.getSmoothRing(thicknessRatio);
@@ -186,7 +185,7 @@ public class Crosshair {
         g.pose().popMatrix();
     }
 
-    private void renderTriangle(GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
+    private void renderTriangle(net.minecraft.client.gui.GuiGraphics g, int cx, int cy, float size, float gap, float thick, float spin, int color) {
         float radius = gap + size;
         if (radius <= 0f || thick <= 0f) return;
         float thicknessRatio = thick / radius;

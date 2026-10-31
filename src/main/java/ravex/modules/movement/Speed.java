@@ -9,11 +9,14 @@ public class Speed {
     public static float matrixTimer = 1.0f;
     @Parameter(name = "Mode", modes = {"Vanilla", "Strafe", "StrafeStrict", "NCP", "NCPStrict", "Matrix", "Grim", "GrimStrict", "Verus"})
     public String mode = "Vanilla";
-    @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.1, visible = "mode=Vanilla||mode=Strafe||mode=NCP||mode=NCPStrict||mode=Grim")
+    @Parameter(name = "Speed", min = 0.5, max = 10.0, step = 0.1, visible = "mode=Vanilla||mode=NCP||mode=NCPStrict||mode=Grim")
     public double speed = 1.5;
-    @Parameter(name = "StrafeJump", visible = "mode=Strafe||mode=StrafeStrict")
-    public boolean strafeJump = true;
-    @Parameter(name = "SpeedLimit", min = 0.1, max = 1.0, step = 0.01, visible = "mode=Vanilla||mode=Strafe||mode=NCP||mode=NCPStrict||mode=Grim||mode=Verus")
+    // hop multiplier, above 1 bursts on every hop
+    @Parameter(name = "StrafeSpeed", min = 0.0, max = 3.0, step = 0.1, visible = "mode=Strafe")
+    public double strafeSpeed = 1.0;
+    @Parameter(name = "StrafeLimit", visible = "mode=Strafe")
+    public boolean strafeLimit = false;
+    @Parameter(name = "SpeedLimit", min = 0.1, max = 1.0, step = 0.01, visible = "mode=Vanilla||mode=NCP||mode=NCPStrict||mode=Grim||mode=Verus")
     public double speedLimit = 0.28;
     @Parameter(name = "GrimBoost", min = 0.1, max = 2.0, step = 0.1, visible = "mode=Grim||mode=GrimStrict")
     public double grimBoost = 1.0;
@@ -34,6 +37,7 @@ public class Speed {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null) return;
+        if (ravex.modules.combat.KillAura.shouldBlockSprint()) return;
         boolean moving = mc.isForwardKeyDown() || mc.isBackKeyDown() || mc.isLeftKeyDown() || mc.isRightKeyDown();
         if ("Verus".equals(mode)) {
             if (!player.onGround()) return;
@@ -53,9 +57,6 @@ public class Speed {
                 player.jumpFromGround();
             }
             return;
-        }
-        if (("Strafe".equals(mode) || "StrafeStrict".equals(mode)) && strafeJump && moving && player.onGround()) {
-            player.jumpFromGround();
         }
     }
 }

@@ -114,22 +114,19 @@ struct ModInfo {
     HICON hIcon = nullptr;
 };
 
-// result of an asynchronous mod search; token lets the UI drop stale answers
-// when the user kept typing (debounced searches can finish out of order).
+// async mod search result; token drops stale answers
 struct ModsSearchResult {
     int token = 0;
     std::vector<ModInfo> res;
 };
 
-// one finished icon delivered from the loader threads to the UI thread as soon
-// as it is ready - the list itself is already on screen by then.
 struct ModIconResult {
     int token = 0;
     size_t idx = 0;
     HICON icon = nullptr;
 };
 
-// result of an asynchronous loader-version fetch (fabric/forge/quilt maven APIs).
+// async loader-version fetch (fabric/forge/quilt maven APIs)
 struct LoaderVersResult {
     int token = 0;
     std::string keep;  // version to re-select, may be empty
@@ -143,8 +140,7 @@ void tintWhiteInst(Gdiplus::Bitmap* bmp);
 HICON loadViaWICForData(void* data, DWORD size, int target);
 HICON loadHIconFromRes(int resId, int target);
 HICON loadLauncherIcon(int resId, const std::wstring& name, int target) {
-    // A theme-specific icon set (icons\win95\ / icons\vista\) overrides the
-    // embedded default resource for the active theme.
+    // themed icon set overrides the embedded default resource
     if (!themeIconSubdir().empty()) {
         std::wstring themed = iconPathEd(name);
         if (isThemedIconPath(themed) && fileExists(themed)) {
@@ -410,7 +406,7 @@ HICON loadIconUrl(const std::string& url, int target) {
             g.SetCompositingQuality(Gdiplus::CompositingQualityHighQuality);
             g.Clear(Gdiplus::Color(0,0,0,0));
             g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
-            // themed icon sets keep their colors - no tinting.
+            // themed sets keep their colors, no tinting
             if (!isThemedIconPath(path)) tintWhiteInst(dst);
             dst->GetHICON(&out);
             delete dst; delete src;
@@ -421,10 +417,8 @@ HICON loadIconUrl(const std::string& url, int target) {
         DeleteFileW(path.c_str()); return out;
     } catch (...) { return nullptr; }
 }
-// loadwebp icon decoder: modrinth serves its icons as webp nowadays (cdn
-// .../<hash>_96.webp). neither gdi+ nor wic decodes webp on many systems
-// (wic webp codec missing: wincodec err 88982f8b measured on win10 19044),
-// so use libwebp directly. returns nullptr when the file is not webp.
+// webp decoder for modrinth icons; gdi+ and wic often lack the codec
+// (wincodec err 88982f8b on win10), so use libwebp
 HICON loadWebpIcon(const std::wstring& path, int target) {
     HANDLE hFile = CreateFileW(path.c_str(), GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (hFile == INVALID_HANDLE_VALUE) return nullptr;
@@ -468,16 +462,13 @@ HICON loadWebpIcon(const std::wstring& path, int target) {
     return out;
 }
 
-// modrinth stores icons under a hash name with no extension
-// (https://cdn.modrinth.com/data/<id>/<sha1>) and those URLs flap on their
-// CDN (measured: 404 x6 for an icon that downloaded fine minutes earlier).
-// every project also exposes <id>/icon.png which usually survives - use it as
-// the automatic fallback when the hash URL fails.
+// modrinth hash-named icons flap on their CDN (404s measured)
+// every project also serves <id>/icon.png - use it as the fallback
 std::string iconFallbackUrl(const std::string& url) {
     size_t slash = url.find_last_of('/');
     if (slash == std::string::npos || slash + 1 >= url.size()) return {};
     std::string file = url.substr(slash + 1);
-    if (file.find('.') != std::string::npos) return {};   // has an extension already
+    if (file.find('.') != std::string::npos) return {};
     if (file.size() < 32) return {};
     for (char c : file) {
         bool hex = (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
@@ -511,7 +502,7 @@ HICON loadIconUrlCached(const std::string& url, int target) {
         }
     }
     if (!net::downloadFileFast(url, cache)) {
-        // hash URL flapped -> try the project's canonical icon.png before giving up.
+        // hash url flapped, try the project icon.png before giving up
         std::string alt = iconFallbackUrl(url);
         if (alt.empty() || !net::downloadFileFast(alt, cache)) {
             DeleteFileW(cache.c_str());
@@ -539,27 +530,20 @@ HICON loadIconUrlCached(const std::string& url, int target) {
     }
     if (!out) {
         DeleteFileW(cache.c_str());
-        return nullptr;   // undecodable payload -> let the retry wave try again
+        return nullptr;
     }
     return out;
 }
-// streaming icon loader: results are ALREADY on screen when this runs, so each
-// icon is delivered to the UI thread the moment it finishes and only its own
-// row is repainted. Parallel fetches share one WinHTTP session (single TLS
-// handshake + keep-alive) so the link - not the CPU - is the bottleneck.
-//
-// modrinth's hash-named icon files flap on their CDN (we measured 404 on6/6
-// attempts for icons that worked minutes earlier), so instead of Prism's
-// "remember the failure" policy we re-run ONLY the failures in extra waves
-// with a pause - a flapping edge node recovers, and the icons still appear.
+// streaming icon loader: one WinHTTP session shared by all fetches,
+// each finished icon repaints only its own row
 struct IconStreamState {
-    std::vector<std::string> urls;      // original list, index == row index
-    std::vector<size_t> queue;          // indices of the CURRENT wave
+    std::vector<std::string> urls;      // index == row index
+    std::vector<size_t> queue;
     std::atomic<size_t> qidx{0};
     std::atomic<int> live{0};           // workers still running this wave
     std::vector<size_t> failed;         // rows whose icon is still missing
     std::mutex mtx;
-    int pass = 0;                       //0 = first wave, up to 2 retry waves
+    int pass = 0;                       // 0 = first wave, up to 2 retry waves
     HWND wnd = nullptr;
     int token = 0;
 };
@@ -584,7 +568,7 @@ static void onIconWaveFinished(const std::shared_ptr<IconStreamState>& st) {
 static void startIconWave(const std::shared_ptr<IconStreamState>& st) {
     int n = (int)st->queue.size();
     if (n == 0) { onIconWaveFinished(st); return; }
-    // scale with the machine: 2 sockets per core, floor16, cap32.
+    // scale with cores: 2 sockets each, min 16, max 32
     unsigned hw = std::thread::hardware_concurrency();
     int conc = static_cast<int>(std::min<size_t>(32, std::max<size_t>(16, static_cast<size_t>(hw) * 2)));
     if (n < conc) conc = n;
@@ -594,12 +578,12 @@ static void startIconWave(const std::shared_ptr<IconStreamState>& st) {
             while (true) {
                 size_t k = st->qidx.fetch_add(1);
                 if (k >= st->queue.size()) break;
-                size_t i = st->queue[k];   // original row index
+                size_t i = st->queue[k];
                 HICON ic = nullptr;
                 try { ic = loadIconUrlCached(st->urls[i], 32); } catch (...) { ic = nullptr; }
                 if (!ic) {
                     std::lock_guard<std::mutex> lk(st->mtx);
-                    st->failed.push_back(i);   // remember for the next wave
+                    st->failed.push_back(i);   // retry in the next wave
                     continue;
                 }
                 ModIconResult* p = new ModIconResult{st->token, i, ic};
@@ -674,7 +658,6 @@ HICON loadHIconEd(const std::wstring& path, int target) {
     g.Clear(Gdiplus::Color(0,0,0,0));
     g.DrawImage(src, Gdiplus::Rect(0,0,target,target), 0,0, src->GetWidth(), src->GetHeight(), Gdiplus::UnitPixel);
     delete src;
-    // themed icon sets keep their colors - no tinting.
     if (!isThemedIconPath(path)) tintWhiteInst(dst);
     HICON out = nullptr;
     dst->GetHICON(&out);
@@ -717,7 +700,7 @@ struct EditorData {
     HFONT titleFont = nullptr;
     HFONT smallFont = nullptr;
     std::vector<std::string> versions;
-    // monotonic tokens: only the newest async request may touch the UI.
+    // monotonic tokens: only the newest async reply may touch the UI
     int loaderVerToken = 0;
     int modsSearchToken = 0;
     GlowData glow;
@@ -911,7 +894,7 @@ void reloadLoaderVersions(EditorData* data) {
         if (data->lblLoaderVer) ShowWindow(data->lblLoaderVer, SW_SHOW);
         if (data->iconLoaderVer) ShowWindow(data->iconLoaderVer, SW_SHOW);
         ShowWindow(data->comboLoaderVer, SW_SHOW);
-        // version to re-select once the list arrives.
+        // version to re-select once the list arrives
         std::string keep;
         {
             int kl = GetWindowTextLengthW(data->comboLoaderVer);
@@ -924,7 +907,7 @@ void reloadLoaderVersions(EditorData* data) {
         }
         if (keep.empty()) keep = data->cfg.loaderVersion;
         int token = ++data->loaderVerToken;
-        // instant placeholder so the UI never waits for the maven APIs.
+        // placeholder first, the UI must not wait for the maven APIs
         SendMessageW(data->comboLoaderVer, CB_RESETCONTENT, 0, 0);
         {
             const char* _lk = ravex::lang("latest");
@@ -963,8 +946,7 @@ std::vector<ModInfo> curseforgeSearch(const std::string& query, const std::strin
     }
     ravex::json::Value root = ravex::json::Value::parse(body);
     if (root.isNull() || !root.has("data")) {
-        // no API key / error body: fall back to Modrinth immediately instead of
-        // returning an empty list after a pointless round-trip.
+        // no API key or error body, fall back to modrinth right away
         return modrinthSearch(query, mc, type);
     }
     const ravex::json::Value& arr = root.at("data");
@@ -1221,9 +1203,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 }
                 data->curTab = 0;
             }
-            // prefetch the default (trending) mod list in the background: by the
-            // time the user opens the Mods tab, results - and most icons - are
-            // already there, so nothing has to wait for a click.
+            // prefetch trending mods so the tab is populated at once
             PostMessageW(hwnd, WM_COMMAND, MAKEWPARAM(IDC_MODS_GO, BN_CLICKED), 0);
 
             auto tr2=[&](const char* k,const char* fb){const char* v=ravex::lang(k); if(!v||strcmp(v,k)==0) v=fb; return fromUtf8(v);};
@@ -1290,8 +1270,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             data->comboLoaderVer = CreateWindowExW(0, L"COMBOBOX", L"", WS_CHILD | WS_VISIBLE | WS_BORDER | CBS_DROPDOWNLIST | WS_VSCROLL, 480, 364, 380, 200, hwnd, reinterpret_cast<HMENU>(IDC_COMBO_LOADER_VER), inst, nullptr);
             if (data->cfg.loader == "vanilla") { ShowWindow(lblLoaderVer, SW_HIDE); ShowWindow(data->comboLoaderVer, SW_HIDE); ShowWindow(iconLoaderVer, SW_HIDE); }
             else { ShowWindow(lblLoaderVer, SW_SHOW); ShowWindow(data->comboLoaderVer, SW_SHOW); ShowWindow(iconLoaderVer, SW_SHOW); }
-            // loader version list is loaded asynchronously: doing the maven API
-            // calls inline used to freeze the whole editor while it was opening.
+            // async, or maven calls freeze the editor while it opens
             reloadLoaderVersions(data);
             data->generalCtrls.push_back(iconLoaderVer); data->generalCtrls.push_back(lblLoaderVer); data->generalCtrls.push_back(data->comboLoaderVer);
 
@@ -1567,14 +1546,13 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 if (dpi < 96) dpi = 96;
                 auto sc = [&](int v){ return MulDiv(v, dpi, 96); };
                 COLORREF bg = sel ? data->theme.accent : data->theme.panel;
-                COLORREF fg = sel ? RGB(255,255,255) : data->theme.text;
                 if (isPrev) {
                     float f = data->tabFade;
                     auto blend = [&](int a,int b){ return (int)(a*f + b*(1-f)); };
                     bg = RGB(blend(GetRValue(data->theme.accent), GetRValue(data->theme.panel)), blend(GetGValue(data->theme.accent), GetGValue(data->theme.panel)), blend(GetBValue(data->theme.accent), GetBValue(data->theme.panel)));
-                    fg = RGB(blend(255, GetRValue(data->theme.text)), blend(255, GetGValue(data->theme.text)), blend(255, GetBValue(data->theme.text)));
                 }
                 if (!sel && !isPrev && (ds->itemState & ODS_SELECTED)) bg = data->theme.accent;
+                COLORREF fg = (sel || isPrev || (ds->itemState & ODS_SELECTED)) ? themeContrastText(bg) : data->theme.text;
                 HBRUSH br = CreateSolidBrush(bg);
                 FillRect(dc, &rc, br);
                 DeleteObject(br);
@@ -1595,7 +1573,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 SelectObject(dc, oldF);
                 if (sel) {
                     RECT ul = rc; ul.top = ul.bottom - sc(3); ul.bottom = rc.bottom;
-                    HBRUSH abr = CreateSolidBrush(RGB(255,255,255));
+                    HBRUSH abr = CreateSolidBrush(themeContrastText(data->theme.accent));
                     FillRect(dc, &ul, abr); DeleteObject(abr);
                 }
                 return TRUE;
@@ -1605,7 +1583,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                 HBRUSH bgBr = CreateSolidBrush(data->theme.panel);
                 FillRect(dc, &rc, bgBr); DeleteObject(bgBr);
                 Gdiplus::Graphics g(dc); g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
-                Gdiplus::Color penCol(60, 255, 255, 255); Gdiplus::Pen pen(penCol, 1.0f);
+                Gdiplus::Color penCol(60, GetRValue(data->theme.text), GetGValue(data->theme.text), GetBValue(data->theme.text)); Gdiplus::Pen pen(penCol, 1.0f);
                 pen.SetLineJoin(Gdiplus::LineJoinRound);
                 Gdiplus::GraphicsPath path; int r=12; path.AddArc(rc.left, rc.top, r, r, 180, 90); path.AddArc(rc.right - r, rc.top, r, r, 270, 90); path.AddArc(rc.right - r, rc.bottom - r, r, r, 0, 90); path.AddArc(rc.left, rc.bottom - r, r, r, 90, 90); path.CloseFigure();
                 g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
@@ -1635,8 +1613,7 @@ LRESULT CALLBACK EditorProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
                     int iy = rc.top + (rc.bottom - rc.top - iconSz) / 2;
 if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullptr, DI_NORMAL);
                 else {
-                    // decode the placeholder ONCE - doing it on every paint made
-                    // scrolling choppy while icons were still downloading.
+                    // decode the placeholder once, not on every paint
                     static HICON s_phIcon = nullptr;
                     if (!s_phIcon) {
                         std::wstring fallbackPath = iconPathEd(L"mods");
@@ -1645,14 +1622,16 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                     if (s_phIcon) DrawIconEx(dc, rc.left + pad, iy, s_phIcon, iconSz, iconSz, 0, nullptr, DI_NORMAL);
                     else { HBRUSH pb = CreateSolidBrush(data->theme.panel); Rectangle(dc, rc.left + pad, iy, rc.left + pad + iconSz, iy + iconSz); DeleteObject(pb); }
                 }
+                    COLORREF rowBg = sel ? data->theme.accent : data->theme.bg;
+                    COLORREF rowFg = sel ? themeContrastText(rowBg) : data->theme.text;
                     RECT tr = rc; tr.left = rc.left + pad + iconSz + sc(10); tr.right -= sc(8); tr.top += sc(4); tr.bottom = rc.top + (rc.bottom - rc.top) / 2;
-                    SetBkMode(dc, TRANSPARENT); SetTextColor(dc, sel ? RGB(255,255,255) : RGB(255,255,255));
+                    SetBkMode(dc, TRANSPARENT); SetTextColor(dc, rowFg);
                     HFONT oldF = (HFONT)SelectObject(dc, data->font);
                     DrawTextW(dc, fromUtf8(m.title).c_str(), -1, &tr, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
                     SelectObject(dc, oldF);
                     RECT dr = rc; dr.left = tr.left; dr.right = tr.right; dr.top = tr.bottom; dr.bottom = rc.bottom - sc(4);
                     HFONT oldS = (HFONT)SelectObject(dc, data->smallFont);
-                    SetTextColor(dc, sel ? RGB(220,220,220) : RGB(150,150,150));
+                    SetTextColor(dc, themeMutedText(rowFg, rowBg));
                     DrawTextW(dc, fromUtf8(m.description).c_str(), -1, &dr, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
                     SelectObject(dc, oldS);
                 }
@@ -1676,14 +1655,16 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 if (widx >= 0 && widx < (int)data->worlds.size()) {
                     const WorldInfo& w = data->worlds[widx];
                     int pad = scW(10);
+                    COLORREF rowBg = wsel ? data->theme.accent : data->theme.bg;
+                    COLORREF rowFg = wsel ? themeContrastText(rowBg) : data->theme.text;
                     RECT tr = rc; tr.left = rc.left + pad; tr.right = rc.right - pad; tr.top += scW(4); tr.bottom = rc.top + (rc.bottom - rc.top) / 2;
-                    SetBkMode(dc, TRANSPARENT); SetTextColor(dc, RGB(255,255,255));
+                    SetBkMode(dc, TRANSPARENT); SetTextColor(dc, rowFg);
                     HFONT oldF = (HFONT)SelectObject(dc, data->font);
                     DrawTextW(dc, w.name.c_str(), -1, &tr, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
                     SelectObject(dc, oldF);
                     RECT dr = rc; dr.left = tr.left; dr.right = tr.right; dr.top = tr.bottom; dr.bottom = rc.bottom - scW(4);
                     HFONT oldS = (HFONT)SelectObject(dc, data->smallFont);
-                    SetTextColor(dc, wsel ? RGB(220,220,220) : RGB(150,150,150));
+                    SetTextColor(dc, themeMutedText(rowFg, rowBg));
                     std::wstring info = formatSize(w.sizeBytes) + L"  |  " + formatFileTime(w.lastPlayed);
                     DrawTextW(dc, info.c_str(), -1, &dr, DT_SINGLELINE | DT_VCENTER | DT_LEFT | DT_END_ELLIPSIS);
                     SelectObject(dc, oldS);
@@ -1697,7 +1678,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 bool sel = (ds->itemState & ODS_SELECTED) != 0;
                 bool focus = (ds->itemState & ODS_FOCUS) != 0;
                 COLORREF bg = sel ? data->theme.accent : data->theme.panel;
-                COLORREF fg = RGB(255, 255, 255);
+                COLORREF fg = themeContrastText(bg);
                 HBRUSH bgBr = CreateSolidBrush(bg);
                 FillRect(dc, &rc, bgBr);
                 DeleteObject(bgBr);
@@ -1731,13 +1712,19 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 bool isOk = (id == IDOK);
                 bool isPrimary = isOk || id == IDC_MODS_INSTALL;
                 COLORREF bg = isPrimary ? data->theme.accent : data->theme.panel;
-                COLORREF fg = isPrimary ? RGB(255,255,255) : data->theme.text;
-                if (ds->itemState & ODS_DISABLED) { bg = RGB(54,54,58); fg = RGB(130,130,130); }
-                else if (ds->itemState & ODS_SELECTED) bg = isPrimary ? RGB(70,120,235) : RGB(60,60,62);
-                if (data->theme.classic) {
-                    // windows 95: navy primary / silver secondary, grayed when disabled
-                    if (ds->itemState & ODS_DISABLED) { bg = RGB(192,192,192); fg = RGB(120,120,120); }
-                    else if (ds->itemState & ODS_SELECTED) bg = isPrimary ? RGB(0,0,128) : RGB(160,160,160);
+                COLORREF fg = isPrimary ? themeContrastText(bg) : data->theme.text;
+                if (ds->itemState & ODS_DISABLED) {
+                    if (data->theme.classic) { bg = RGB(192,192,192); fg = RGB(120,120,120); }
+                    else { bg = blendThemeColor(data->theme.panel, data->theme.bg, 50); fg = themeMutedText(data->theme.text, bg); }
+                } else if (ds->itemState & ODS_SELECTED) {
+                    if (data->theme.classic) {
+                        // win95: navy primary, silver secondary
+                        bg = isPrimary ? RGB(0,0,128) : RGB(160,160,160);
+                        fg = isPrimary ? RGB(255,255,255) : RGB(0,0,0);
+                    } else {
+                        bg = blendThemeColor(bg, data->theme.text, 82);
+                        fg = isPrimary ? themeContrastText(bg) : data->theme.text;
+                    }
                 }
                 Gdiplus::Graphics g(dc); g.SetSmoothingMode(Gdiplus::SmoothingModeHighQuality);
                 HBRUSH bgFill=CreateSolidBrush(bg); FillRect(dc,&rc,bgFill); DeleteObject(bgFill);
@@ -1765,17 +1752,17 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 HBRUSH bg = CreateSolidBrush(data->theme.bg); FillRect(dc, &rc, bg); DeleteObject(bg);
                 int box = 16; int bx = rc.left + 2; int by = rc.top + (rc.bottom - rc.top - box) / 2;
                 HBRUSH boxBr = CreateSolidBrush(chk ? data->theme.accent : data->theme.panel);
-                HPEN boxPen = CreatePen(PS_SOLID, 1, RGB(225, 225, 225));
+                HPEN boxPen = CreatePen(PS_SOLID, 1, themeMutedText(data->theme.text, data->theme.panel));
                 HBRUSH ob = (HBRUSH)SelectObject(dc, boxBr); HPEN op = (HPEN)SelectObject(dc, boxPen);
                 Rectangle(dc, bx, by, bx + box, by + box);
                 SelectObject(dc, ob); SelectObject(dc, op); DeleteObject(boxBr); DeleteObject(boxPen);
                 if (chk) {
-                    HPEN cpen = CreatePen(PS_SOLID, 2, RGB(255,255,255));
+                    HPEN cpen = CreatePen(PS_SOLID, 2, themeContrastText(data->theme.accent));
                     HPEN oc = (HPEN)SelectObject(dc, cpen);
                     MoveToEx(dc, bx+4, by+8, nullptr); LineTo(dc, bx+7, by+12); LineTo(dc, bx+13, by+4);
                     SelectObject(dc, oc); DeleteObject(cpen);
                 }
-                SetBkMode(dc, TRANSPARENT); SetTextColor(dc, RGB(255,255,255));
+                SetBkMode(dc, TRANSPARENT); SetTextColor(dc, data->theme.text);
                 HFONT old = (HFONT)SelectObject(dc, data->font);
                 RECT tr = {bx + box + 8, rc.top, rc.right - 4, rc.bottom};
                 {
@@ -1883,7 +1870,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
             for (ModInfo& m : data->modResults) if (m.hIcon) { DestroyIcon(m.hIcon); m.hIcon = nullptr; }
             data->modResults = std::move(res->res);
             delete res;
-            // batch the fill: no repaints between the individual LB_ADDSTRINGs.
+            // batch the fill, no repaints between the LB_ADDSTRINGs
             SendMessageW(data->listMods, WM_SETREDRAW, FALSE, 0);
             SendMessageW(data->listMods, LB_RESETCONTENT, 0, 0);
             for (size_t i = 0; i < data->modResults.size(); ++i) {
@@ -1897,7 +1884,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
         case WM_APP_MODS_ICON: {
             ModIconResult* r = reinterpret_cast<ModIconResult*>(lParam);
             if (!r) return 0;
-            // stale token, out-of-range or dead list: drop the icon safely.
+            // stale token, bad index or dead list: drop the icon safely
             if (!data || r->token != data->modsSearchToken || !data->listMods ||
                 r->idx >= data->modResults.size() || !IsWindow(data->listMods)) {
                 if (r->icon) DestroyIcon(r->icon);
@@ -1909,7 +1896,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                 data->modResults[r->idx].hIcon = r->icon;
                 RECT itemRc{};
                 if (SendMessageW(data->listMods, LB_GETITEMRECT, static_cast<WPARAM>(r->idx), reinterpret_cast<LPARAM>(&itemRc))) {
-                    InvalidateRect(data->listMods, &itemRc, FALSE);  // repaint only this row
+                    InvalidateRect(data->listMods, &itemRc, FALSE);
                 }
             }
             delete r;
@@ -2156,8 +2143,7 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
                     urls.reserve(res.size());
                     for (const ModInfo& m : res) urls.push_back(m.iconUrl);
                     ModsSearchResult* out = new ModsSearchResult{token, std::move(res)};
-                    // post the list FIRST: it must appear instantly. Icons stream
-                    // in afterwards, one message per finished icon.
+                    // post the list first so it shows at once, icons stream in after
                     if (!IsWindow(par) || !PostMessageW(par, WM_APP_MODS, 0, reinterpret_cast<LPARAM>(out))) { delete out; return; }
                     streamLoadIcons(par, token, std::move(urls));
                 }).detach();
@@ -2451,10 +2437,10 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
         case WM_CTLCOLORBTN: {
             HDC dc = reinterpret_cast<HDC>(wParam);
             HWND ctrl = reinterpret_cast<HWND>(lParam);
-            if (!data) { SetBkColor(dc, kBg); SetTextColor(dc, RGB(255,255,255)); return reinterpret_cast<LRESULT>(GetStockObject(BLACK_BRUSH)); }
-            if (ctrl == data->notesHint || ctrl == data->notesCounter || ctrl == data->servHint || ctrl == data->logsHint || ctrl == data->worldHint) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(150,150,150)); return reinterpret_cast<LRESULT>(data->bgBrush); }
+            if (!data) { SetBkColor(dc, kBg); SetTextColor(dc, kText); return reinterpret_cast<LRESULT>(GetStockObject(BLACK_BRUSH)); }
+            if (ctrl == data->notesHint || ctrl == data->notesCounter || ctrl == data->servHint || ctrl == data->logsHint || ctrl == data->worldHint) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, themeMutedText(data->theme.text, data->theme.bg)); return reinterpret_cast<LRESULT>(data->bgBrush); }
             if (ctrl == data->notesTitle || ctrl == data->servTitle || ctrl == data->logsTitle || ctrl == data->worldTitle) { SetBkColor(dc, data->theme.bg); SetTextColor(dc, data->theme.text); return reinterpret_cast<LRESULT>(data->bgBrush); }
-            SetBkColor(dc, data->theme.bg); SetTextColor(dc, RGB(255,255,255));
+            SetBkColor(dc, data->theme.bg); SetTextColor(dc, data->theme.text);
             return reinterpret_cast<LRESULT>(data->bgBrush);
         }
         case WM_GETMINMAXINFO: {
@@ -2467,9 +2453,9 @@ if (m.hIcon) DrawIconEx(dc, rc.left + pad, iy, m.hIcon, iconSz, iconSz, 0, nullp
         case WM_CTLCOLORLISTBOX: {
             HDC dc = reinterpret_cast<HDC>(wParam);
             HWND ctrl = reinterpret_cast<HWND>(lParam);
-            if (!data) { SetBkColor(dc, kPanel); SetTextColor(dc, RGB(255,255,255)); return reinterpret_cast<LRESULT>(GetStockObject(BLACK_BRUSH)); }
-            if (ctrl == data->editNotes) { SetBkColor(dc, data->theme.panel); SetTextColor(dc, RGB(255,255,255)); return reinterpret_cast<LRESULT>(data->panelBrush); }
-            SetBkColor(dc, data->theme.panel); SetTextColor(dc, RGB(255,255,255));
+            if (!data) { SetBkColor(dc, kPanel); SetTextColor(dc, kText); return reinterpret_cast<LRESULT>(GetStockObject(BLACK_BRUSH)); }
+            if (ctrl == data->editNotes) { SetBkColor(dc, data->theme.panel); SetTextColor(dc, data->theme.text); return reinterpret_cast<LRESULT>(data->panelBrush); }
+            SetBkColor(dc, data->theme.panel); SetTextColor(dc, data->theme.text);
             return reinterpret_cast<LRESULT>(data->panelBrush);
         }
         case WM_ERASEBKGND: {

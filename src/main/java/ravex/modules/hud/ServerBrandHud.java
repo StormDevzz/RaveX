@@ -26,6 +26,13 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
         if (!Modules.enabled(Hud.class)) return;
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getPlayer().connection == null) return;
+        // lan server reports the client brand, not a core
+        boolean singlePlayer = false;
+        try {
+            var rawMc = mc.getRaw();
+            singlePlayer = rawMc.isLocalServer() || rawMc.getCurrentServer() == null;
+        } catch (Throwable ignored) {
+        }
         String rawBrand = null;
         if (mc.getPlayer().connection instanceof IClientPacketListener) {
             rawBrand = ((IClientPacketListener) mc.getPlayer().connection).ravex$getServerBrand();
@@ -43,7 +50,7 @@ private static final Identifier ICON = TextureLoaderUtility.HUD_SERVERBRAND_WHIT
         } else {
             displayBrand = "\u00A77" + rawBrand;
         }
-        String labelText = "Server Brand: " + displayBrand;
+        String labelText = singlePlayer ? "Singleplayer" : "Server Brand: " + displayBrand;
         int tw = ravex.utility.render.FontRenderUtility.getStringWidth(labelText);
         int pw = Math.max(100, 4 + tw + 4 + IS + 4);
         int ph = 26;

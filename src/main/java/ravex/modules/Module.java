@@ -42,6 +42,7 @@ public abstract class Module {
     private float hudScale = 1f;
     private float userScale = 1.0f;
     private final ravex.utility.render.animate.AnimationUtility.SpringAnimation hudSpring = new ravex.utility.render.animate.AnimationUtility.SpringAnimation(0f);
+    private long hudAnimLastNs = 0L;
     public boolean isHudPositionCustomized() { return hudPositionCustomized; }
     public void setHudPositionCustomized(boolean v) { this.hudPositionCustomized = v; }
     public float getHudAlpha() { return hudAlpha; }
@@ -111,7 +112,16 @@ public abstract class Module {
     public String getDescription() {
         String translated = ravex.utility.misc.LanguageUtility.getDescription(getName());
         if (translated != null && !translated.startsWith("desc_")) return translated;
-        if (hud) return ravex.gui.descriptions.HudDescriptions.getDescription(getName());
+        if (hud) {
+            // hud modules are registered with the Hud suffix, the keys are without it
+            String shortName = getName().endsWith("Hud")
+                ? getName().substring(0, getName().length() - 3) : getName();
+            if (!shortName.equals(getName())) {
+                translated = ravex.utility.misc.LanguageUtility.getDescription(shortName);
+                if (translated != null && !translated.startsWith("desc_")) return translated;
+            }
+            return ravex.gui.descriptions.HudDescriptions.getDescription(getName());
+        }
         return ravex.gui.descriptions.ClickGuiDescriptions.getDescription(getName());
     }
     private ravex.parameter.ModuleCondition enableCondition = () -> true;
@@ -132,9 +142,14 @@ public abstract class Module {
     }
     @Contract(pure = true)
     protected boolean hasToggleSound() {
-        return true;
+        return !"Settings".equals(getName());
+    }
+    @Contract(pure = true)
+    protected boolean canBeDisabled() {
+        return !"Settings".equals(getName());
     }
     public void setEnabled(boolean enabled) {
+        if (!enabled && !canBeDisabled()) return;
         if (enabled) ensureNativeLoaded();
         if (hud) {
             if (this.enabled != enabled) {
@@ -241,14 +256,21 @@ public abstract class Module {
             displayY = targetY;
             animInitialized = true;
         }
-        float speed = 0.25f;
+        // own clock, the shared timer can freeze mid way
+        long now = System.nanoTime();
+        float delta = 50f;
+        if (hudAnimLastNs != 0L) {
+            delta = Math.min(50f, (now - hudAnimLastNs) / 1_000_000f);
+        }
+        hudAnimLastNs = now;
+        // frame rate independent follow, same feel as 0.25 per frame at 60 fps
+        float speed = 1f - (float) Math.pow(1f - 0.25f, delta / 16.6667f);
         displayX += (targetX - displayX) * speed;
         displayY += (targetY - displayY) * speed;
         if (Math.abs(targetX - displayX) < 0.3f) displayX = targetX;
         if (Math.abs(targetY - displayY) < 0.3f) displayY = targetY;
 
         if (hud) {
-            float delta = Math.min(50f, ravex.utility.render.animate.AnimationUtility.deltaTime());
             hudSpring.setTarget(enabled ? 1f : 0f);
             hudSpring.update(delta);
             float springVal = Math.max(0f, Math.min(1f, hudSpring.getValue()));

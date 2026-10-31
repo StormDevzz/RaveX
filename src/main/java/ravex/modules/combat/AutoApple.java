@@ -7,7 +7,7 @@ import ravex.utility.misc.food.FoodUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.network.NetworkUtility;
 import ravex.mcwrapper.MinecraftWrapper;
-@Module(name = "AutoApple", category = "Combat")
+@Module(name = "AutoGapple", category = "Combat")
 public class AutoApple {
     @Parameter(name = "Mode", modes = {"Default", "Grim"})
     public String mode = "Default";
@@ -37,7 +37,6 @@ public class AutoApple {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
         
-        // Grim mode: add delay before eating
         if ("Grim".equals(mode) && !isEating) {
             grimDelayTicks++;
             int delayTicks = (int)(grimDelay * 20);

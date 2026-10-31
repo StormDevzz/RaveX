@@ -33,7 +33,7 @@ public static net.minecraft.world.phys.Vec3 highlightPos = null;
     @Parameter(name = "Animate")
     public boolean animate = true;
     @Parameter(name = "HighlightColor", color = true, visible = "render")
-    public int highlightColor = 0xFF55AAFF;
+    public int highlightColor = 0xFF40A9F8;
     private final EasingAnimationUtility fadeAnim = new EasingAnimationUtility();
     private final EasingAnimationUtility sizeAnim = new EasingAnimationUtility();
     private final SlideAnimationUtility slideAnim = new SlideAnimationUtility();

@@ -36,9 +36,15 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
 
     private static boolean clickGuiWasDown = false;
     private static boolean onboardingTried = false;
+    private static boolean guiScaleForced = false;
+    private static boolean historyWarm = false;
     private static boolean updateToastShown = false;
     private static Process loaderProcess = null;
     private static boolean loaderProcessClosed = false;
+
+    public static void markClickGuiKeyHandled() {
+        clickGuiWasDown = true;
+    }
 
     public static void closeLoaderProcess() {
         if (loaderProcess != null) {
@@ -284,6 +290,30 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         MinecraftWrapper mc = MinecraftWrapper.getWrapper();
         if (mc.getWindow() == null) return;
 
+        // force gui scale 2 on every start
+        if (!guiScaleForced) {
+            guiScaleForced = true;
+            try {
+                if (mc.getOptions().guiScale().get() != 2) {
+                    mc.getOptions().guiScale().set(2);
+                    mc.getWindow().setGuiScale(2);
+                }
+            } catch (Throwable t) {
+                RaveX.LOGGER.info("[Startup] Could not force gui scale: {}", t.getMessage());
+            }
+        }
+
+        // warm commit history for the title screen date
+        if (!historyWarm) {
+            historyWarm = true;
+            Thread warm = new Thread(() -> {
+                ravex.manager.ChangelogManager.INSTANCE.loadLocal();
+                ravex.manager.ChangelogManager.INSTANCE.loadRemote();
+            }, "RaveX-HistoryWarm");
+            warm.setDaemon(true);
+            warm.start();
+        }
+
         if (!onboardingTried && !ravex.gui.onboarding.OnboardingScreen.isCompleted()) {
             if (ScreenUtility.isTitleScreen(mc) && !(mc.getCurrentScreen() instanceof ravex.gui.onboarding.OnboardingScreen)) {
                 onboardingTried = true;
@@ -306,13 +336,10 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         } catch (Exception ignored) {}
         boolean isDown = clickGuiBind > 0 && com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, clickGuiBind);
         if (isDown && !clickGuiWasDown) {
-            if (mc.getCurrentScreen() instanceof ClickGUI) {
-                if (mc.getPlayer() == null)
-                    ScreenUtility.setToTitle(ravex.mcwrapper.MinecraftWrapper.getWrapper());
-                else
-                    ScreenUtility.closeScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper());
+            if (mc.getCurrentScreen() instanceof ClickGUI clickGui) {
+                clickGui.onClose();
             } else if (mc.getCurrentScreen() == null || ScreenUtility.isTitleScreen(ravex.mcwrapper.MinecraftWrapper.getWrapper())) {
-                mc.setScreen(new ClickGUI());
+                mc.setScreen(ClickGUI.getOrCreate());
             }
         }
         clickGuiWasDown = isDown;
@@ -336,6 +363,12 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
                 keysState[bind] = isKeyBindDown;
             }
         }
+
+        // swap bind works while the module is off
+        try {
+            ravex.modules.player.ElytraHelper elytraHelper = ModuleManager.get(ravex.modules.player.ElytraHelper.class);
+            if (elytraHelper != null) elytraHelper.handleGlobalBind();
+        } catch (Exception ignored) {}
     }
 
     private static class NotificationHandler {

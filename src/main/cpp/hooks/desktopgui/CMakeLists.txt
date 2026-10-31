@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.14)
 
 if(WIN32)
-    set(DESKTOPGUI_SOURCES main/desktopgui.cpp main/desktopgui_windows.cpp)
+    enable_language(RC)
+    set(DESKTOPGUI_SOURCES main/desktopgui.cpp main/desktopgui_windows.cpp res/dashboard.rc)
 else()
     find_package(PkgConfig QUIET)
     if(PkgConfig_FOUND)
@@ -40,6 +41,11 @@ target_link_libraries(ravex_desktopgui PRIVATE ravex_common)
 set_property(TARGET ravex_desktopgui PROPERTY CXX_STANDARD 23)
 set_property(TARGET ravex_desktopgui PROPERTY CXX_STANDARD_REQUIRED ON)
 
+# #pragma comment(lib) is msvc only, link comctl32 here
+if(WIN32)
+    target_link_libraries(ravex_desktopgui PRIVATE comctl32 msimg32)
+endif()
+
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     if(MSVC)
         target_compile_options(ravex_desktopgui PRIVATE /O2 /fp:fast)
@@ -51,7 +57,13 @@ endif()
 set_target_properties(ravex_desktopgui PROPERTIES
     OUTPUT_NAME "ravex_desktopgui"
     LIBRARY_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
+    RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/../../../src/main/resources/assets/ravex/natives"
 )
+
+# jvm path has no mingw runtime, link it into the dll
+if(MINGW)
+    target_link_options(ravex_desktopgui PRIVATE -static-libgcc -static-libstdc++ -static)
+endif()
 
 if(WIN32)
     set_target_properties(ravex_desktopgui PROPERTIES PREFIX "")

@@ -1,4 +1,5 @@
 #include <jni.h>
+#include "../../../common/include/jni_raii.hpp"
 #include "bowaim.hpp"
 
 extern "C" {
@@ -22,6 +23,7 @@ Java_ravex_modules_combat_BowAim_nativeCalculateBowAim(
 
     jdoubleArray out = env->NewDoubleArray(4);
     if (!out) return nullptr;
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
 
     jdouble buf[4] = {
         result.hit ? 1.0 : 0.0,
@@ -31,6 +33,7 @@ Java_ravex_modules_combat_BowAim_nativeCalculateBowAim(
     };
 
     env->SetDoubleArrayRegion(out, 0, 4, buf);
+    if (ravex::jni::checkAndClearException(env)) return nullptr;
     return out;
 }
 
