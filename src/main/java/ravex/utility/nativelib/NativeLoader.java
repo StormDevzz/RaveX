@@ -67,7 +67,7 @@ public class NativeLoader {
         Map.entry("ravex_breaker.dll", "e4e1034bbd3e3ad61a55765f56cf3be8699df42a684fd8f06e8c92f2fadd11c6"),
         Map.entry("ravex_burrow.dll", "55ee217917430c60e0a13654aa9dbedb3b4d8172c9ff86308271afb668dbba47"),
         Map.entry("ravex_calculator.dll", "a24e1aa711ad8f2fc0aecd4caad76d69f5cd5e8e3c49069afe984b682495b8ef"),
-        Map.entry("ravex_dc.dll", "2227c5aab52af498def0ccf69dacf323c1b7c8f97c828b6e572ebc91d94ca61d"),
+        Map.entry("ravex_dc.dll", "4ffc2976fe867b7b4736ce633607d370aaf0cf689929347569ed0c5ef3ab89f5"),
         Map.entry("ravex_desktopgui.dll", "f0622041bd153f8c54ee7b016bb8bd66b5d5a6240ea29afe78ab6874104fe68b"),
         Map.entry("ravex_elytraplusplus.dll", "333518e325a8e4266d33ca6984b5a4d7cf48ad63a1a73edcd483160849d93796"),
         Map.entry("ravex_fastexp.dll", "a0e391486ccdb287a9dde73bd8fd389817f7ce452e39fafaac50e5a1a3a1cbf8"),
@@ -75,15 +75,15 @@ public class NativeLoader {
         Map.entry("ravex_font.dll", "465a7498840e9946ceb8bf17998fd1f66b1bad4c1dbaca3f87586c77d0c20f80"),
         Map.entry("ravex_github_tools.dll", "0ef6bdabb16b8256d63fa661734e5879faebecfdc70189999464e1e016f2a11d"),
         Map.entry("ravex_holefill.dll", "5f0d335d2be502957135a9458c4abf766baf4ec575ba47c04fd4138b7ec67a59"),
-        Map.entry("ravex_jni.dll", "abd9baeb05293287999216f7a452a7f2fab9c163b974866fb4c67984daeaa35a"),
-        Map.entry("ravex_loader.dll", "9977e6592a4bac41145e6f0dec9e64e5488c6e88a08464bde0e2e26eea3d3ea8"),
-        Map.entry("ravex_manager.dll", "a98ebaf6a572247eaef9f97308dff73a3efd43ba7218ab3d278aeb3f367206ba"),
+        Map.entry("ravex_jni.dll", "76a038c390500110b9441bd2958ceb3367054acbc8e35b840e8fcdd9f1976b95"),
+        Map.entry("ravex_loader.dll", "7a564f007d0e68108c2c89a99c31aaccae1f8318d787758a9418c09618b5f3d5"),
+        Map.entry("ravex_manager.dll", "f18f70d6ab60a0f072df2d3e07f2b63981e8c391e00980391eb8736038ea8237"),
         Map.entry("ravex_mediaquery.dll", "4c8df3a2ed66ff8c4bf3fbf457ed77b1798a2777710edce401ccd5732f10927e"),
         Map.entry("ravex_native_manager.exe", "38861e8a53534bad376ca85abca377675d28eadf839ba773e88101ddbd8f7448"),
         Map.entry("ravex_nativesc.dll", "e5a87f361305f1b5c1b4f6dea6261785d190e7c7e3f2d8ee34c6312b8bc98bb2"),
         Map.entry("ravex_nopacktkick.dll", "420b001cf7b462f1879a701fdd8b96d1d02fb2359ec3dd95af732ef9f8795903"),
         Map.entry("ravex_nuker.dll", "0a1c2f2971bd1afbeb5536726d5bfa480fc61c848d9a1c0954b9d2a272996d21"),
-        Map.entry("ravex_optimize.dll", "21ee61973f63969c6c7de08484077dd390f5b4b4447ac7f3d9c84d8d53d9fadf"),
+        Map.entry("ravex_optimize.dll", "f50dad2964c48d88f600dce5c8aa588cc62c894b26e02b3e5975bc4d517f885a"),
         Map.entry("ravex_pearltarget.dll", "169c141d2126c15191af62fe537136be5823ff7805e12199f46b8bcadb161c1c"),
         Map.entry("ravex_phase.dll", "37088d17d9d675e681ac8e28d4d67198162b214a24551c9f8ab047b115f9c2df"),
         Map.entry("ravex_quiver.dll", "39a530e3f391b6b6d5cc300c24f0b1a761bf21094616c602d5a849787eb55630"),
@@ -230,7 +230,7 @@ public class NativeLoader {
             return null;
         }
 
-        // хеш не совпал с манифестом и не наш, значит файл положил пользователь
+        // Ñ…ÐµÑˆ Ð½Ðµ ÑÐ¾Ð²Ð¿Ð°Ð» Ñ Ð¼Ð°Ð½Ð¸Ñ„ÐµÑÑ‚Ð¾Ð¼ Ð¸ Ð½Ðµ Ð½Ð°Ñˆ, Ð·Ð½Ð°Ñ‡Ð¸Ñ‚ Ñ„Ð°Ð¹Ð» Ð¿Ð¾Ð»Ð¾Ð¶Ð¸Ð» Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ
         if (customBuildsLogged.add(fileName)) {
             try {
                 ravex.RaveX.LOGGER.info("[Natives] {} is used as a custom build, its hash is not the bundled one", fileName);
@@ -291,7 +291,7 @@ public class NativeLoader {
     }
 
     private static void preloadDependencies(File dir) {
-        String[] deps = {"optimize", "manager", "github_tools"};
+        String[] deps = {"optimize", "manager", "github_tools", "loader"};
         for (String dep : deps) {
             String fileName = isWindows() ? "ravex_" + dep + ".dll" : "libravex_" + dep + ".so";
             File f = new File(dir, fileName);

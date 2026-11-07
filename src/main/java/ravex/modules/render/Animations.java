@@ -14,7 +14,7 @@ import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-@Module(name = "Animations", category = "Render", enabled = true)
+@Module(name = "Animations", category = "Render", enabled = false)
 public class Animations {
     @Parameter(name = "TabAnimation")
     public boolean tabAnimation = true;

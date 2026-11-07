@@ -28,8 +28,8 @@ namespace checks {
 
     bool validateHandshakeResponse(const std::string& responseJson, uint32_t opcode) {
 
-        if (opcode != 2) {
-            std::printf("[Checks] Handshake validation failed: expected opcode 2, got %u\n", opcode);
+        if (opcode != 1) {
+            std::printf("[Checks] Handshake validation failed: expected opcode 1, got %u\n", opcode);
             return false;
         }
         if (responseJson.find("\"cmd\":\"DISPATCH\"") == std::string::npos) {
@@ -59,8 +59,8 @@ namespace checks {
     }
 
     bool validateHandshakeResponse(const std::string& responseJson, uint32_t opcode) {
-        if (opcode != 2) {
-            std::printf("[Checks] Handshake validation failed: expected opcode 2, got %u\n", opcode);
+        if (opcode != 1) {
+            std::printf("[Checks] Handshake validation failed: expected opcode 1, got %u\n", opcode);
             return false;
         }
         if (responseJson.find("\"cmd\":\"DISPATCH\"") == std::string::npos) {

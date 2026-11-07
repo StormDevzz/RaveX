@@ -196,7 +196,7 @@ public class ModuleButton {
     public int getLayoutHeight(int panelWidth) {
         int btnH = (int) ModuleManager.get(ClickGui.class).buttonHeight;
         int row = Math.max(1, (int) (btnH * lastRevealH)) + 2;
-        if (!parameterElements.isEmpty() && expandAnim > 0.01f) {
+        if (!parameterElements.isEmpty() && expandAnim > 0.0001f) {
             row += (int) (getExpandedHeight(panelWidth) * lastRevealH);
         }
         return row;
@@ -209,7 +209,7 @@ public class ModuleButton {
                 h += pe.getHeight();
             }
         }
-        return (int) ((Math.min(h, MAX_INLINE_HEIGHT) + 4) * AnimationUtility.Easing.CUBIC_OUT.apply(expandAnim));
+        return (int) ((Math.min(h, MAX_INLINE_HEIGHT) + 4) * expandAnim);
     }
 
     public boolean onInlineScroll(double mouseX, double mouseY, double amount, int x, int y, int width) {
@@ -520,12 +520,13 @@ public class ModuleButton {
 
         if (hasParams) {
             float targetExpand = expanded ? 1.0f : 0.0f;
-            float expandStep = 1f - (float) Math.exp(-getFrameDt() * 9f);
+            float speed = expanded ? 9f : 5f;
+            float expandStep = 1f - (float) Math.exp(-getFrameDt() * speed);
             expandAnim += (targetExpand - expandAnim) * expandStep;
-            if (Math.abs(targetExpand - expandAnim) < 0.005f) {
+            if (Math.abs(targetExpand - expandAnim) < 0.00001f) {
                 expandAnim = targetExpand;
             }
-            if (expandAnim > 0.01f) {
+            if (expandAnim > 0.0f) {
                 int paramAreaH = 0;
                 int paramW = width - 6;
                 for (ParameterElement pe : parameterElements) {
@@ -537,7 +538,7 @@ public class ModuleButton {
                 int bgCol = ColorUtility.withAlpha(0x0A0A14, Math.max(btnAlpha / 2, 24));
                 Render2DUtility.drawRound(graphics, x + 3, currentY, width - 6, actualH, Math.max(4, btnRadius - 2), bgCol);
 
-                int accentH = (int) (actualH * AnimationUtility.Easing.CUBIC_OUT.apply(expandAnim));
+                int accentH = (int) (actualH * expandAnim);
                 if (accentH > 1) {
                     int barColor = ColorUtility.withAlpha(activeColor, (int) (expandAnim * 150));
                     Render2DUtility.drawRound(graphics, x + 5, currentY + 1, 2, accentH, 1, barColor);
@@ -578,8 +579,8 @@ public class ModuleButton {
                 currentY += actualH;
             }
         } else {
-            expandAnim += (0.0f - expandAnim) * (1f - (float) Math.exp(-getFrameDt() * 9f));
-            if (expandAnim < 0.005f) expandAnim = 0.0f;
+            expandAnim += (0.0f - expandAnim) * (1f - (float) Math.exp(-getFrameDt() * 5f));
+            if (expandAnim < 0.0001f) expandAnim = 0.0f;
         }
 
         boolean searching = searchQuery != null && !searchQuery.isEmpty();

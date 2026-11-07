@@ -98,6 +98,9 @@ public class MixinVanillaPackResources {
                 "sounds/other/scroll.ogg",
                 "sounds/other/swipein.ogg",
                 "sounds/other/swipeout.ogg",
+                "sounds/done.ogg",
+                "sounds/onboarding_done.ogg",
+                "sounds/no_settings.ogg",
                 "textures/skull.png"
             };
 

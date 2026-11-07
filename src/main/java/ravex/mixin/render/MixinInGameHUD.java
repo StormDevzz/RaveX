@@ -16,32 +16,32 @@ import ravex.modules.Modules;
 public abstract class MixinInGameHUD {
     @Shadow private net.minecraft.client.gui.components.PlayerTabOverlay tabList;
 
-    @Inject(method = "renderBossOverlay", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderBossOverlay", at = @At("HEAD"), cancellable = true, require = 0)
     private void ravexHideBossBar(GuiGraphics g, DeltaTracker d, CallbackInfo ci) {
         if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).bossBar) ci.cancel();
     }
 
-    @Inject(method = "renderScoreboardSidebar", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderScoreboardSidebar", at = @At("HEAD"), cancellable = true, require = 0)
     private void ravexHideScoreboard(GuiGraphics g, DeltaTracker d, CallbackInfo ci) {
         if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).scoreboard) ci.cancel();
     }
 
-    @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true, require = 0)
     private void ravexHideCrosshair(GuiGraphics g, DeltaTracker d, CallbackInfo ci) {
         if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).crosshair) ci.cancel();
     }
 
-    @Inject(method = "renderEffects", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderEffects", at = @At("HEAD"), cancellable = true, require = 0)
     private void ravexHidePotions(GuiGraphics g, DeltaTracker d, CallbackInfo ci) {
         if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).effectIcons) ci.cancel();
     }
 
-    @Inject(method = "renderVignette", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderVignette", at = @At("HEAD"), cancellable = true, require = 0)
     private void ravexHideVignette(GuiGraphics g, net.minecraft.world.entity.Entity e, CallbackInfo ci) {
         if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).vignette) ci.cancel();
     }
 
-    @Inject(method = "renderConfusionOverlay", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderConfusionOverlay", at = @At("HEAD"), cancellable = true, require = 0)
     private void ravexHideNausea(GuiGraphics g, float f, CallbackInfo ci) {
         if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).nausea) ci.cancel();
     }
@@ -132,12 +132,12 @@ public abstract class MixinInGameHUD {
         pose.popMatrix();
     }
 
-    @Inject(method = "renderItemHotbar", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderItemHotbar", at = @At("HEAD"), cancellable = true, require = 0)
     private void ravexHideVanillaHotbar(GuiGraphics g, DeltaTracker d, CallbackInfo ci) {
         if (ravex.modules.hud.HotbarHud.hidesVanillaHotbar()) ci.cancel();
     }
 
-    @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "renderPortalOverlay", at = @At("HEAD"), cancellable = true, require = 0)
     private void onRenderPortalOverlay(GuiGraphics guiGraphics, float f, CallbackInfo ci) {
         if (Modules.enabled(NoRender.class) && Modules.get(NoRender.class).portal) {
             ci.cancel();

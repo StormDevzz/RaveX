@@ -34,16 +34,20 @@ public class RichPresence {
     private Thread updateThread;
     private volatile boolean running = false;
     public void onEnable() {
+        ravex.RaveX.LOGGER.info("[RichPresence] onEnable called");
         if (!NativeLoader.loadLibrary("ravex_dc")) {
             ravex.RaveX.LOGGER.warn("[RichPresence] native dc library is not available, module stays off");
             return;
         }
+        ravex.RaveX.LOGGER.info("[RichPresence] native library loaded, starting thread");
         running = true;
         updateThread = new Thread(() -> {
             try {
                 nativeInitialize(CLIENT_ID);
+                ravex.RaveX.LOGGER.info("[RichPresence] nativeInitialize succeeded");
             } catch (Throwable t) {
-                System.err.println("[RichPresence] nativeInitialize failed: " + t.getMessage());
+                System.err.println("[RichPresence] nativeInitialize failed: " + t);
+                t.printStackTrace();
                 running = false;
                 return;
             }
@@ -51,6 +55,7 @@ public class RichPresence {
             while (running) {
                 try {
                     updatePresence(startTime);
+                    ravex.RaveX.LOGGER.info("[RichPresence] isConnected=" + nativeIsConnected());
                     Thread.sleep(10000);
                 } catch (InterruptedException e) {
                     break;
@@ -67,6 +72,9 @@ public class RichPresence {
         running = false;
         if (updateThread != null) {
             updateThread.interrupt();
+            try {
+                updateThread.join(2000);
+            } catch (InterruptedException ignored) {}
             updateThread = null;
         }
         try {
@@ -121,8 +129,10 @@ public class RichPresence {
         }
         try {
             nativeUpdatePresence(state, details, startTime, showOS, showButton, largeImage);
+            ravex.RaveX.LOGGER.info("[RichPresence] sent: state=" + state + ", details=" + details);
         } catch (Throwable t) {
-            System.err.println("[RichPresence] nativeUpdatePresence failed: " + t.getMessage());
+            System.err.println("[RichPresence] nativeUpdatePresence failed: " + t);
+            t.printStackTrace();
         }
     }
 }

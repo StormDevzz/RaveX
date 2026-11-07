@@ -5,6 +5,8 @@ import java.util.*;
 
 public class ProcessLauncher {
 
+    public static Process launchedProcess = null;
+
     public void launch(String command, String[] extraArgs, LoaderCallback callback) {
         File signalFile = new File(System.getProperty("java.io.tmpdir"), ".ravex_ready");
         if (signalFile.exists()) signalFile.delete();
@@ -19,6 +21,7 @@ public class ProcessLauncher {
             pb.environment().put("RAVEX_LOADER_ACTIVE", "true");
 
             Process process = pb.start();
+            launchedProcess = process;
 
             callback.updateStatus("Client starting...", 55);
 

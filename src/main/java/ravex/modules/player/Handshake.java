@@ -5,9 +5,6 @@ import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.network.NetworkUtility;
 
-import ravex.manager.LuaManager;
-import org.luaj.vm2.LuaValue;
-import org.luaj.vm2.LuaFunction;
 import ravex.modules.Modules;
 @Module(name = "Handshake", category = "Player")
 public class Handshake {
@@ -32,18 +29,6 @@ public class Handshake {
 
     public String getSpoofedHost(String originalHost) {
         if (!Modules.enabled(Handshake.class)) return originalHost;
-        LuaValue fn = LuaManager.INSTANCE.getGlobals().get("onHandshake");
-        if (fn.isfunction()) {
-            try {
-                LuaValue[] args = { LuaValue.valueOf(originalHost), LuaValue.valueOf((int) (double) protocol) };
-                org.luaj.vm2.Varargs res = ((LuaFunction) fn).invoke(LuaValue.varargsOf(args));
-                if (res.narg() >= 1 && !res.arg(1).isnil()) {
-                    return res.arg(1).tojstring();
-                }
-            } catch (Exception e) {
-                System.err.println("[Lua Handshake Error] " + e.getMessage());
-            }
-        }
         String m = mode;
         switch (m) {
             case "Forge":
@@ -58,18 +43,6 @@ public class Handshake {
     }
     public int getSpoofedProtocol(int originalProtocol) {
         if (!Modules.enabled(Handshake.class)) return originalProtocol;
-        LuaValue fn = LuaManager.INSTANCE.getGlobals().get("onHandshake");
-        if (fn.isfunction()) {
-            try {
-                LuaValue[] args = { LuaValue.valueOf(""), LuaValue.valueOf(originalProtocol) };
-                org.luaj.vm2.Varargs res = ((LuaFunction) fn).invoke(LuaValue.varargsOf(args));
-                if (res.narg() >= 2 && !res.arg(2).isnil()) {
-                    return res.arg(2).toint();
-                }
-            } catch (Exception e) {
-                System.err.println("[Lua Handshake Error] " + e.getMessage());
-            }
-        }
         String m = mode;
         switch (m) {
             case "Forge":

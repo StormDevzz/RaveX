@@ -18,7 +18,6 @@ endif()
 find_package(JNI REQUIRED)
 
 add_subdirectory(common)
-# add_subdirectory(lua)  # вырублен тк нужен LuaScript.h которого нету
 add_subdirectory(math)
 # add_subdirectory(hooks/voidesp)  # теперь на джаве
 add_subdirectory(hooks/shaders)

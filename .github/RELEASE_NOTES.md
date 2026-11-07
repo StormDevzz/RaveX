@@ -1,5 +1,37 @@
 # RaveX
 
+## November 7, 2026
+
+### Loader
+- Loader window is now draggable (mouse events properly handled on the content pane).
+- Added Windows acrylic blur effect to the loader window (DWM SetWindowCompositionAttribute + DwmEnableBlurBehindWindow), with proper HWND retrieval and delayed application after window is shown.
+- Replaced the old single-arc loading spinner with a rotating dots spinner (5 dots with staggered delays and non-linear rotation/opacity keyframes).
+- Loading dots are now white; animation speed increased.
+- Fixed text rendering issues on the acrylic backdrop: switched text antialiasing from LCD/ClearType (colored fringes) to grayscale gasp-based antialiasing; disabled antialiasing for the "X" letter to remove blue outline.
+- Text elements (OS version, system info, extra info, status) are now truncated with "..." if they exceed the available width.
+- OS version string now shows the localized Windows edition and release (e.g. "Windows 11 Pro 25H2") via WMI `Win32_OperatingSystem.Caption` + registry `DisplayVersion`, supporting all Windows display languages.
+- Loader window now appears in the taskbar (changed from `JWindow` to undecorated `JFrame`).
+- Fixed window transparency/flickering during drag (override `update()` to skip background erase, `repaint()` after `setLocation`).
+
+### RichPresence (Discord)
+- Fixed Discord IPC handshake: expected opcode was incorrectly set to 2 (Close) instead of 1 (Frame), causing all handshakes to fail. Status now updates correctly.
+- Fixed window freeze when disabling RichPresence (deadlock between `updateThread` holding `rpcMutex` and `nativeShutdown` acquiring it) — added `join(2000)` timeout.
+- Added diagnostic logging (`isConnected`, `sent:` state/details).
+
+### Removed Lua integration
+- Removed `LuaManager` (660 lines), Lua resource files, and C++ Lua native code.
+- Removed `org.luaj:luaj-jse` dependency from `build.gradle`.
+- `Handshake` module now uses only built-in modes (Basic/Forge/Lunar/Custom) without Lua `onHandshake` override.
+
+### Loader (launcher integration)
+- Embedded JAR-in-JAR dependencies (including JNA) are now extracted to a temp directory and added to the loader process classpath, so acrylic blur works when running through external launchers (Freesm Launcher, etc.).
+
+### Native layer
+- Updated `ravex_dc.dll` manifest hash and rebuilt the native library with the handshake fix.
+- Added "loader" to `preloadDependencies` in `NativeLoader`.
+
+## November 1, 2026
+
 ## KickX Launcher v1.3 (Windows)
 
 - KickX Launcher for Windows is now version **1.3** (not 1.3.0). Version reflected in `app.rc`, `app.manifest` and `build_info.h.in`.

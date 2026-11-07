@@ -21,11 +21,11 @@ public class ClickGui {
     @Parameter(name = "ButtonOpacity", min = 0, max = 255, step = 1)
     public double buttonOpacity = 35;
     @Parameter(name = "Switchless")
-    public boolean switchless = true;
+    public boolean switchless = false;
     @Parameter(name = "Outlines")
     public boolean outlines = true;
     @Parameter(name = "OutlineColor", color = true, visible = "outlines")
-    public int outlineColor = 0x30FFFFFF;
+    public int outlineColor = 0xFFB8C4D8;
     @Parameter(name = "ButtonOutlines")
     public boolean buttonOutlines = true;
     @Parameter(name = "ButtonHeight", min = 8, max = 30, step = 1)
@@ -66,9 +66,4 @@ public class ClickGui {
     public boolean showGear = true;
     @Parameter(name = "ShowTips")
     public boolean showTips = true;
-    @Parameter(name = "Blur")
-    public boolean blur = false;
-    @Parameter(name = "BlurRadius", min = 1, max = 10, step = 1, visible = "blur")
-    public double blurRadius = 8;
-
 }

@@ -41,6 +41,13 @@ public class RaveXLoader {
 
         window = new LoaderWindow();
         window.setVisible(true);
+        javax.swing.Timer t = new javax.swing.Timer(1000, e -> {
+            AcrylicBlur.applyGlass(window);
+            ((javax.swing.Timer) e.getSource()).stop();
+        });
+        t.setRepeats(false);
+        t.start();
+        window.requestFocusInWindow();
 
         window.updateStatus("Initializing loader...", 0);
 
@@ -93,6 +100,13 @@ public class RaveXLoader {
     private static void runStandaloneOptimizer() {
         window = new LoaderWindow();
         window.setVisible(true);
+        javax.swing.Timer t = new javax.swing.Timer(1000, e -> {
+            AcrylicBlur.applyGlass(window);
+            ((javax.swing.Timer) e.getSource()).stop();
+        });
+        t.setRepeats(false);
+        t.start();
+        window.requestFocusInWindow();
         window.updateStatus("Initializing Standalone Optimizer...", 0);
 
         new Thread(() -> {
@@ -120,6 +134,7 @@ public class RaveXLoader {
         window.updateStatus("Launching client...", 50);
         ProcessLauncher launcher = new ProcessLauncher();
         launcher.launch(command, extraArgs, window);
+        System.exit(0);
     }
 
     private static void runOptimizationOnly() {
@@ -132,10 +147,13 @@ public class RaveXLoader {
 
         while (true) {
             sleep(1000);
-        }
-    }
+        }    }
 
     public static void closeLoader() {
+        if (ProcessLauncher.launchedProcess != null) {
+            try { ProcessLauncher.launchedProcess.destroyForcibly(); } catch (Exception ignored) {}
+            ProcessLauncher.launchedProcess = null;
+        }
         if (window != null) {
             javax.swing.SwingUtilities.invokeLater(() -> {
                 try {
@@ -169,6 +187,13 @@ public class RaveXLoader {
 
         window = new LoaderWindow();
         window.setVisible(true);
+        javax.swing.Timer t = new javax.swing.Timer(1000, e -> {
+            AcrylicBlur.applyGlass(window);
+            ((javax.swing.Timer) e.getSource()).stop();
+        });
+        t.setRepeats(false);
+        t.start();
+        window.requestFocusInWindow();
         window.updateStatus("Initializing client optimization...", 0);
 
         new Thread(() -> {
@@ -191,6 +216,7 @@ public class RaveXLoader {
         new Thread(() -> {
             sleep(20000);
             closeLoader();
+            System.exit(0);
         }).start();
     }
 

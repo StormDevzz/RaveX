@@ -169,48 +169,6 @@ public class ClickGUI extends Screen {
         }
     }
 
-    private boolean blurApplied = false;
-    private int blurRadiusApplied = -1;
-    private int savedBlurRadius = -1;
-
-        // the vanilla menu blur option drives the world blur here
-    private void syncBlurOptions() {
-        var cfg = ModuleManager.get(ravex.modules.client.ClickGui.class);
-        var option = MinecraftWrapper.getWrapper().getOptions().menuBackgroundBlurriness();
-        boolean want = cfg.blur;
-        int radius = want ? (int) Math.round(cfg.blurRadius) : 0;
-        if (blurApplied && savedBlurRadius >= 0) {
-            if (!want) {
-                restoreBlur();
-            } else if (blurRadiusApplied != radius) {
-                if (option.get() != radius) {
-                    option.set(radius);
-                }
-                blurRadiusApplied = radius;
-            }
-            return;
-        }
-        if (want) {
-            savedBlurRadius = option.get();
-            if (savedBlurRadius != radius) {
-                option.set(radius);
-            }
-            blurApplied = true;
-            blurRadiusApplied = radius;
-        }
-    }
-
-    private void restoreBlur() {
-        if (!blurApplied || savedBlurRadius < 0) return;
-        var option = MinecraftWrapper.getWrapper().getOptions().menuBackgroundBlurriness();
-        if (option.get() != savedBlurRadius) {
-            option.set(savedBlurRadius);
-        }
-        blurApplied = false;
-        blurRadiusApplied = -1;
-        savedBlurRadius = -1;
-    }
-
     @Override
     protected void init() {
         int panelW = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).panelWidth;
@@ -346,16 +304,25 @@ public class ClickGUI extends Screen {
 
         cachedActiveColor = ColorUtility.getActiveColor();
 
-        syncBlurOptions();
-        if (ModuleManager.get(ravex.modules.client.ClickGui.class).blur) {
-            // marks the current gui layer as blurred
+        try {
             this.renderBlurredBackground(graphics);
+        } catch (IllegalStateException ignored) {
+            // blur already applied this frame by another source
         }
 
         boolean drawBg = ModuleManager.get(ravex.modules.client.ClickGui.class).drawBackground;
         if (drawBg) {
             int bgOpacity = (int) ModuleManager.get(ravex.modules.client.ClickGui.class).backgroundOpacity;
-            graphics.fillGradient(0, 0, this.width, this.height, ColorUtility.withAlpha(ColorUtility.BACKGROUND_START, bgOpacity), ColorUtility.withAlpha(ColorUtility.BACKGROUND_END, bgOpacity));
+            int start = ColorUtility.withAlpha(0x0A0A14, bgOpacity);
+            int end = ColorUtility.withAlpha(0x14141E, bgOpacity);
+            graphics.fillGradient(0, 0, this.width, this.height, start, end);
+            // soft glow at the bottom in the accent color of the ClickGui theme
+            int accent = ColorUtility.getActiveColor();
+            int glowA = Math.min(140, bgOpacity + 60);
+            graphics.fillGradient(0, this.height - 200, this.width, this.height,
+                    ColorUtility.withAlpha(accent, 0), ColorUtility.withAlpha(accent, glowA));
+            graphics.fillGradient(0, this.height - 120, this.width, this.height,
+                    ColorUtility.withAlpha(accent, 0), ColorUtility.withAlpha(accent, glowA / 2));
         }
 
         if (ModuleManager.isEnabled(ravex.modules.client.GuiParticles.class)) {
@@ -1101,7 +1068,6 @@ public class ClickGUI extends Screen {
         for (CategoryPanel p : panels) {
             p.resetExpansion();
         }
-        restoreBlur();
         super.removed();
     }
 

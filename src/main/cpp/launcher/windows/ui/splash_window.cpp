@@ -47,6 +47,7 @@ struct SplashData {
     HBRUSH bgBrush = nullptr;
     ThemeColors theme;
     bool done = false;
+    bool acrylic = false;
     float animPhase = 0.0f;
     float lut[SPINNER_LUT_SIZE] = {};
     int phraseIndex = 0;
@@ -193,6 +194,30 @@ void splashWorker() {
     }
     PostMessageW(g_splash.hwnd, WM_SPLASH_DONE, 1, 0);
 }
+bool applySplashAcrylic(HWND hwnd, const ThemeColors& theme) {
+    HMODULE user = GetModuleHandleW(L"user32.dll");
+    if (!user) user = LoadLibraryW(L"user32.dll");
+    if (!user) return false;
+    typedef BOOL (WINAPI *SetWcaFn)(HWND, void*);
+    auto setWca = reinterpret_cast<SetWcaFn>(GetProcAddress(user, "SetWindowCompositionAttribute"));
+    if (!setWca) return false;
+    enum AccentState { ACCENT_DISABLED = 0, ACCENT_ENABLE_BLURBEHIND = 3, ACCENT_ENABLE_ACRYLICBLURBEHIND = 4 };
+    struct AccentPolicy { int state; int flags; unsigned int color; int anim; };
+    struct WcaData { int attr; void* data; size_t size; };
+    AccentPolicy policy{};
+    policy.state = ACCENT_ENABLE_ACRYLICBLURBEHIND;
+    policy.flags = 0;
+    unsigned char r = GetRValue(theme.bg), g = GetGValue(theme.bg), b = GetBValue(theme.bg);
+    unsigned char a = theme.isDark ? 0xCC : 0x99;
+    policy.color = (a << 24) | (b << 16) | (g << 8) | r;
+    policy.anim = 0;
+    WcaData data{};
+    data.attr = 19; // WCA_ACCENT_POLICY
+    data.data = &policy;
+    data.size = sizeof(policy);
+    return setWca(hwnd, &data) == TRUE;
+}
+
 LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
     switch (msg) {
         case WM_CREATE: {
@@ -201,8 +226,6 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
             g_splash.font = makeSplashFont(-14, FW_NORMAL);
             g_splash.titleFont = makeSplashFont(-22, FW_SEMIBOLD);
             if (g_splash.theme.bg == 0) g_splash.theme = getTheme("dark");
-            if (g_splash.bgBrush) DeleteObject(g_splash.bgBrush);
-            g_splash.bgBrush = CreateSolidBrush(g_splash.theme.bg);
             std::wstring logoPath = iconPathSplash(L"win10");
             if (fileExists(logoPath)) {
                 g_splash.winLogo = Gdiplus::Bitmap::FromFile(logoPath.c_str());
@@ -235,39 +258,21 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_PAINT: {
             PAINTSTRUCT ps;
             HDC hdc = BeginPaint(hwnd, &ps);
-            if (!g_splash.bgBrush) g_splash.bgBrush = CreateSolidBrush(g_splash.theme.bg);
-            RECT crc; GetClientRect(hwnd, &crc);
-            // double-buffered: direct 16 ms GDI+ repaints made the spinner flicker
-            HDC mem = CreateCompatibleDC(hdc);
-            HBITMAP memBmp = (mem && (crc.right > 0) && (crc.bottom > 0))
-                ? CreateCompatibleBitmap(hdc, crc.right, crc.bottom) : nullptr;
-            if (mem && memBmp) {
-                HGDIOBJ old = SelectObject(mem, memBmp);
-                FillRect(mem, &crc, g_splash.bgBrush);
-                SetBkMode(mem, TRANSPARENT);
-                drawSpinner(mem, SPINNER_CX, SPINNER_CY, g_splash.animPhase);
-                if (g_splash.winLogo && g_splash.winLogo->GetLastStatus() == Gdiplus::Ok) {
-                    Gdiplus::Graphics g(mem);
-                    g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
-                    g.DrawImage(g_splash.winLogo, 492, 172, 20, 20);
-                }
-                BitBlt(hdc, 0, 0, crc.right, crc.bottom, mem, 0, 0, SRCCOPY);
-                SelectObject(mem, old);
-            } else {
-                if (g_splash.bgBrush) FillRect(hdc, &ps.rcPaint, g_splash.bgBrush);
-                SetBkMode(hdc, TRANSPARENT);
-                drawSpinner(hdc, SPINNER_CX, SPINNER_CY, g_splash.animPhase);
+            SetBkMode(hdc, TRANSPARENT);
+            drawSpinner(hdc, SPINNER_CX, SPINNER_CY, g_splash.animPhase);
+            if (g_splash.winLogo && g_splash.winLogo->GetLastStatus() == Gdiplus::Ok) {
+                Gdiplus::Graphics g(hdc);
+                g.SetInterpolationMode(Gdiplus::InterpolationModeHighQualityBicubic);
+                g.DrawImage(g_splash.winLogo, 492, 172, 20, 20);
             }
-            if (memBmp) DeleteObject(memBmp);
-            if (mem) DeleteDC(mem);
             EndPaint(hwnd, &ps);
             return 0;
         }
         case WM_CTLCOLORSTATIC: {
             HDC dc = reinterpret_cast<HDC>(wParam);
             SetTextColor(dc, g_splash.theme.text);
-            SetBkColor(dc, g_splash.theme.bg);
-            return reinterpret_cast<LRESULT>(g_splash.bgBrush);
+            SetBkMode(dc, TRANSPARENT);
+            return reinterpret_cast<LRESULT>(GetStockObject(HOLLOW_BRUSH));
         }
         case WM_ERASEBKGND:
             return 1;
@@ -295,7 +300,6 @@ LRESULT CALLBACK SplashProc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {
         case WM_DESTROY: {
             if (g_splash.font) DeleteObject(g_splash.font);
             if (g_splash.titleFont) DeleteObject(g_splash.titleFont);
-            if (g_splash.bgBrush) DeleteObject(g_splash.bgBrush);
             if (g_splash.winLogo) delete g_splash.winLogo;
             PostQuitMessage(0);
             return 0;
@@ -321,7 +325,7 @@ bool runSplashWindow(HINSTANCE hInstance) {
     if (!wc.hIcon) wc.hIcon = LoadIconW(nullptr, MAKEINTRESOURCEW(32512));
     wc.hIconSm = wc.hIcon;
     wc.hCursor = LoadCursorW(nullptr, MAKEINTRESOURCEW(32512));
-    wc.hbrBackground = CreateSolidBrush(g_splash.theme.bg);
+    wc.hbrBackground = (HBRUSH)GetStockObject(NULL_BRUSH);
     wc.lpszClassName = L"KickXSplash";
     RegisterClassExW(&wc);
     int sw = 520;
@@ -333,15 +337,16 @@ bool runSplashWindow(HINSTANCE hInstance) {
     RECT wr = mi.rcWork;
     int sx = wr.left + ((wr.right - wr.left) - sw) / 2;
     int sy = wr.top + ((wr.bottom - wr.top) - sh) / 2;
-    HWND hwnd = CreateWindowExW(WS_EX_TOPMOST, L"KickXSplash", L"KickX Launcher",
-        WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_VISIBLE, sx, sy, sw, sh, nullptr, nullptr, hInstance, nullptr);
+    HWND hwnd = CreateWindowExW(WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP, L"KickXSplash", L"KickX Launcher",
+        WS_POPUP | WS_VISIBLE, sx, sy, sw, sh, nullptr, nullptr, hInstance, nullptr);
     if (!hwnd) return true;
     RECT cr{0, 0, sw, sh};
-    AdjustWindowRectEx(&cr, WS_POPUP | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX, FALSE, WS_EX_TOPMOST);
+    AdjustWindowRectEx(&cr, WS_POPUP, FALSE, WS_EX_TOPMOST | WS_EX_NOREDIRECTIONBITMAP);
     int dw = cr.right - cr.left;
     int dh = cr.bottom - cr.top;
     SetWindowPos(hwnd, nullptr, sx, sy, dw, dh, SWP_NOZORDER);
     applyWindowTheme(hwnd, g_splash.theme);
+    applySplashAcrylic(hwnd, g_splash.theme);
     ShowWindow(hwnd, SW_SHOW);
     UpdateWindow(hwnd);
     MSG msg;
@@ -357,7 +362,6 @@ bool runSplashWindow(HINSTANCE hInstance) {
             break;
         }
     }
-    DeleteObject(wc.hbrBackground);
     Gdiplus::GdiplusShutdown(gdiplusToken);
     return true;
 }

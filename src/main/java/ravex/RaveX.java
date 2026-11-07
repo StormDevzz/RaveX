@@ -132,11 +132,34 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
                     java.io.File exeFile = new java.io.File(javaExe);
                     if (!exeFile.exists()) javaExe = "java";
 
+                    java.io.File tempDir = new java.io.File(System.getProperty("java.io.tmpdir"), "ravex_loader_libs");
+                    tempDir.mkdirs();
+                    java.util.List<String> cpEntries = new java.util.ArrayList<>();
+                    cpEntries.add(jarPath);
+                    try (java.util.jar.JarFile jf = new java.util.jar.JarFile(jarPath)) {
+                        java.util.Enumeration<java.util.jar.JarEntry> entries = jf.entries();
+                        while (entries.hasMoreElements()) {
+                            java.util.jar.JarEntry entry = entries.nextElement();
+                            if (entry.getName().startsWith("META-INF/jars/") && entry.getName().endsWith(".jar")) {
+                                java.io.File out = new java.io.File(tempDir, new java.io.File(entry.getName()).getName());
+                                if (!out.exists() || out.length() != entry.getSize()) {
+                                    try (java.io.InputStream is = jf.getInputStream(entry);
+                                         java.io.FileOutputStream fos = new java.io.FileOutputStream(out)) {
+                                        byte[] buf = new byte[8192];
+                                        int n;
+                                        while ((n = is.read(buf)) > 0) fos.write(buf, 0, n);
+                                    }
+                                }
+                                cpEntries.add(out.getAbsolutePath());
+                            }
+                        }
+                    } catch (Exception ignored) {}
+
                     java.util.List<String> cmd = new java.util.ArrayList<>();
                     cmd.add(javaExe);
                     cmd.add("-Djava.awt.headless=false");
                     cmd.add("-cp");
-                    cmd.add(jarPath);
+                    cmd.add(String.join(java.io.File.pathSeparator, cpEntries));
                     cmd.add("ravex.loader.RaveXLoader");
                     cmd.add("--integrated-gui");
 
@@ -243,7 +266,6 @@ public class RaveX implements ModInitializer, ClientModInitializer, PreLaunchEnt
         ServiceLocator.register(ProfileManager.class, ProfileManager.INSTANCE);
         ServiceLocator.register(MacroManager.class, MacroManager.INSTANCE);
         ServiceLocator.register(AddonManager.class, AddonManager.INSTANCE);
-        ServiceLocator.register(LuaManager.class, LuaManager.INSTANCE);
         ServiceLocator.register(CmdManager.class, CmdManager.INSTANCE);
         ServiceLocator.register(FriendManager.class, FriendManager.INSTANCE);
         ServiceLocator.register(InventoryManager.class, InventoryManager.INSTANCE);

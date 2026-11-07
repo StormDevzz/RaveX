@@ -13,14 +13,6 @@ target_link_libraries(ravex_jni PRIVATE
     ${JNI_LIBRARIES}
 )
 
-if(TARGET ravex_brand)
-    target_link_libraries(ravex_jni PRIVATE ravex_brand)
-endif()
-
-if(TARGET ravex_lua)
-    target_link_libraries(ravex_jni PRIVATE ravex_lua)
-endif()
-
 target_include_directories(ravex_jni PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${JNI_INCLUDE_DIRS}
