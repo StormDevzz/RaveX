@@ -10,6 +10,7 @@ target_link_libraries(ravex_jni PRIVATE
     ravex_optimize
     ravex_manager
     ravex_github_tools
+    ravex_brand
     ${JNI_LIBRARIES}
 )
 
