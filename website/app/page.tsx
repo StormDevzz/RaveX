@@ -114,7 +114,7 @@ function pluralRu(n: number, one: string, few: string, many: string) {
 }
 
 const EN = {
-  nav: { screenshots: 'Screenshots', about: 'About', code: 'Code', download: 'Download' },
+  nav: { screenshots: 'Screenshots', about: 'About', code: 'Code', changelog: 'Changelog', contributors: 'Contributors', discord: 'Discord', reviews: 'Reviews', download: 'Download' },
   hero: {
     tagline: 'A free and open-source utility client for Minecraft on Fabric.',
     sub: 'Written in Java and C++. Pick your language, set up your modules and just play. Everything is on GitHub if you want to check it yourself.',
@@ -125,13 +125,23 @@ const EN = {
     title: 'Screenshots',
     sub: (n: number) => n + ' images, click to open fullscreen',
   },
-  code: {
-    title: 'Source code',
-    sub: 'Straight from GitHub, always up to date, read only. The file tree loads through the GitHub API - 60 requests per hour per IP, so if it ever stops loading, just hit Retry later',
-    fullscreen: 'Open full screen',
-  },
+   code: {
+     title: 'Source code',
+     sub: 'Straight from GitHub, always up to date, read only. The file tree is cached locally to save GitHub API requests (60 per hour per IP)',
+     fullscreen: 'Open full screen',
+   },
+   changelog: {
+     title: 'Changelog',
+     sub: 'Recent commits from GitHub',
+     noCommits: 'No commits found',
+   },
+   contributors: {
+     title: 'Contributors',
+     sub: 'People who made RaveX better',
+     noContributors: 'No contributors found',
+   },
   about: {
-    title: 'About',
+      title: 'About',
     p1: 'RaveX is a Minecraft utility client built on Fabric. Combat, movement, render, HUD, macros, the usual stuff, plus a ClickGUI you can rearrange however you like.',
     p2: 'You can write your own addons in Java or C++. And if you ever wonder what is inside the jar, build it from source and compare the sha-256 with the official release.',
     links: {
@@ -143,7 +153,8 @@ const EN = {
   },
   install: {
     title: 'How I install this client?',
-    sub: 'Four steps, about a minute. Fabric API is not required',
+      sub: 'Four steps, about a minute. Fabric API is not required',
+      compatible: 'Compatible with:',
     steps: [
       {
         title: 'Install Fabric Loader',
@@ -175,7 +186,7 @@ const EN = {
 }
 
 const RU: typeof EN = {
-  nav: { screenshots: 'Скриншоты', about: 'О проекте', code: 'Код', download: 'Скачать' },
+  nav: { screenshots: 'Скриншоты', about: 'О проекте', code: 'Код', changelog: 'Изменения', contributors: 'Контрибьюторы', discord: 'Discord', reviews: 'Отзывы', download: 'Скачать' },
   hero: {
     tagline: 'Бесплатный клиент-утилита для Minecraft на Fabric с открытым кодом.',
     sub: 'Написан на Java и C++. Выбирай язык, настраивай модули и просто играй. Всё лежит на GitHub, если хочешь проверить сам.',
@@ -186,11 +197,21 @@ const RU: typeof EN = {
     title: 'Скриншоты',
     sub: (n: number) => n + ' ' + pluralRu(n, 'изображение', 'изображения', 'изображений') + ', кликни для полноэкранного просмотра',
   },
-  code: {
-    title: 'Исходный код',
-    sub: 'Прямо с GitHub, всегда актуально, только чтение. Дерево файлов грузится через GitHub API - 60 запросов в час на IP, если перестало грузиться, просто нажми Retry позже',
-    fullscreen: 'Открыть на весь экран',
-  },
+   code: {
+     title: 'Исходный код',
+     sub: 'Прямо с GitHub, всегда актуально, только чтение. Дерево файлов кешируется локально, чтобы экономить запросы GitHub API (60 в час на IP)',
+     fullscreen: 'Открыть на весь экран',
+   },
+   changelog: {
+     title: 'История изменений',
+     sub: 'Последние коммиты с GitHub',
+     noCommits: 'Коммиты не найдены',
+   },
+   contributors: {
+     title: 'Контрибьюторы',
+     sub: 'Люди, сделавшие RaveX лучше',
+     noContributors: 'Контрибьюторы не найдены',
+   },
   about: {
     title: 'О проекте',
     p1: 'RaveX - это Minecraft клиент-утилита на Fabric. Боёвка, движение, рендер, HUD, макросы - всё как обычно, плюс ClickGUI, который можно перестроить как угодно.',
@@ -204,7 +225,8 @@ const RU: typeof EN = {
   },
   install: {
     title: 'Как установить клиент?',
-    sub: 'Четыре шага, около минуты. Fabric API не нужен',
+      sub: 'Четыре шага, около минуты. Fabric API не нужен',
+      compatible: 'Совместимо с:',
     steps: [
       {
         title: 'Установи Fabric Loader',
@@ -237,7 +259,41 @@ const RU: typeof EN = {
 
 const STRINGS: Record<Lang, typeof EN> = { en: EN, ru: RU }
 
+function formatVersion(tag: string): string {
+  const lower = tag.toLowerCase()
+  if (!lower.startsWith('ravex')) return tag
+  const rest = tag.slice(5)
+  const match = rest.match(/^(\d)(\d)(\d*)(.*)$/)
+  if (!match) return tag
+  const major = match[1]
+  const minor = match[2]
+  const patch = match[3]
+  const suffix = match[4]
+  if (patch) return 'ravex ' + major + '.' + minor + '.' + patch + suffix
+  return 'ravex ' + major + '.' + minor + suffix
+}
+
 const TYPED_WORD = 'RaveX'
+
+type CommitInfo = {
+  sha: string
+  message: string
+  author: string
+  avatar: string
+  date: string
+}
+
+type ContributorInfo = {
+  login: string
+  avatar_url: string
+  contributions: number
+  html_url: string
+}
+
+type DiscordInfo = {
+  online: number
+  members: number
+}
 
 type RepoInfo = {
   created_at: string
@@ -252,7 +308,7 @@ const REPO_FALLBACK: RepoInfo = {
   stargazers_count: 20,
   forks_count: 4,
   open_issues_count: 13,
-  pushed_at: '2026-09-27T12:07:36Z',
+  pushed_at: '2026-11-07T12:00:00Z',
 }
 
 function TypedTitle() {
@@ -386,7 +442,12 @@ function ProjectStats({ repo, lang }: { repo: RepoInfo; lang: Lang }) {
 export default function Home() {
   const [active, setActive] = useState<number | null>(null)
   const [repo, setRepo] = useState<RepoInfo | null>(null)
-  const [lang, setLang] = useState<Lang>('ru')
+  const [versions, setVersions] = useState<string[]>([])
+  const [commits, setCommits] = useState<CommitInfo[]>([])
+  const [contributors, setContributors] = useState<ContributorInfo[]>([])
+  const [discord, setDiscord] = useState<DiscordInfo | null>(null)
+  const [selectedVersion, setSelectedVersion] = useState<string>(jarVersion)
+  const [lang, setLang] = useState<Lang>('en')
   const t = STRINGS[lang]
 
   useEffect(() => {
@@ -400,6 +461,17 @@ export default function Home() {
   }
 
   useEffect(() => {
+    // Try cached repo info first to reduce GitHub API calls
+    try {
+      const cached = localStorage.getItem('ravex-repo-info')
+      if (cached) {
+        const { data, ts } = JSON.parse(cached)
+        if (Date.now() - ts < 3600000 && data) {
+          setRepo(data)
+          return
+        }
+      }
+    } catch {}
     setRepo(REPO_FALLBACK)
     fetch('https://api.github.com/repos/StormDevzz/RaveX')
       .then((r) => (r.ok ? r.json() : Promise.reject()))
@@ -411,6 +483,112 @@ export default function Home() {
         if (typeof d.forks_count === 'number') live.forks_count = d.forks_count
         if (typeof d.open_issues_count === 'number') live.open_issues_count = d.open_issues_count
         setRepo(live)
+        try { localStorage.setItem('ravex-repo-info', JSON.stringify({ data: live, ts: Date.now() })) } catch {}
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    // Try cached versions first
+    try {
+      const cached = localStorage.getItem('ravex-versions')
+      if (cached) {
+        const { data, ts } = JSON.parse(cached)
+        if (Date.now() - ts < 3600000 && Array.isArray(data) && data.length > 0) {
+          setVersions(data)
+          return
+        }
+      }
+    } catch {}
+    fetch('https://api.github.com/repos/StormDevzz/RaveX/releases')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        const tags = (Array.isArray(d) ? d : [])
+          .map((r: { tag_name?: string }) => (r.tag_name || '').replace(/^v/, ''))
+          .filter(Boolean)
+        if (tags.length > 0) {
+          setVersions(tags)
+          try { localStorage.setItem('ravex-versions', JSON.stringify({ data: tags, ts: Date.now() })) } catch {}
+        }
+      })
+      .catch(() => {})
+  }, [])
+  useEffect(() => {
+    // Try cached commits first
+    try {
+      const cached = localStorage.getItem('ravex-commits')
+      if (cached) {
+        const { data, ts } = JSON.parse(cached)
+        if (Date.now() - ts < 3600000 && Array.isArray(data) && data.length > 0) {
+          setCommits(data)
+          return
+        }
+      }
+    } catch {}
+    fetch('https://api.github.com/repos/StormDevzz/RaveX/commits?per_page=15')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        const list: CommitInfo[] = (Array.isArray(d) ? d : []).map((c: any) => ({
+          sha: (c.sha || '').slice(0, 7),
+          message: (c.commit?.message || '').split('\n')[0],
+          author: c.commit?.author?.name || c.author?.login || 'Unknown',
+          avatar: c.author?.avatar_url || '',
+          date: c.commit?.author?.date || '',
+        }))
+        setCommits(list)
+        try { localStorage.setItem('ravex-commits', JSON.stringify({ data: list, ts: Date.now() })) } catch {}
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    // Try cached contributors first
+    try {
+      const cached = localStorage.getItem('ravex-contributors')
+      if (cached) {
+        const { data, ts } = JSON.parse(cached)
+        if (Date.now() - ts < 3600000 && Array.isArray(data) && data.length > 0) {
+          setContributors(data)
+          return
+        }
+      }
+    } catch {}
+    fetch('https://api.github.com/repos/StormDevzz/RaveX/contributors?per_page=30')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        const list: ContributorInfo[] = (Array.isArray(d) ? d : []).map((c: any) => ({
+          login: c.login || 'Unknown',
+          avatar_url: c.avatar_url || '',
+          contributions: c.contributions || 0,
+          html_url: c.html_url || '#',
+        }))
+        setContributors(list)
+        try { localStorage.setItem('ravex-contributors', JSON.stringify({ data: list, ts: Date.now() })) } catch {}
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    // Try cached Discord info first
+    try {
+      const cached = localStorage.getItem('ravex-discord')
+      if (cached) {
+        const { data, ts } = JSON.parse(cached)
+        if (Date.now() - ts < 300000 && data) { // 5 min TTL
+          setDiscord(data)
+          return
+        }
+      }
+    } catch {}
+    fetch('https://discord.com/api/v10/invites/aQwhMywmRA?with_counts=true')
+      .then((r) => (r.ok ? r.json() : Promise.reject()))
+      .then((d) => {
+        const info: DiscordInfo = {
+          online: d.approximate_presence_count || d.profile?.online_count || 0,
+          members: d.approximate_member_count || d.profile?.member_count || 0,
+        }
+        setDiscord(info)
+        try { localStorage.setItem('ravex-discord', JSON.stringify({ data: info, ts: Date.now() })) } catch {}
       })
       .catch(() => {})
   }, [])
@@ -431,7 +609,7 @@ export default function Home() {
   }, [active])
 
   return (
-    <div className="min-h-screen flex flex-col overflow-x-hidden">
+    <div className="min-h-screen flex flex-col overflow-x-hidden bg-[#06060e]">
       <header className="sticky top-0 z-50 border-b border-[#12121e] bg-[#06060e]/90 backdrop-blur-sm">
         <div className="max-w-5xl mx-auto px-5 h-12 flex items-center justify-between">
           <a href="/" className="flex items-center shrink-0" aria-label="RaveX home">
@@ -446,6 +624,18 @@ export default function Home() {
             </a>
             <a href="#code" className="hidden sm:inline-block text-[#7878a0] hover:text-white transition-colors">
               {t.nav.code}
+            </a>
+            <a href="#changelog" className="hidden md:inline-block text-[#7878a0] hover:text-white transition-colors">
+              {t.nav.changelog}
+            </a>
+            <a href="#contributors" className="hidden md:inline-block text-[#7878a0] hover:text-white transition-colors">
+              {t.nav.contributors}
+            </a>
+            <a href="#discord" className="hidden md:inline-block text-[#7878a0] hover:text-white transition-colors">
+              {t.nav.discord}
+            </a>
+            <a href="/reviews" className="text-[#7878a0] hover:text-white transition-colors">
+              {t.nav.reviews}
             </a>
             <LangSwitch lang={lang} onChange={switchLang} />
             <a
@@ -483,9 +673,22 @@ export default function Home() {
             <p className="text-[#7878a0] text-sm md:text-base max-w-xl leading-relaxed mb-9">
               {t.hero.sub}
             </p>
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap gap-3 items-center">
+              {versions.length > 0 && (
+                <select
+                  value={selectedVersion}
+                  onChange={(e) => setSelectedVersion(e.target.value)}
+                  className="px-3 py-2.5 rounded-lg border border-[#1a1a2e] bg-[#0d0d1a] text-[#c8c8d0] text-sm font-semibold hover:bg-[#12121e] transition-all"
+                >
+                  {versions.map((v) => (
+                    <option key={v} value={v}>
+                      {formatVersion(v) + (v === versions[0] ? ' (latest)' : '')}
+                    </option>
+                  ))}
+                </select>
+              )}
               <a
-                href={jarUrl}
+                href={'https://github.com/StormDevzz/RaveX/releases/download/' + (selectedVersion || jarVersion) + '/ravex-' + (selectedVersion || jarVersion) + '.jar'}
                 className="px-6 py-2.5 rounded-lg bg-[#38bdf8] text-[#06060e] text-sm font-semibold hover:bg-[#7dd3fc] active:scale-95 transition-all"
               >
                 {t.hero.download}
@@ -559,11 +762,110 @@ export default function Home() {
           </div>
         </section>
 
+        <section id="changelog" className="py-16 md:py-24 border-t border-[#12121e]">
+          <div className="max-w-5xl mx-auto px-5">
+            <div className="mb-6">
+              <h2 className="text-white text-sm font-semibold tracking-widest mb-2">
+                {t.changelog.title}
+              </h2>
+              <p className="text-[#a0a0c8] text-xs">
+                {t.changelog.sub}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 max-h-[400px] overflow-y-auto vs-scroll">
+              {commits.length === 0 && (
+                <p className="text-[#a0a0c8] text-xs">{t.changelog.noCommits}</p>
+              )}
+              {commits.map((c) => (
+                <div key={c.sha} className="flex items-start gap-3 px-4 py-3 rounded-lg border border-[#12121e] bg-[#0a0a14]">
+                  {c.avatar && (
+                    <img src={c.avatar} alt={c.author} className="w-8 h-8 rounded-full shrink-0" width={32} height={32} />
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm text-[#c8c8d0] truncate">{c.message}</p>
+                    <p className="text-xs text-[#a0a0c8] mt-1">
+                      {c.author} &middot; {c.sha} &middot; {c.date ? new Date(c.date).toLocaleDateString() : ''}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="contributors" className="py-16 md:py-24 border-t border-[#12121e]">
+          <div className="max-w-5xl mx-auto px-5">
+            <div className="mb-6">
+              <h2 className="text-white text-sm font-semibold tracking-widest mb-2">
+                {t.contributors.title}
+              </h2>
+              <p className="text-[#a0a0c8] text-xs">
+                {t.contributors.sub}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              {contributors.length === 0 && (
+                <p className="text-[#a0a0c8] text-xs">{t.contributors.noContributors}</p>
+              )}
+              {contributors.map((c) => (
+                <a
+                  key={c.login}
+                  href={c.html_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="flex items-center gap-2 px-3 py-2 rounded-lg border border-[#12121e] bg-[#0a0a14] hover:bg-[#0d0d1a] transition-all"
+                >
+                  <img src={c.avatar_url} alt={c.login} className="w-8 h-8 rounded-full" width={32} height={32} />
+                  <div>
+                    <div className="text-sm text-[#c8c8d0]">{c.login}</div>
+                    <div className="text-xs text-[#a0a0c8]">{c.contributions} commits</div>
+                  </div>
+                </a>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        <section id="discord" className="py-16 md:py-24 border-t border-[#12121e]">
+          <div className="max-w-5xl mx-auto px-5">
+            <div className="mb-6">
+              <h2 className="text-white text-sm font-semibold tracking-widest mb-2 flex items-center gap-2">
+                <img src="https://cdn.simpleicons.org/discord" alt="" className="w-4 h-4" width={16} height={16} />
+                Discord
+              </h2>
+              <p className="text-[#a0a0c8] text-xs">
+                {discord ? discord.online + ' online, ' + discord.members + ' members' : 'Loading...'}
+              </p>
+            </div>
+            <div className="border border-[#12121e] rounded-lg overflow-hidden p-6 bg-[#0a0a14] flex flex-col items-center gap-4">
+              <div className="flex items-center gap-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-[#38bdf8]">{discord ? discord.online : '—'}</div>
+                  <div className="text-xs text-[#a0a0c8]">Online</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-white">{discord ? discord.members : '—'}</div>
+                  <div className="text-xs text-[#a0a0c8]">Members</div>
+                </div>
+              </div>
+              <a
+                href={discordUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="px-6 py-2.5 rounded-lg bg-[#5865f2] text-white text-sm font-semibold hover:bg-[#7289da] active:scale-95 transition-all"
+              >
+                Join Discord
+              </a>
+            </div>
+          </div>
+        </section>
+
         <section id="about" className="py-16 md:py-24 border-t border-[#12121e]">
           <div className="max-w-5xl mx-auto px-5">
             <div className="grid md:grid-cols-2 gap-12">
               <div>
-                <h2 className="text-white text-sm font-semibold tracking-widest mb-4">
+                <h2 className="text-white text-sm font-semibold tracking-widest mb-4 flex items-center gap-2">
+                  <img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/readme.svg" alt="" className="w-4 h-4" width={16} height={16} />
                   {t.about.title}
                 </h2>
                 <p className="text-[#9a9ab8] text-sm leading-relaxed mb-4">
@@ -634,9 +936,10 @@ export default function Home() {
         <section id="install" className="py-16 md:py-24 border-t border-[#12121e]">
           <div className="max-w-5xl mx-auto px-5">
             <div className="mb-10">
-              <h2 className="text-white text-sm font-semibold tracking-widest mb-2">
-                {t.install.title}
-              </h2>
+            <h2 className="text-white text-sm font-semibold tracking-widest mb-2 flex items-center gap-2">
+              <img src="https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/rocket.svg" alt="" className="w-4 h-4" width={16} height={16} />
+              {t.install.title}
+            </h2>
               <p className="text-[#a0a0c8] text-xs">
                 {t.install.sub}
               </p>
@@ -665,6 +968,19 @@ export default function Home() {
                 </li>
               ))}
             </ol>
+            <div className="mt-6 flex flex-wrap gap-2 items-center">
+              <span className="text-xs text-[#a0a0c8]">{t.install.compatible}</span>
+              {[
+                { name: 'Windows', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/windows8/windows8-original.svg' },
+                { name: 'Linux', icon: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg' },
+                { name: 'FreeBSD', icon: 'https://cdn.simpleicons.org/freebsd' },
+              ].map((os) => (
+                <span key={os.name} className="inline-flex items-center gap-1.5 px-2 py-1 text-xs rounded-md bg-[#0d0d1a] text-[#38bdf8] border border-[#1a1a2e]">
+                  <img src={os.icon} alt={os.name} className="w-4 h-4" width={16} height={16} />
+                  {os.name}
+                </span>
+              ))}
+            </div>
           </div>
         </section>
       </main>

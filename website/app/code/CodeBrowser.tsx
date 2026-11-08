@@ -45,7 +45,6 @@ const EXT_LANG: Record<string, LangConf> = {
   bash: { hl: 'bash', label: 'Shell' },
   zsh: { hl: 'bash', label: 'Shell' },
   py: { hl: 'python', label: 'Python' },
-  lua: { hl: 'lua', label: 'Lua' },
   c: { hl: 'c', label: 'C' },
   h: { hl: 'c', label: 'C Header' },
   hpp: { hl: 'cpp', label: 'C++ Header' },
@@ -112,7 +111,6 @@ const EXT_COLORS: Record<string, string> = {
   bash: '#89e051',
   zsh: '#89e051',
   py: '#3572a5',
-  lua: '#569cd6',
   c: '#f34b7d',
   h: '#f34b7d',
   hpp: '#f34b7d',
@@ -205,7 +203,67 @@ function IconFolder() {
 }
 
 function IconFile({ path }: { path: string }) {
-  const color = EXT_COLORS[extFor(path)] || '#c5c5c5'
+  const name = path.split('/').pop() || path
+  const ext = extFor(path)
+  const iconMap: Record<string, string> = {
+    java: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/java/java-original.svg',
+    c: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg',
+    cpp: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg',
+    cc: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg',
+    cxx: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg',
+    h: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/c/c-original.svg',
+    hpp: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg',
+    hxx: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cplusplus/cplusplus-original.svg',
+    js: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/javascript/javascript-original.svg',
+    ts: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
+    tsx: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg',
+    css: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/css3/css3-original.svg',
+    gradle: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/gradle/gradle-original.svg',
+    png: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/image.svg',
+    jpg: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/image.svg',
+    jpeg: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/image.svg',
+    gif: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/image.svg',
+    json: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/json.svg',
+    ttf: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/font.svg',
+    woff: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/font.svg',
+    woff2: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/font.svg',
+    bat: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/console.svg',
+    sh: 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/linux/linux-original.svg',
+    md: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/markdown.svg',
+    ogg: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/audio.svg',
+    mp3: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/audio.svg',
+    wav: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/audio.svg',
+    mp4: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/video.svg',
+    jar: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/java.svg',
+    toml: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/settings.svg',
+    yml: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/yaml.svg',
+    yaml: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/yaml.svg',
+    frag: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/shader.svg',
+    der: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/certificate.svg',
+    mcmeta: 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/json.svg',
+  }
+  const specialMap: Record<string, string> = {
+    'CMakeLists.txt': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cmake/cmake-original.svg',
+    '.gitignore': 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/git.svg',
+    '.gitattributes': 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/git.svg',
+    'gradlew': 'https://cdn.jsdelivr.net/gh/devicons/devicon/icons/gradle/gradle-original.svg',
+    'LICENSE': 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/license.svg',
+    'MANIFEST.MF': 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/file.svg',
+    'pack.mcmeta': 'https://raw.githubusercontent.com/PKief/vscode-material-icon-theme/main/icons/json.svg',
+  }
+  const iconUrl = specialMap[name] || iconMap[ext]
+  if (iconUrl) {
+    return (
+      <img
+        src={iconUrl}
+        alt={ext || name}
+        className="w-3.5 h-3.5 shrink-0"
+        width={14}
+        height={14}
+      />
+    )
+  }
+  const color = EXT_COLORS[ext] || '#c5c5c5'
   return (
     <svg viewBox="0 0 16 16" className="w-3.5 h-3.5 shrink-0" fill="none" stroke={color} strokeWidth={1.2} aria-hidden="true">
       <path d="M4 1.5h5.5L12 4v10.5H4z" />
@@ -363,6 +421,7 @@ export default function CodeBrowser() {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [copied, setCopied] = useState(false)
   const [showWindowTitle, setShowWindowTitle] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const titleBarRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
@@ -379,11 +438,25 @@ export default function CodeBrowser() {
     let cancelled = false
     async function loadTree() {
       setTreeError(false)
+      // Try cached tree first to reduce GitHub API calls
+      try {
+        const cached = localStorage.getItem('ravex-file-tree')
+        if (cached) {
+          const { data, ts } = JSON.parse(cached)
+          if (Date.now() - ts < 3600000 && data) {
+            if (!cancelled) setTree(buildTree(data))
+            return
+          }
+        }
+      } catch {}
       try {
         const res = await fetch('https://api.github.com/repos/StormDevzz/RaveX/git/trees/main?recursive=1')
         if (!res.ok) throw new Error(String(res.status))
         const data = await res.json()
-        if (!cancelled) setTree(buildTree(data.tree))
+        if (!cancelled) {
+          setTree(buildTree(data.tree))
+          try { localStorage.setItem('ravex-file-tree', JSON.stringify({ data: data.tree, ts: Date.now() })) } catch {}
+        }
       } catch {
         if (!cancelled) setTreeError(true)
       }
@@ -446,6 +519,19 @@ export default function CodeBrowser() {
     }
   }
 
+  const filteredTree = useMemo(() => {
+    if (!tree || !searchQuery.trim()) return tree
+    const q = searchQuery.toLowerCase()
+    const flat: TreeNode[] = []
+    const collect = (nodes: TreeNode[]) => {
+      for (const n of nodes) {
+        if (n.type === 'blob' && n.name.toLowerCase().includes(q)) flat.push(n)
+        if (n.children) collect(n.children)
+      }
+    }
+    collect(tree)
+    return flat.map((n) => ({ ...n, children: undefined }))
+  }, [tree, searchQuery])
   const status = activeTab ? files[activeTab] : undefined
   const content = activeTab ? contents[activeTab] : undefined
   const langConf = activeTab ? langFor(activeTab) : null
@@ -508,6 +594,15 @@ export default function CodeBrowser() {
             <div className="h-9 shrink-0 flex items-center px-4 text-[11px] font-semibold tracking-wider text-[#bbbbbb]">
               EXPLORER
             </div>
+            <div className="px-2 pb-2">
+              <input
+                type="text"
+                placeholder="Search files..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full px-2 py-1 text-[12px] bg-[#3c3c3c] text-[#cccccc] border border-[#2b2b2b] rounded placeholder-[#858585] focus:outline-none focus:border-[#007acc]"
+              />
+            </div>
             <div className="h-6 shrink-0 flex items-center gap-1 px-1 text-[11px] font-semibold uppercase text-[#cccccc]">
               <IconChevron open />
               RaveX
@@ -528,7 +623,26 @@ export default function CodeBrowser() {
                   </button>
                 </div>
               )}
-              {tree &&
+              {searchQuery.trim() && filteredTree && (
+                <div>
+                  {filteredTree.map((node) => (
+                    <button
+                      key={node.path}
+                      onClick={() => openFile(node.path)}
+                      className={'w-full flex items-center gap-1.5 h-[22px] pr-2 text-[13px] transition-colors ' + (node.path === activeTab ? 'bg-[#37373d] text-white' : 'text-[#cccccc] hover:bg-[#2a2d2e]')}
+                      style={{ paddingLeft: 8 }}
+                    >
+                      <span className="w-3 shrink-0" />
+                      <IconFile path={node.path} />
+                      <span className="truncate">{node.path}</span>
+                    </button>
+                  ))}
+                  {filteredTree.length === 0 && (
+                    <div className="px-4 py-2 text-[13px] text-[#858585]">No files found</div>
+                  )}
+                </div>
+              )}
+              {!searchQuery.trim() && tree &&
                 tree.map((node) => (
                   <TreeRow
                     key={node.path}

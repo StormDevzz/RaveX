@@ -1,0 +1,13 @@
+{
+  "name": "RaveX Community Site",
+  "short_name": "RaveX",
+  "description": "A free and open-source utility client for Minecraft on Fabric",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#06060e",
+  "theme_color": "#38bdf8",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

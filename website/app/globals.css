@@ -29,6 +29,8 @@ body {
   font-weight: 500;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background-color: #06060e;
+  color: #c8c8d0;
 }
 
 ::selection {
