@@ -1,5 +1,65 @@
 # RaveX
 
+## November 15, 2026
+
+### Combat
+- **BasePlace** rewritten as a full Java module. It now follows `AutoCrystal.currentTarget`, uses AutoCrystal's damage, range and wall-range settings, predicts target movement and selects an obsidian position that AutoCrystal can actually use.
+- BasePlace now disables itself and sends a warning when AutoCrystal is disabled or has no target. Warnings follow the Notifications `Mode` setting: Toast or chat text.
+- Fixed BasePlace not placing obsidian: the old self-damage filter ignored armor, toughness and line of sight, so every candidate was rejected. Self damage is now used only for scoring; AutoCrystal decides whether the resulting crystal is safe.
+- Obsidian is searched in the hotbar by default for legit play. Inventory swapping is optional through `SwapInv`.
+- BasePlace no longer requires end crystals in the inventory to start placing.
+- Stale AutoCrystal base positions no longer block new base placement; the active base must still deal enough damage to the current target.
+
+### HUD
+- **InvPreviewHud** now animates the hotbar selection highlight. The highlight slides smoothly between slots with a spring animation instead of jumping.
+- **SpeedometerHud** now smooths displayed speed changes with a spring animation. Switching between BPS and KMH is animated as well.
+- **ArrayListHud** added the `Animation` setting: `Default`, `Slide`, `Fade`, `Bounce` and `Wave`. `Default` preserves the previous behavior.
+- Changing the ArrayList animation mode now replays the entry animation immediately, so the selected style is visible without toggling modules.
+- ArrayList added blue-white highlight animations: `Slide` sweeps the highlight left to right, `Bounce` sweeps it back and forth, `Fade` pulses it. `Wave` keeps the per-character vertical wave.
+- **FpsHud** added the `Instant` option. When enabled, FPS is calculated from the last 12 frame times and updates every frame instead of using the slow vanilla counter.
+- **IndicatorsHud** description corrected. It now describes health, armor, TPS, speed and knockback indicators instead of target information.
+
+### Chat
+- Custom `^` command suggestions now animate their height, width and alpha smoothly.
+- Suggestion list is positioned like vanilla command suggestions, above the chat input.
+- Tab completion keeps showing hints until Space is pressed. Pressing Space now actually inserts the space and collapses the top-level hint list.
+- Typing a space after a command shows subcommand hints when the command has them, and hides the list when it does not.
+- Enter and Space during Tab cycling no longer cancel the key press.
+
+### Render
+- Fixed **Tracers** rendering when the target is behind the player. Behind targets now use camera-space direction and point to the correct screen edge instead of mirrored screen coordinates.
+- **BlockOutline** now uses the block's `VoxelShape` and renders every shape box. Flower pots, heads, slabs and other non-full blocks outline correctly instead of using a full cube.
+- Full blocks keep the previous Thin and Thick outline styles.
+- Vanilla block outline is now stable with **FreeCam**: `hitResult` is recalculated every frame from the interpolated FreeCam camera position and rotation.
+- **Borders** `CurrentChunk` is always enabled. The current chunk highlight smoothly interpolates its position when crossing chunk borders and fades in smoothly.
+- **SourceFiller** added `Render` and `Color` settings. The water source highlight now slides between blocks and fades in and out smoothly. The nearest water source is selected instead of the first scanned block.
+- **SwingAnimation** added the `Vanilla` mode. It uses the normal vanilla first-person swing instead of a custom pose.
+- SwingAnimation `Speed` now applies to the `Vanilla` mode. At `Speed = 1.0` the swing duration is left completely untouched, so it matches vanilla exactly. Other speeds scale the vanilla 6-tick duration.
+
+### Client
+- **RichPresence** no longer uses the native Discord implementation. The module now uses the bundled `DiscordIPC` Java library.
+- RichPresence connects immediately when Discord is available, sends the first status right away and updates it every 5 seconds.
+- If Discord is not running, the module retries briefly and then disables itself with a toast. When Discord closes, the module disables itself.
+- Duplicate RichPresence enable calls no longer start multiple update threads.
+- Native Rich Presence library is no longer loaded, which removes the long handshake stalls and the related process crash.
+- **Weather** now detects when `NoRender` has the weather option enabled, disables itself and shows a warning in Russian or English.
+- **Notifications** item collection now works for the player's own pickups. The `Self` option defaults to enabled.
+- Item collection Toast notifications now show the picked up item icon, including stack count, and use a proper "You picked up" message for self pickups.
+- Item collection pickup detection radius increased to 2 blocks so moving item entities are not missed.
+- Fixed pickup and tracker messages that contained corrupted text formatting.
+- **Notifications Tracker** now tracks the player under the crosshair or the nearest player within 20 blocks and reports held crystals, enchanted golden apples, golden apples, potions, shields and totems.
+- Tracker notifications use cooldowns to avoid spam and keep the existing gapple use, potion use, totem pop and shield break messages.
+
+### World
+- **AutoFish** removed the `AntiBreak` option.
+- AutoFish `Swap` is now a mode: `Silent`, `Normal` or `None`.
+- AutoFish settings simplified to `AutoCast`, `Swap`, `CastDelay`, `ReelDelay` and `Timeout`.
+- Fishing rod selection no longer checks durability, since the AntiBreak option was removed.
+
+### Verification
+- `gradlew compileJava` passes.
+- Client startup tested with the new RichPresence implementation: Discord connection succeeds and the first presence is sent immediately.
+
 ## November 7, 2026
 
 ### Loader

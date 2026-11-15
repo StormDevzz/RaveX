@@ -32,7 +32,6 @@ public final class FishUtility {
         return hook.getHookedIn() != null;
     }
 
-    // milliseconds the current bobber has been in the water, 0 when unknown.
     public static long hookAgeMs() {
         if (!hasHook()) return 0;
         long now = System.currentTimeMillis();
@@ -40,37 +39,45 @@ public final class FishUtility {
         return now - hookCastTime;
     }
 
-    // swaps to the best rod, uses it and optionally swaps back.
-    public static boolean useRod(boolean antiBreak, boolean swapBack) {
+    public static boolean useRod(String swapMode) {
         var mc = MinecraftWrapper.getWrapper();
         var player = mc.getPlayer();
         if (player == null || mc.getGameMode() == null) return false;
-        int prev = InventoryUtility.getSelectedSlot(player);
-        int rodSlot = findBestRodSlot(antiBreak);
-        ItemStack main = player.getMainHandItem();
-        if (rodSlot == -1 && !isRod(main, antiBreak) && !isRod(player.getOffhandItem(), antiBreak)) return false;
 
-        boolean swapped = false;
-        if (rodSlot != -1 && rodSlot != prev) {
+        int previous = InventoryUtility.getSelectedSlot(player);
+        int rodSlot = findBestRodSlot();
+        boolean mainRod = isRod(player.getMainHandItem());
+        boolean offhandRod = isRod(player.getOffhandItem());
+        if (rodSlot == -1 && !mainRod && !offhandRod) return false;
+        if ("None".equals(swapMode) && !mainRod && !offhandRod) return false;
+
+        boolean swap = !"None".equals(swapMode) && rodSlot != -1 && rodSlot != previous;
+        if (swap) {
             InventoryUtility.selectSlot(player, rodSlot);
-            swapped = true;
+            if ("Silent".equals(swapMode)) InventoryUtility.silentSelectSlot(player, rodSlot);
+            mainRod = isRod(player.getMainHandItem());
         }
-        if (isRod(player.getMainHandItem(), antiBreak)) {
+
+        if (mainRod) {
             mc.getGameMode().useItem(player, InteractionHand.MAIN_HAND);
         } else {
             mc.getGameMode().useItem(player, InteractionHand.OFF_HAND);
         }
         SwingUtility.swingMainHand(player);
-        if (swapped && swapBack) InventoryUtility.selectSlot(player, prev);
+
+        if (swap) {
+            InventoryUtility.selectSlot(player, previous);
+            if ("Silent".equals(swapMode)) InventoryUtility.silentSelectSlot(player, previous);
+        }
         return true;
     }
 
-    public static int findBestRodSlot(boolean antiBreak) {
+    public static int findBestRodSlot() {
         int best = -1;
         int bestScore = -1;
         for (int i = 0; i < 9; i++) {
             ItemStack stack = InventoryUtility.getItem(MinecraftWrapper.getWrapper().getPlayer(), i);
-            if (!isRod(stack, antiBreak)) continue;
+            if (!isRod(stack)) continue;
             int score = rodScore(stack);
             if (score > bestScore) {
                 bestScore = score;
@@ -80,13 +87,10 @@ public final class FishUtility {
         return best;
     }
 
-    public static boolean isRod(ItemStack stack, boolean antiBreak) {
-        if (stack == null || stack.isEmpty() || !InventoryUtility.isItem(stack, "fishing_rod")) return false;
-        if (antiBreak && stack.getMaxDamage() > 0 && stack.getDamageValue() >= stack.getMaxDamage() - 1) return false;
-        return true;
+    public static boolean isRod(ItemStack stack) {
+        return stack != null && !stack.isEmpty() && InventoryUtility.isItem(stack, "fishing_rod");
     }
 
-    // lure and luck of the sea make the fish come (and bite) faster.
     public static int rodScore(ItemStack stack) {
         int score = 0;
         score += InventoryUtility.getEnchantmentLevel(stack, "minecraft:luck_of_the_sea");

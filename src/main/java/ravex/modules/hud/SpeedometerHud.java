@@ -22,12 +22,26 @@ public class SpeedometerHud extends ravex.modules.Module {
 
     private static final Identifier ICON = Identifier.fromNamespaceAndPath("ravex", "hud_white/speedometer");
 
+    private final ravex.utility.render.animate.AnimationUtility.SpringAnimation speedAnim =
+            new ravex.utility.render.animate.AnimationUtility.SpringAnimation(0f);
+    private boolean speedInitialized = false;
+    private long lastFrameNs = 0L;
+
+    {
+        speedAnim.stiffness(110f).damping(2f * (float) Math.sqrt(110f)).mass(1f);
+    }
+
     public SpeedometerHud() {
         super("SpeedometerHud", 10, 70, 70, 14);
         setX(10);
         setY(70);
         setWidth(70);
         setHeight(14);
+    }
+
+    protected void onEnable() {
+        speedInitialized = false;
+        lastFrameNs = 0L;
     }
 
     public void render(GuiGraphics graphics, float partialTicks) {
@@ -39,13 +53,24 @@ public class SpeedometerHud extends ravex.modules.Module {
         String unitMode = this.unit;
         boolean shadow = this.shadow;
 
-        double displaySpeed = 0.0;
+        double targetSpeed = 0.0;
         if (player != null) {
             double dX = player.getX() - player.xo;
             double dZ = player.getZ() - player.zo;
             double speedBps = Math.sqrt(dX * dX + dZ * dZ) * 20.0;
-            displaySpeed = unitMode.equals("KMH") ? speedBps * 3.6 : speedBps;
+            targetSpeed = unitMode.equals("KMH") ? speedBps * 3.6 : speedBps;
         }
+
+        long now = System.nanoTime();
+        float delta = lastFrameNs == 0L ? 1f / 60f : Math.min(0.05f, (now - lastFrameNs) / 1_000_000_000f);
+        lastFrameNs = now;
+        if (!speedInitialized) {
+            speedAnim.setValue((float) targetSpeed);
+            speedInitialized = true;
+        }
+        speedAnim.setTarget((float) targetSpeed);
+        speedAnim.update(delta * 1000f);
+        double displaySpeed = Math.max(0.0, speedAnim.getValue());
 
         int activeColor = ColorUtility.getActiveColor();
         String valStr = String.format("%.1f", displaySpeed);

@@ -1,58 +1,51 @@
 package ravex.modules.combat;
-import ravex.modules.annotations.Module;
-import ravex.modules.annotations.Parameter;
-import ravex.utility.misc.EntityUtility;
-import ravex.utility.misc.PhysicUtility;
-import ravex.utility.nativelib.NativeLibraryUtility;
-import ravex.utility.player.InventoryUtility;
-import ravex.utility.player.rotation.SilentRotationUtility;
-import ravex.utility.player.SwingUtility;
+
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
 import net.minecraft.world.item.BlockItem;
-import java.util.HashSet;
-import java.util.Set;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.Vec3;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
+import ravex.modules.annotations.Module;
+import ravex.modules.annotations.Parameter;
+import ravex.modules.client.Notifications;
 import ravex.utility.misc.CombatUtility;
-import ravex.utility.client.ClientAlertUtility;
 import ravex.utility.misc.LanguageUtility;
-import net.minecraft.world.entity.boss.enderdragon.EndCrystal;
+import ravex.utility.misc.PhysicUtility;
+import ravex.utility.player.InventoryUtility;
+import ravex.utility.player.SwingUtility;
+import ravex.utility.player.rotation.SilentRotationUtility;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Module(name = "BasePlace", category = "Combat")
 public class BasePlace {
-    @Parameter(name = "Target", modes = {"Closest", "LowestHP"})
-    public String targetMode = "Closest";
-    @Parameter(name = "TargetType", modes = {"Players", "Monsters", "Passives", "All"})
-    public String targetType = "Players";
     @Parameter(name = "Range", min = 1.0, max = 6.0, step = 0.1)
     public double range = 4.5;
-    @Parameter(name = "TargetRange", min = 1.0, max = 10.0, step = 0.1)
-    public double targetRange = 6.0;
-    @Parameter(name = "MinDamage", min = 1.0, max = 20.0, step = 0.5)
-    public double minDamage = 4.0;
-    @Parameter(name = "MaxSelfDmg", min = 1.0, max = 20.0, step = 0.5)
-    public double maxSelfDmg = 8.0;
     @Parameter(name = "SelfDmgWeight", min = 0.0, max = 5.0, step = 0.1)
     public double selfDamageWeight = 1.2;
-    @Parameter(name = "AntiSuicide")
-    public boolean antiSuicide = true;
-    @Parameter(name = "SuicideMinHP", min = 1.0, max = 20.0, step = 0.5)
-    public double antiSuicideMinHp = 6.0;
     @Parameter(name = "PredictTicks", min = 0.0, max = 4.0, step = 0.1)
     public double predictTicks = 1.0;
     @Parameter(name = "AirPlace")
     public boolean airPlace = false;
-    @Parameter(name = "AirPlaceBypass", modes = {"NCP", "Grim", "None"})
-    public String airPlaceBypass = "None";
     @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
-    public double placeDelay = 100.0;
+    public double placeDelay = 200.0;
     @Parameter(name = "Rotate", modes = {"Grim", "NCP", "NCPStrict", "None"})
     public String rotate = "Grim";
-    @Parameter(name = "Swap", modes = {"Grim", "NCP", "NCPStrict", "None"})
-    public String swapMode = "Grim";
+    @Parameter(name = "Swap", modes = {"Silent", "Normal", "None"})
+    public String swapMode = "Silent";
     @Parameter(name = "SwitchBack")
     public boolean swapSwitchBack = true;
     @Parameter(name = "SwapInv")
-    public boolean swapInventory = true;
+    public boolean swapInventory = false;
     @Parameter(name = "AutoCrystalSync")
     public boolean autoCrystalSync = true;
     @Parameter(name = "SyncPredict", min = 1.0, max = 10.0, step = 1.0)
@@ -61,337 +54,387 @@ public class BasePlace {
     public boolean render = true;
     @Parameter(name = "Color", color = true, visible = "render")
     public int color = 0x3F00FF00;
-    public static net.minecraft.core.BlockPos lastPlacedBase = null;
-    public static long lastPlacedTime = 0;
+
+    public static BlockPos lastPlacedBase = null;
+    public static long lastPlacedTime = 0L;
     public static double currentTargetDamage = 0.0;
     public static double currentSelfDamage = 0.0;
-    private static final java.util.Map<net.minecraft.core.BlockPos, Long> placedPositions = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static final Map<BlockPos, Long> placedPositions = new ConcurrentHashMap<>();
     private static final SilentRotationUtility silentRotation = new SilentRotationUtility();
-    private long lastPlaceTime = 0;
-    private static net.minecraft.core.BlockPos simulatedPlacementBlock = null;
-    private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_baseplace");
+    private static BlockPos simulatedPlacementBlock = null;
+
+    private long lastPlaceTime = 0L;
+    private long lastWarnTime = 0L;
+    private int noTargetTicks = 0;
+
     public static boolean hasSilentRotations() {
         return silentRotation.hasRotation;
     }
+
     public static float getSilentYaw() {
         return silentRotation.yaw;
     }
+
     public static float getSilentPitch() {
         return silentRotation.pitch;
     }
-    public static net.minecraft.core.BlockPos getSimulatedPlacementBlock() {
+
+    public static BlockPos getSimulatedPlacementBlock() {
         return simulatedPlacementBlock;
     }
-    public static java.util.Map<net.minecraft.core.BlockPos, Long> getRecentPlacedBlocks() {
+
+    public static Map<BlockPos, Long> getRecentPlacedBlocks() {
         return placedPositions;
     }
+
     public void onEnable() {
-        NATIVE.load();
-        lastPlaceTime = 0;
-        silentRotation.reset();
+        lastPlaceTime = 0L;
+        lastWarnTime = 0L;
+        noTargetTicks = 0;
         lastPlacedBase = null;
-        lastPlacedTime = 0;
+        lastPlacedTime = 0L;
         simulatedPlacementBlock = null;
         placedPositions.clear();
+        silentRotation.reset();
     }
+
     public void onDisable() {
         silentRotation.reset();
         simulatedPlacementBlock = null;
         placedPositions.clear();
     }
+
     public void onTick() {
-        var mc = MinecraftWrapper.getWrapper();
+        MinecraftWrapper mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null || mc.getGameMode() == null) return;
-        if (!NATIVE.isLoaded()) {
-            NATIVE.load();
-        }
         silentRotation.hasRotation = false;
-        if (autoCrystalSync) {
-            AutoCrystal ac = Modules.get(AutoCrystal.class);
-            if (!Modules.enabled(AutoCrystal.class)) {
-                simulatedPlacementBlock = null;
-                return;
-            }
-            if (AutoCrystal.currentPlacementBlock != null && AutoCrystal.currentTargetDamage >= ac.minDamage) {
-                simulatedPlacementBlock = null;
-                return;
-            }
-            if (!playerHasCrystals(mc)) {
-                simulatedPlacementBlock = null;
-                return;
-            }
-            if (System.currentTimeMillis() - lastPlacedTime < 350) {
-                return;
-            }
-            String acPlaceMode = ac.placeMode;
-            if (acPlaceMode.equals("Grim")) {
-                airPlaceBypass = "Grim";
-            } else if (acPlaceMode.equals("NCPStrict")) {
-                airPlaceBypass = "NCP";
-            }
-        }
-        net.minecraft.world.entity.LivingEntity target = findTarget(mc);
-        if (target == null) {
+
+        AutoCrystal autoCrystal = Modules.get(AutoCrystal.class);
+        if (autoCrystal == null || !Modules.enabled(AutoCrystal.class)) {
+            noTargetTicks = 0;
             simulatedPlacementBlock = null;
+            disableWithWarning(LanguageUtility.t("baseplace_no_ac"));
             return;
         }
-        if (autoCrystalSync) {
-            AutoCrystal ac = Modules.get(AutoCrystal.class);
-            if (hasDamagingCrystalNearby(mc, target, ac.minDamage)) {
-                simulatedPlacementBlock = null;
-                return;
-            }
-        }
-        double[] solidBlockData = CombatUtility.collectSolidBlocks(mc, (int) Math.ceil(range) + 2);
-        boolean airPlaceMode = airPlace;
-        String bypassMode = airPlaceBypass;
-        if (airPlaceMode && !bypassMode.equals("None")) {
-            airPlaceMode = true;
-        }
-        double[] result;
-        if (NATIVE.isLoaded()) {
-            result = nativeCalculateBasePlace(
-                mc.getPlayer().getX(), mc.getPlayer().getY(), mc.getPlayer().getZ(),
-                mc.getPlayer().getHealth(), mc.getPlayer().getAbsorptionAmount(), CombatUtility.getEntityStats(mc.getPlayer()),
-                target.getX(), target.getY(), target.getZ(),
-                target.getHealth(), target.getAbsorptionAmount(), CombatUtility.getEntityStats(target),
-                solidBlockData,
-                range,
-                targetRange,
-                minDamage,
-                maxSelfDmg,
-                selfDamageWeight,
-                antiSuicide,
-                antiSuicideMinHp,
-                predictTicks,
-                airPlaceMode
-            );
-        } else {
-            result = javaFallbackCalculate(mc, target, solidBlockData);
-        }
-        if (result == null || result[0] < 0.5) {
+
+        LivingEntity target = autoCrystal.currentTarget;
+        if (target == null || !target.isAlive() || target.isRemoved() || target.level() != mc.getLevel()) {
             simulatedPlacementBlock = null;
             currentTargetDamage = 0.0;
             currentSelfDamage = 0.0;
+            if (++noTargetTicks >= 8) {
+                noTargetTicks = 0;
+                disableWithWarning(LanguageUtility.t("baseplace_no_target"));
+            }
             return;
         }
-        simulatedPlacementBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
-        if (result.length >= 10) {
-            currentTargetDamage = result[8];
-            currentSelfDamage = result[9];
-        } else {
-            currentTargetDamage = 0.0;
-            currentSelfDamage = 0.0;
+        noTargetTicks = 0;
+
+        double effectiveMinDamage = Math.max(1.0, autoCrystal.minDamage);
+
+        BlockPos activeBase = AutoCrystal.currentPlacementBlock;
+        if (activeBase != null && isUsableBase(mc, activeBase)) {
+            Vec3 activeCenter = new Vec3(activeBase.getX() + 0.5, activeBase.getY() + 1.0, activeBase.getZ() + 0.5);
+            if (autoCrystalCanReach(mc, activeCenter, autoCrystal)
+                    && damageToTarget(target, activeCenter, CombatUtility.getEntityStats(target)) >= effectiveMinDamage) {
+                simulatedPlacementBlock = null;
+                return;
+            }
         }
+
+        Vec3 predictedTarget = predictTarget(target);
+        if (hasUsableBase(mc, target, predictedTarget, effectiveMinDamage, autoCrystal)) {
+            simulatedPlacementBlock = null;
+            return;
+        }
+        if (hasDamagingCrystal(mc, target, effectiveMinDamage)) {
+            simulatedPlacementBlock = null;
+            return;
+        }
+        if (findObsidianSlot(mc) == -1) {
+            simulatedPlacementBlock = null;
+            warnThrottled(LanguageUtility.t("baseplace_no_obsidian"), 0xFFFFAA00);
+            return;
+        }
+
         long now = System.currentTimeMillis();
-        if (now - lastPlaceTime < (long) placeDelay) {
+        if (now - lastPlaceTime < (long) placeDelay) return;
+        if (now - lastPlacedTime < 600L) return;
+
+        placedPositions.entrySet().removeIf(entry -> now - entry.getValue() > 2000L);
+
+        PlaceCandidate candidate = findBestBase(mc, target, predictedTarget, effectiveMinDamage, autoCrystal);
+        if (candidate == null) {
+            simulatedPlacementBlock = null;
+            currentTargetDamage = 0.0;
+            currentSelfDamage = 0.0;
             return;
         }
-        int blockSlot = findBlockSlot(mc);
+
+        simulatedPlacementBlock = candidate.targetBlock;
+        currentTargetDamage = candidate.targetDamage;
+        currentSelfDamage = candidate.selfDamage;
+
+        if (placedPositions.containsKey(candidate.targetBlock)) return;
+
+        int blockSlot = findObsidianSlot(mc);
         if (blockSlot == -1) return;
-        net.minecraft.core.BlockPos neighborPos = new net.minecraft.core.BlockPos((int) result[1], (int) result[2], (int) result[3]);
-        net.minecraft.core.Direction face = net.minecraft.core.Direction.values()[(int) result[4]];
-        net.minecraft.core.BlockPos targetBlock = new net.minecraft.core.BlockPos((int) result[5], (int) result[6], (int) result[7]);
-        placedPositions.entrySet().removeIf(entry -> now - entry.getValue() > 1000);
-        if (placedPositions.containsKey(targetBlock) || mc.getLevel().getBlockState(targetBlock).getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
-            return;
-        }
-        net.minecraft.world.phys.Vec3 hitVec = PhysicUtility.centerOf(neighborPos).add(PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
-        CombatUtility.rotateTo(mc, hitVec, 180.0f, 0.0f, silentRotation);
-        int originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-        String swap = swapMode;
-        if (swap.equals("None")) {
-            if (InventoryUtility.getSelectedSlot(mc.getPlayer()) != blockSlot) {
-                return;
-            }
-            originalSlot = -1;
-        } else {
-            originalSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-            InventoryUtility.silentSelectSlot(mc.getPlayer(), blockSlot);
-        }
-        int prevSelected = mc.getPlayer().getInventory().getSelectedSlot();
-        mc.getPlayer().getInventory().setSelectedSlot(blockSlot);
-        net.minecraft.world.phys.BlockHitResult hitResult = new net.minecraft.world.phys.BlockHitResult(hitVec, face, neighborPos, false);
-        mc.getGameMode().useItemOn(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND, hitResult);
-        mc.getPlayer().getInventory().setSelectedSlot(prevSelected);
-        SwingUtility.swing(mc.getPlayer(), net.minecraft.world.InteractionHand.MAIN_HAND);
-        placedPositions.put(targetBlock, now);
+
         lastPlaceTime = now;
-        lastPlacedBase = targetBlock;
+        if (!place(mc, candidate, blockSlot)) return;
+
+        placedPositions.put(candidate.targetBlock, now);
+        lastPlacedBase = candidate.targetBlock;
         lastPlacedTime = now;
-        ClientAlertUtility.alert(LanguageUtility.t("baseplace_placed", targetBlock.getX(), targetBlock.getY(), targetBlock.getZ()), 0xFF55FF55);
-        if (swapSwitchBack && originalSlot != -1 && !swap.equals("None")) {
-            InventoryUtility.silentSelectSlot(mc.getPlayer(), originalSlot);
-        }
+        Notifications.notifyByMode(
+                LanguageUtility.t("baseplace_placed", candidate.targetBlock.getX(), candidate.targetBlock.getY(), candidate.targetBlock.getZ()),
+                0xFF55FF55);
     }
-    private boolean hasDamagingCrystalNearby(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, double minDmg) {
-        if (target == null) return false;
-        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
-            if (e instanceof EndCrystal crystal && crystal.isAlive() && !crystal.isRemoved()) {
-                double dist = crystal.position().distanceTo(target.position());
-                if (dist <= 6.0) {
-                    double impact = Math.max(0, (1.0 - dist / 12.0));
-                    double dmg = (impact * impact + impact) / 2.0 * 84.0 + 1.0;
-                    if (dmg >= minDmg) return true;
+
+    private Vec3 predictTarget(LivingEntity target) {
+        double vx = target.getX() - target.xOld;
+        double vy = target.getY() - target.yOld;
+        double vz = target.getZ() - target.zOld;
+        if (vx == 0.0 && vy == 0.0 && vz == 0.0 && target.getDeltaMovement() != null) {
+            Vec3 motion = target.getDeltaMovement();
+            vx = motion.x;
+            vy = motion.y;
+            vz = motion.z;
+        }
+        return target.position().add(vx * predictTicks, vy * predictTicks, vz * predictTicks);
+    }
+
+    private boolean place(MinecraftWrapper mc, PlaceCandidate candidate, int blockSlot) {
+        var player = mc.getPlayer();
+        int previousSlot = InventoryUtility.getSelectedSlot(player);
+        String swap = swapMode;
+
+        if ("None".equals(swap) && previousSlot != blockSlot) return false;
+        if (!"None".equals(swap)) {
+            InventoryUtility.selectSlot(player, blockSlot);
+            InventoryUtility.silentSelectSlot(player, blockSlot);
+        }
+
+        BlockPos clickedPos;
+        Direction face;
+        Vec3 hitVec;
+        if (candidate.airPlace) {
+            clickedPos = candidate.targetBlock;
+            face = Direction.UP;
+            hitVec = PhysicUtility.centerOf(clickedPos).add(0.0, 0.5, 0.0);
+        } else {
+            clickedPos = candidate.neighbor;
+            face = candidate.face;
+            hitVec = PhysicUtility.centerOf(clickedPos).add(
+                    PhysicUtility.vec3(face.getStepX(), face.getStepY(), face.getStepZ()).scale(0.5));
+        }
+
+        if (!"None".equals(rotate)) {
+            float speed = switch (rotate) {
+                case "NCPStrict" -> 90.0f;
+                case "NCP" -> 140.0f;
+                default -> 180.0f;
+            };
+            CombatUtility.rotateTo(mc, hitVec, speed, 0.0f, silentRotation);
+        }
+
+        boolean placed = mc.getGameMode().useItemOn(
+                player, InteractionHand.MAIN_HAND, new BlockHitResult(hitVec, face, clickedPos, false));
+        SwingUtility.swing(player, InteractionHand.MAIN_HAND);
+
+        if (!"None".equals(swap)) {
+            InventoryUtility.selectSlot(player, previousSlot);
+            if (swapSwitchBack) InventoryUtility.silentSelectSlot(player, previousSlot);
+        }
+
+        return placed;
+    }
+
+    private PlaceCandidate findBestBase(MinecraftWrapper mc, LivingEntity target, Vec3 predictedTarget,
+                                        double effectiveMinDamage, AutoCrystal autoCrystal) {
+        BlockPos origin = BlockPos.containing(predictedTarget);
+        Vec3 eyePos = mc.getPlayer().getEyePosition();
+        double[] targetStats = CombatUtility.getEntityStats(target);
+        double[] playerStats = CombatUtility.getEntityStats(mc.getPlayer());
+
+        PlaceCandidate best = null;
+        double bestScore = -Double.MAX_VALUE;
+
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dy = -2; dy <= 1; dy++) {
+                for (int dz = -3; dz <= 3; dz++) {
+                    BlockPos pos = origin.offset(dx, dy, dz);
+                    BlockState state = mc.getLevel().getBlockState(pos);
+                    if (!state.canBeReplaced()) continue;
+                    if (!mc.getLevel().getBlockState(pos.above()).isAir()) continue;
+                    if (intersects(mc.getPlayer(), pos) || intersects(target, pos)) continue;
+
+                    Vec3 center = PhysicUtility.centerOf(pos);
+                    if (eyePos.distanceTo(center) > range) continue;
+
+                    Vec3 crystalCenter = new Vec3(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5);
+                    if (!autoCrystalCanReach(mc, crystalCenter, autoCrystal)) continue;
+
+                    double targetDamage = damageToTarget(target, crystalCenter, targetStats);
+                    if (targetDamage < effectiveMinDamage) continue;
+
+                    double selfDamage = damageToSelf(mc.getPlayer(), crystalCenter, playerStats);
+
+                    Neighbor neighbor = findNeighbor(mc, pos);
+                    if (neighbor == null) {
+                        if (!airPlace) continue;
+                        neighbor = new Neighbor(pos, Direction.UP, true);
+                    }
+
+                    double score = targetDamage * 1.5 - selfDamage * selfDamageWeight;
+                    double dyToTarget = (pos.getY() + 1.0) - predictedTarget.y;
+                    if (dyToTarget <= 0.1 && dyToTarget >= -1.2) {
+                        score += 18.0;
+                    } else if (dyToTarget < -1.2 && dyToTarget >= -2.5) {
+                        score += 8.0;
+                    } else if (dyToTarget > 0.1) {
+                        score -= 10.0 + dyToTarget * 15.0;
+                    }
+
+                    if (score > bestScore) {
+                        bestScore = score;
+                        best = new PlaceCandidate(pos, neighbor.pos, neighbor.face, neighbor.airPlace, targetDamage, selfDamage);
+                    }
+                }
+            }
+        }
+        return best;
+    }
+
+    private Neighbor findNeighbor(MinecraftWrapper mc, BlockPos pos) {
+        Direction[] order = {Direction.DOWN, Direction.NORTH, Direction.SOUTH, Direction.WEST, Direction.EAST, Direction.UP};
+        for (Direction dir : order) {
+            BlockPos neighbor = pos.relative(dir);
+            BlockState state = mc.getLevel().getBlockState(neighbor);
+            if (!state.canBeReplaced() && !state.isAir()) {
+                return new Neighbor(neighbor, dir.getOpposite(), false);
+            }
+        }
+        return null;
+    }
+
+    private boolean hasUsableBase(MinecraftWrapper mc, LivingEntity target, Vec3 predictedTarget,
+                                  double effectiveMinDamage, AutoCrystal autoCrystal) {
+        BlockPos origin = BlockPos.containing(predictedTarget);
+        double[] targetStats = CombatUtility.getEntityStats(target);
+        for (int dx = -3; dx <= 3; dx++) {
+            for (int dy = -2; dy <= 1; dy++) {
+                for (int dz = -3; dz <= 3; dz++) {
+                    BlockPos pos = origin.offset(dx, dy, dz);
+                    if (!isUsableBase(mc, pos)) continue;
+                    Vec3 crystalCenter = new Vec3(pos.getX() + 0.5, pos.getY() + 1.0, pos.getZ() + 0.5);
+                    if (!autoCrystalCanReach(mc, crystalCenter, autoCrystal)) continue;
+                    if (damageToTarget(target, crystalCenter, targetStats) >= effectiveMinDamage) return true;
                 }
             }
         }
         return false;
     }
-    private boolean playerHasCrystals(MinecraftWrapper mc) {
-        if (InventoryUtility.isHolding(mc.getPlayer(), "end_crystal")) return true;
-        if (InventoryUtility.isOffhand(mc.getPlayer(), "end_crystal")) return true;
-        return InventoryUtility.findSlot(mc.getPlayer(), "end_crystal") != -1;
-    }
-    private int findBlockSlot(MinecraftWrapper mc) {
-        for (int i = 0; i < 9; i++) {
-            var stack = InventoryUtility.getItem(mc.getPlayer(), i);
-            if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
-            if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
-                return i;
-            }
+
+    private boolean autoCrystalCanReach(MinecraftWrapper mc, Vec3 crystalCenter, AutoCrystal autoCrystal) {
+        double maxRange = autoCrystal.placeRange;
+        if (PhysicUtility.raycast(mc.getPlayer().getEyePosition(), crystalCenter) != null) {
+            maxRange = Math.min(maxRange, autoCrystal.placeWallRange);
         }
-        if (swapInventory) {
-            for (int i = 9; i < 36; i++) {
-                var stack = InventoryUtility.getItem(mc.getPlayer(), i);
-                if (stack.isEmpty() || !(stack.getItem() instanceof BlockItem blockItem)) continue;
-                if (blockItem.getBlock() == net.minecraft.world.level.block.Blocks.OBSIDIAN) {
-                    int hotbarSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
-                    InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), i, hotbarSlot, InventoryUtility.SWAP);
-                    return hotbarSlot;
-                }
+        return mc.getPlayer().position().distanceTo(crystalCenter) <= maxRange;
+    }
+
+    private boolean isUsableBase(MinecraftWrapper mc, BlockPos pos) {
+        BlockState state = mc.getLevel().getBlockState(pos);
+        if (!state.is(Blocks.OBSIDIAN) && !state.is(Blocks.BEDROCK)) return false;
+        return mc.getLevel().getBlockState(pos.above()).isAir();
+    }
+
+    private boolean hasDamagingCrystal(MinecraftWrapper mc, LivingEntity target, double effectiveMinDamage) {
+        double[] targetStats = CombatUtility.getEntityStats(target);
+        for (var entity : mc.getLevel().entitiesForRendering()) {
+            if (!(entity instanceof EndCrystal crystal) || !crystal.isAlive() || crystal.isRemoved()) continue;
+            if (damageToTarget(target, crystal.position(), targetStats) >= effectiveMinDamage) return true;
+        }
+        return false;
+    }
+
+    private double damageToTarget(LivingEntity target, Vec3 crystalCenter, double[] stats) {
+        double dist = crystalCenter.distanceTo(target.position().add(0.0, 1.0, 0.0));
+        return applyArmor(rawCrystalDamage(dist), stats);
+    }
+
+    private double damageToSelf(LivingEntity player, Vec3 crystalCenter, double[] stats) {
+        double raw = rawCrystalDamage(crystalCenter.distanceTo(player.position()));
+        if (PhysicUtility.raycast(crystalCenter.add(0.0, 0.2, 0.0), player.getEyePosition()) != null) {
+            raw *= 0.45;
+        }
+        return applyArmor(raw, stats);
+    }
+
+    private double rawCrystalDamage(double distance) {
+        if (distance > 12.0) return 0.0;
+        double impact = Math.max(0.0, 1.0 - distance / 12.0);
+        return (impact * impact + impact) / 2.0 * 84.0 + 1.0;
+    }
+
+    private double applyArmor(double raw, double[] stats) {
+        if (stats == null || stats.length < 10) return raw;
+        double armor = stats[0];
+        double toughness = stats[1];
+        double blastEpf = stats[2];
+        double protEpf = stats[3];
+        double resistanceLevel = stats[4];
+
+        double armorFactor = Math.max(armor / 5.0, armor - raw / (2.0 + toughness / 4.0));
+        armorFactor = Math.min(20.0, armorFactor);
+        double afterArmor = raw * (1.0 - armorFactor / 25.0);
+        double totalEpf = Math.min(20.0, blastEpf + protEpf);
+        double afterEnchant = afterArmor * (1.0 - totalEpf * 0.04);
+        double resistance = Math.min(1.0, resistanceLevel * 0.2);
+        return afterEnchant * (1.0 - resistance);
+    }
+
+    private int findObsidianSlot(MinecraftWrapper mc) {
+        for (int slot = 0; slot < 9; slot++) {
+            if (isObsidian(InventoryUtility.getItem(mc.getPlayer(), slot))) return slot;
+        }
+        if (!swapInventory) return -1;
+        if (mc.getPlayer().containerMenu != mc.getPlayer().inventoryMenu) return -1;
+
+        int hotbarSlot = InventoryUtility.getSelectedSlot(mc.getPlayer());
+        for (int slot = 9; slot < 36; slot++) {
+            if (isObsidian(InventoryUtility.getItem(mc.getPlayer(), slot))) {
+                InventoryUtility.handleInventoryClick(mc, mc.getPlayer(), slot, hotbarSlot, InventoryUtility.SWAP);
+                return isObsidian(InventoryUtility.getItem(mc.getPlayer(), hotbarSlot)) ? hotbarSlot : -1;
             }
         }
         return -1;
     }
-    private net.minecraft.world.entity.LivingEntity findTarget(MinecraftWrapper mc) {
-        net.minecraft.world.entity.LivingEntity closest = null;
-        double bestMetric = Double.MAX_VALUE;
-        double maxDist = targetRange;
-        String mode = targetMode;
-        String typeFilter = targetType;
-        for (net.minecraft.world.entity.Entity e : mc.getLevel().entitiesForRendering()) {
-            if (!(e instanceof net.minecraft.world.entity.LivingEntity le)) continue;
-            if (EntityUtility.isSelf(le)) continue;
-            if (EntityUtility.isDead(le)) continue;
-            if (typeFilter.equals("Players")) {
-                if (!EntityUtility.isPlayer(le)) continue;
-            } else if (typeFilter.equals("Monsters")) {
-                if (!EntityUtility.isHostile(le)) continue;
-            } else if (typeFilter.equals("Passives")) {
-                if (EntityUtility.isPlayer(le) || EntityUtility.isHostile(le)) continue;
-            }
-            double dist = EntityUtility.distanceToPlayer(le);
-            if (dist > maxDist) continue;
-            double metric = switch (mode) {
-                case "Closest"   -> dist;
-                case "LowestHP" -> EntityUtility.getHealth(le);
-                default          -> dist;
-            };
-            if (metric < bestMetric) {
-                bestMetric = metric;
-                closest = le;
-            }
-        }
-        return closest;
-    }
-    private double[] javaFallbackCalculate(MinecraftWrapper mc, net.minecraft.world.entity.LivingEntity target, double[] solidBlocksData) {
-        net.minecraft.core.BlockPos tPos = target.blockPosition();
-        Set<net.minecraft.core.BlockPos> solids = new HashSet<>();
-        for (int i = 0; i + 2 < solidBlocksData.length; i += 3) {
-            solids.add(new net.minecraft.core.BlockPos((int) solidBlocksData[i], (int) solidBlocksData[i+1], (int) solidBlocksData[i+2]));
-        }
-        net.minecraft.core.BlockPos bestBlock = null;
-        double bestDist = Double.MAX_VALUE;
-        net.minecraft.core.BlockPos bestNeighbor = null;
-        int bestFace = 1;
-        int r = 2;
-        double maxPlaceRange = range;
-        double maxTargetRange = targetRange;
-        boolean allowAirPlace = airPlace;
-        String bypassMode = airPlaceBypass;
-        for (int dx = -r; dx <= r; dx++) {
-            for (int dy = -1; dy <= 1; dy++) {
-                for (int dz = -r; dz <= r; dz++) {
-                    net.minecraft.core.BlockPos c = tPos.offset(dx, dy, dz);
-                    if (solids.contains(c)) continue;
-                    double pDist = Math.sqrt(c.distToCenterSqr(mc.getPlayer().getX(), mc.getPlayer().getEyeY(), mc.getPlayer().getZ()));
-                    if (pDist > maxPlaceRange) continue;
-                    double tDist = Math.sqrt(c.distToCenterSqr(target.getX(), target.getY(), target.getZ()));
-                    if (tDist > maxTargetRange) continue;
-                    if (solids.contains(c.above())) continue;
-                    if (!allowAirPlace && solids.contains(c.above(2))) continue;
-                    if (intersectsEntity(mc.getPlayer(), c) || intersectsEntity(target, c)) continue;
-                    boolean hasNeighbor = false;
-                    net.minecraft.core.BlockPos neighbor = null;
-                    int faceIndex = 1;
-                    for (net.minecraft.core.Direction dir : net.minecraft.core.Direction.values()) {
-                        net.minecraft.core.BlockPos n = c.relative(dir);
-                        if (solids.contains(n)) {
-                            hasNeighbor = true;
-                            neighbor = n;
-                            faceIndex = dir.getOpposite().ordinal();
-                            break;
-                        }
-                    }
-                    if (!hasNeighbor) {
-                        if (allowAirPlace) {
-                            neighbor = c;
-                            faceIndex = 1;
-                        } else {
-                            continue;
-                        }
-                    }
-                    double priorityDist = c.distSqr(tPos.below());
-                    if (priorityDist < bestDist) {
-                        bestDist = priorityDist;
-                        bestBlock = c;
-                        bestNeighbor = neighbor;
-                        bestFace = faceIndex;
-                    }
-                }
-            }
-        }
-        if (bestBlock != null) {
-            return new double[]{1.0, bestNeighbor.getX(), bestNeighbor.getY(), bestNeighbor.getZ(), bestFace, bestBlock.getX(), bestBlock.getY(), bestBlock.getZ(), 0.0, 0.0};
-        }
-        return new double[]{0.0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-    }
-    private boolean intersectsEntity(net.minecraft.world.entity.Entity entity, net.minecraft.core.BlockPos pos) {
-        double minX = entity.getX() - 0.3;
-        double maxX = entity.getX() + 0.3;
-        double minY = entity.getY();
-        double maxY = entity.getY() + 1.8;
-        double minZ = entity.getZ() - 0.3;
-        double maxZ = entity.getZ() + 0.3;
-        double bMinX = pos.getX();
-        double bMaxX = pos.getX() + 1.0;
-        double bMinY = pos.getY();
-        double bMaxY = pos.getY() + 1.0;
-        double bMinZ = pos.getZ();
-        double bMaxZ = pos.getZ() + 1.0;
-        return (bMaxX > minX && bMinX < maxX &&
-                bMaxY > minY && bMinY < maxY &&
-                bMaxZ > minZ && bMinZ < maxZ);
-    }
-    private static native double[] nativeCalculateBasePlace(
-        double playerX, double playerY, double playerZ,
-        double playerHp, double playerAbs,
-        double[] playerStats,
-        double targetX, double targetY, double targetZ,
-        double targetHp, double targetAbs,
-        double[] targetStats,
-        double[] solidBlocksData,
-        double placeRange,
-        double targetRange,
-        double minTargetDmg,
-        double maxSelfDmg,
-        double selfDmgWeight,
-        boolean antiSuicide,
-        double antiSuicideMinHp,
-        double predictTicks,
-        boolean airPlace
-    );
 
+    private boolean isObsidian(ItemStack stack) {
+        return !stack.isEmpty() && stack.getItem() instanceof BlockItem blockItem && blockItem.getBlock() == Blocks.OBSIDIAN;
+    }
 
+    private boolean intersects(LivingEntity entity, BlockPos pos) {
+        return entity.getBoundingBox().intersects(new net.minecraft.world.phys.AABB(pos));
+    }
+
+    private void disableWithWarning(String text) {
+        Notifications.notifyByMode(text, 0xFFFF5555);
+        Modules.setEnabled(BasePlace.class, false);
+    }
+
+    private void warnThrottled(String text, int color) {
+        long now = System.currentTimeMillis();
+        if (now - lastWarnTime < 3000L) return;
+        lastWarnTime = now;
+        Notifications.notifyByMode(text, color);
+    }
+
+    private record Neighbor(BlockPos pos, Direction face, boolean airPlace) {}
+
+    private record PlaceCandidate(BlockPos targetBlock, BlockPos neighbor, Direction face, boolean airPlace,
+                                  double targetDamage, double selfDamage) {}
 }

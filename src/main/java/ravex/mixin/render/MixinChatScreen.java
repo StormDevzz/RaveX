@@ -55,6 +55,10 @@ public abstract class MixinChatScreen {
     @Unique
     private float ravex$reveal = 0f;
     @Unique
+    private float ravex$displayRows = 0f;
+    @Unique
+    private float ravex$displayWidth = 0f;
+    @Unique
     private long ravex$lastFrameNs = 0L;
     @Unique
     private double ravex$lastMouseX = Double.NaN;
@@ -77,25 +81,38 @@ public abstract class MixinChatScreen {
     private List<Cmd> ravex$matches() {
         String prefix = ModuleManager.get(Commands.class).prefix;
         String value = input.getValue();
-        if (value.endsWith(" ")) value = value.substring(0, value.length() - 1);
+        boolean trailingSpace = value.endsWith(" ");
+        if (trailingSpace) value = value.substring(0, value.length() - 1);
         String token = value.length() >= prefix.length() ? value.substring(prefix.length()).toLowerCase() : "";
         String[] parts = token.split("\\s+", 2);
-        String cmdName = parts[0];
+        String cmdName = parts.length > 0 ? parts[0] : "";
+        Cmd cmd = CmdReg.INSTANCE.getCommands().get(cmdName);
 
         if (parts.length == 2 && !parts[1].isEmpty()) {
-            Cmd cmd = CmdReg.INSTANCE.getCommands().get(cmdName);
             if (cmd != null) {
                 ravex$subMode = true;
                 String subToken = parts[1];
                 ravex$subCached = new ArrayList<>(cmd.getSubcommandSuggestions(new String[]{cmdName, subToken}));
                 ravex$subCached.removeIf(s -> !s.toLowerCase().startsWith(subToken.toLowerCase()));
-                // если введена полная сабкоманда, не показывать подсказки
                 if (ravex$subCached.size() == 1 && ravex$subCached.get(0).equalsIgnoreCase(subToken)) {
                     ravex$subMode = false;
                     ravex$subCached.clear();
                 }
                 return new ArrayList<>();
             }
+        }
+
+        if (trailingSpace) {
+            ravex$subMode = false;
+            ravex$subCached.clear();
+            if (cmd != null) {
+                List<String> subs = new ArrayList<>(cmd.getSubcommandSuggestions(new String[]{cmdName, ""}));
+                if (!subs.isEmpty()) {
+                    ravex$subMode = true;
+                    ravex$subCached = subs;
+                }
+            }
+            return new ArrayList<>();
         }
 
         ravex$subMode = false;
@@ -138,10 +155,12 @@ public abstract class MixinChatScreen {
         float dt = ravex$lastFrameNs == 0L ? 0.016f : Math.min(0.05f, (now - ravex$lastFrameNs) / 1_000_000_000f);
         ravex$lastFrameNs = now;
         float target = wantShow ? 1f : 0f;
-        ravex$reveal += (target - ravex$reveal) * Math.min(1f, dt * 24f);
+        ravex$reveal += (target - ravex$reveal) * Math.min(1f, dt * 16f);
         if (Math.abs(target - ravex$reveal) < 0.004f) ravex$reveal = target;
         if (ravex$reveal <= 0.01f) {
             ravex$reveal = 0f;
+            ravex$displayRows = 0f;
+            ravex$displayWidth = 0f;
             if (!active) {
                 ravex$cached = new ArrayList<>();
                 ravex$subCached = new ArrayList<>();
@@ -171,12 +190,22 @@ public abstract class MixinChatScreen {
         } else {
             boxX = input.getScreenX(0) + 2;
         }
-        int boxTop = input.getY() - shown * RAVEX_LINE_HEIGHT + 2;
+
+        float targetRows = wantShow ? shown : 0f;
+        float targetWidth = wantShow ? boxW : 0f;
+        float animSpeed = Math.min(1f, dt * 18f);
+        ravex$displayRows += (targetRows - ravex$displayRows) * animSpeed;
+        ravex$displayWidth += (targetWidth - ravex$displayWidth) * animSpeed;
+        int drawRows = Math.max(0, Math.min(shown, Math.round(ravex$displayRows)));
+        int drawW = Math.max(0, Math.round(ravex$displayWidth));
+        if (drawRows == 0 || drawW == 0) return;
+
+        int boxTop = input.getY() - drawRows * RAVEX_LINE_HEIGHT - 2;
         int screenW = ravex.mcwrapper.MinecraftWrapper.getWrapper().getScreenWidth();
-        if (boxX + boxW > screenW) boxX = Math.max(2, screenW - boxW);
+        if (boxX + drawW > screenW) boxX = Math.max(2, screenW - drawW);
         if (boxTop < 2) boxTop = 2;
 
-        float a = ravex$reveal;
+        float a = ravex$reveal * ravex$reveal * (3f - 2f * ravex$reveal);
         int fillColor = ravex.mcwrapper.MinecraftWrapper.getWrapper()
             .getOptions().getBackgroundColor(0.6F);
         if (((fillColor >>> 24) & 0xFF) < 0x38) fillColor = 0x60000000;
@@ -188,21 +217,21 @@ public abstract class MixinChatScreen {
 
         // vanilla scroll strips and arrows
         if (hasUp || hasDown) {
-            graphics.fill(boxX, boxTop - 1, boxX + boxW, boxTop, fillColor);
-            graphics.fill(boxX, boxTop + shown * RAVEX_LINE_HEIGHT, boxX + boxW,
-                boxTop + shown * RAVEX_LINE_HEIGHT + 1, fillColor);
+            graphics.fill(boxX, boxTop - 1, boxX + drawW, boxTop, fillColor);
+            graphics.fill(boxX, boxTop + drawRows * RAVEX_LINE_HEIGHT, boxX + drawW,
+                boxTop + drawRows * RAVEX_LINE_HEIGHT + 1, fillColor);
         }
         if (hasUp) {
             int dash = ColorUtility.applyAlpha(0xFFFFFFFF, a);
-            for (int i = 0; i < boxW; i += 2) {
+            for (int i = 0; i < drawW; i += 2) {
                 graphics.fill(boxX + i, boxTop - 1, boxX + i + 1, boxTop, dash);
             }
         }
         if (hasDown) {
             int dash = ColorUtility.applyAlpha(0xFFFFFFFF, a);
-            for (int i = 0; i < boxW; i += 2) {
-                graphics.fill(boxX + i, boxTop + shown * RAVEX_LINE_HEIGHT,
-                    boxX + i + 1, boxTop + shown * RAVEX_LINE_HEIGHT + 1, dash);
+            for (int i = 0; i < drawW; i += 2) {
+                graphics.fill(boxX + i, boxTop + drawRows * RAVEX_LINE_HEIGHT,
+                    boxX + i + 1, boxTop + drawRows * RAVEX_LINE_HEIGHT + 1, dash);
             }
         }
 
@@ -210,11 +239,11 @@ public abstract class MixinChatScreen {
         ravex$lastMouseX = mouseX;
         ravex$lastMouseY = mouseY;
 
-        for (int i = 0; i < shown; i++) {
+        for (int i = 0; i < drawRows; i++) {
             int rowY = boxTop + i * RAVEX_LINE_HEIGHT;
-            graphics.fill(boxX, rowY, boxX + boxW, rowY + RAVEX_LINE_HEIGHT, fillColor);
+            graphics.fill(boxX, rowY, boxX + drawW, rowY + RAVEX_LINE_HEIGHT, fillColor);
 
-            if (mouseMoved && mouseX > boxX && mouseX < boxX + boxW
+            if (mouseMoved && mouseX > boxX && mouseX < boxX + drawW
                 && mouseY > rowY && mouseY < rowY + RAVEX_LINE_HEIGHT) {
                 ravex$selected = first + i;
             }
@@ -229,8 +258,8 @@ public abstract class MixinChatScreen {
                 selected ? selectedText : normalText, false);
         }
 
-        Render2DUtility.drawRoundBorder(graphics, boxX - 1, boxTop - 1, boxW + 2,
-            shown * RAVEX_LINE_HEIGHT + 2, 3, 1,
+        Render2DUtility.drawRoundBorder(graphics, boxX - 1, boxTop - 1, drawW + 2,
+            drawRows * RAVEX_LINE_HEIGHT + 2, 3, 1,
             ColorUtility.applyAlpha(ColorUtility.getActiveColor(), a));
     }
 
@@ -347,11 +376,12 @@ public abstract class MixinChatScreen {
             }
         }
 
-        // Space or Enter while cycling: confirm the selection
+        // Space/Enter confirm the selection and let vanilla handle the key.
+        // Space must actually be inserted so the hint list can collapse.
         if (ravex$cycling && (event.key() == GLFW.GLFW_KEY_SPACE || event.key() == GLFW.GLFW_KEY_ENTER)) {
             ravex$cycling = false;
             ravex$subMode = false;
-            cir.cancel();
+            ravex$lastInput = "";
             return;
         }
 

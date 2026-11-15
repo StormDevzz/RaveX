@@ -34,11 +34,23 @@ public class InvPreviewHud extends ravex.modules.Module {
 
     private float previewAlpha = 1f;
     private long previewLastNs = 0L;
+    private final ravex.utility.render.animate.AnimationUtility.SpringAnimation selectionAnim =
+            new ravex.utility.render.animate.AnimationUtility.SpringAnimation(0f);
+    private boolean selectionInitialized = false;
+
+    {
+        selectionAnim.stiffness(420f).damping(2f * (float) Math.sqrt(420f)).mass(1f);
+    }
 
     public InvPreviewHud() {
         super("InvPreviewHud", 10, 200, 188, 108);
         setX(10);
         setY(200);
+    }
+
+    protected void onEnable() {
+        selectionInitialized = false;
+        previewLastNs = 0L;
     }
 
     public void render(GuiGraphics graphics, float partialTicks) {
@@ -88,6 +100,14 @@ public class InvPreviewHud extends ravex.modules.Module {
             ColorUtility.multiplyAlpha(0x14FFFFFF, previewAlpha));
 
         int selectedSlot = mc.getPlayer() != null ? InventoryUtility.getSelectedSlot(mc.getPlayer()) : 0;
+        if (!selectionInitialized) {
+            selectionAnim.setValue(selectedSlot);
+            selectionInitialized = true;
+        }
+        selectionAnim.setTarget(selectedSlot);
+        selectionAnim.update(dt * 1000f);
+        float selectionPos = Math.max(0f, Math.min(COLS - 1, selectionAnim.getValue()));
+
         for (int row = 0; row < ROWS; row++) {
             for (int col = 0; col < COLS; col++) {
                 int slot = 9 + row * COLS + col;
@@ -98,19 +118,15 @@ public class InvPreviewHud extends ravex.modules.Module {
         }
 
         int hotbarY = startY + rowsH + 4;
+        int selectionX = bx + PAD + Math.round(selectionPos * (CELL + GAP));
+        Render2DUtility.drawRound(graphics, selectionX - 1, hotbarY - 1, CELL + 2, CELL + 2, 4,
+                ColorUtility.multiplyAlpha(ColorUtility.withAlpha(accent, 45), previewAlpha));
         for (int col = 0; col < COLS; col++) {
             int x = bx + PAD + col * (CELL + GAP);
-            boolean selected = selectedSlot == col;
-            if (selected) {
-                Render2DUtility.drawRound(graphics, x - 1, hotbarY - 1, CELL + 2, CELL + 2, 4,
-                    ColorUtility.multiplyAlpha(ColorUtility.withAlpha(accent, 45), previewAlpha));
-            }
             renderSlot(graphics, mc, col, x, hotbarY);
-            if (selected) {
-                Render2DUtility.drawRound(graphics, x, hotbarY + CELL + 1, CELL, 2, 1,
-                    ColorUtility.multiplyAlpha(ColorUtility.withAlpha(accent, 215), previewAlpha));
-            }
         }
+        Render2DUtility.drawRound(graphics, selectionX, hotbarY + CELL + 1, CELL, 2, 1,
+                ColorUtility.multiplyAlpha(ColorUtility.withAlpha(accent, 215), previewAlpha));
     }
 
     private int countUsed(MinecraftWrapper mc) {

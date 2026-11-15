@@ -10,6 +10,9 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.core.BlockPos;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import net.minecraft.world.level.ClipContext;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -34,6 +37,7 @@ import ravex.modules.misc.NewChunks;
 import ravex.modules.misc.StashFinder;
 import ravex.modules.player.AirPlace;
 import ravex.modules.player.PacketMine;
+import ravex.modules.player.SourceFiller;
 import ravex.modules.render.BlockOutline;
 import ravex.modules.render.Borders;
 import ravex.modules.render.BreadCrumbs;
@@ -94,6 +98,15 @@ public class MixinLevelRenderer {
     private static double boX = 0, boY = 0, boZ = 0;
     private static float boAlpha = 0.0f;
     private static boolean boInitialized = false;
+    private static VoxelShape boShape = null;
+
+    private static double bordX = 0, bordZ = 0;
+    private static float bordAlpha = 0.0f;
+    private static boolean bordInitialized = false;
+
+    private static double sfX = 0, sfY = 0, sfZ = 0;
+    private static float sfAlpha = 0.0f;
+    private static boolean sfInitialized = false;
 
     @ModifyVariable(
         method = "renderLevel",
@@ -115,6 +128,18 @@ public class MixinLevelRenderer {
     )
     private void onRenderLevelHead(CallbackInfo ci) {
         if (Modules.enabled(Skeleton.class)) Skeleton.beginFrame();
+        if (Modules.enabled(ravex.modules.render.FreeCam.class)) updateFreeCamHitResult();
+    }
+
+    private void updateFreeCamHitResult() {
+        var mc = MinecraftWrapper.getInstance();
+        if (mc.level == null || mc.player == null) return;
+        var camera = mc.gameRenderer.getMainCamera();
+        Vec3 eye = camera.position();
+        Vec3 look = Vec3.directionFromRotation(camera.xRot(), camera.yRot());
+        double reach = mc.player.blockInteractionRange();
+        mc.hitResult = mc.level.clip(new ClipContext(eye, eye.add(look.scale(reach)),
+                ClipContext.Block.OUTLINE, ClipContext.Fluid.NONE, mc.player));
     }
 
     @Inject(
@@ -191,6 +216,7 @@ public class MixinLevelRenderer {
               if (hit != null && hit.getType() == HitResult.Type.BLOCK) {
                 BlockHitResult blockHit = (BlockHitResult) hit;
                 BlockPos pos = blockHit.getBlockPos();
+                boShape = mc.level.getBlockState(pos).getShape(mc.level, pos);
                 double tx = pos.getX();
                 double ty = pos.getY();
                 double tz = pos.getZ();
@@ -216,10 +242,12 @@ public class MixinLevelRenderer {
                     if (boAlpha < 0.01f) {
                         boAlpha = 0.0f;
                         boInitialized = false;
+                        boShape = null;
                     }
                 } else {
                     boAlpha = 0.0f;
                     boInitialized = false;
+                    boShape = null;
                 }
             }
 
@@ -244,14 +272,38 @@ public class MixinLevelRenderer {
                     float sy = by + 1.0f;
                     float sz = bz + 1.0f;
 
+                    VoxelShape shape = boShape;
+                    java.util.List<AABB> boxes = shape == null || shape.isEmpty()
+                            ? java.util.List.of(new AABB(0.0, 0.0, 0.0, 1.0, 1.0, 1.0))
+                            : shape.toAabbs();
                     if (outlineMode.equals("Thin")) {
                         modelViewMatrix.translate(bx, by, bz, REUSABLE_MATRIX);
-                        if (filled) {
-                            Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
+                        if (boxes.size() == 1 && isFullCube(boxes.get(0))) {
+                            if (filled) {
+                                Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
+                            }
+                            Render3DUtility.batchWireframe(REUSABLE_MATRIX, 1.001, r, g, b, a,
+                                    Math.max(0.5f, thickness * 0.7f), true);
+                        } else {
+                            for (AABB box : boxes) {
+                                float minX = (float) box.minX;
+                                float minY = (float) box.minY;
+                                float minZ = (float) box.minZ;
+                                float maxX = (float) box.maxX;
+                                float maxY = (float) box.maxY;
+                                float maxZ = (float) box.maxZ;
+                                if (filled) {
+                                    Render3DUtility.batchBox(REUSABLE_MATRIX,
+                                            minX - 0.002f, minY - 0.002f, minZ - 0.002f,
+                                            maxX + 0.002f, maxY + 0.002f, maxZ + 0.002f,
+                                            r, g, b, a * 0.25f, true);
+                                }
+                                Render3DUtility.batchBoxWireframe(REUSABLE_MATRIX,
+                                        minX, minY, minZ, maxX, maxY, maxZ,
+                                        r, g, b, a, Math.max(1.0f, thickness), true);
+                            }
                         }
-                        float lw = Math.max(0.5f, thickness * 0.7f);
-                        Render3DUtility.batchWireframe(REUSABLE_MATRIX, 1.001, r, g, b, a, lw, true);
-                    } else {
+                    } else if (boxes.size() == 1 && isFullCube(boxes.get(0))) {
                         if (filled) {
                             modelViewMatrix.translate(bx, by, bz, REUSABLE_MATRIX);
                             Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, r, g, b, a * 0.25f, true);
@@ -271,6 +323,26 @@ public class MixinLevelRenderer {
                         Render3DUtility.batchAxisLine(modelViewMatrix, bx, by, sz, sx, by, sz, base, r, g, b, a, true);
                         Render3DUtility.batchAxisLine(modelViewMatrix, bx, sy, bz, sx, sy, bz, base, r, g, b, a, true);
                         Render3DUtility.batchAxisLine(modelViewMatrix, bx, sy, sz, sx, sy, sz, base, r, g, b, a, true);
+                    } else {
+                        float base = Math.max(1.0f, thickness * 1.6f);
+                        modelViewMatrix.translate(bx, by, bz, REUSABLE_MATRIX);
+                        for (AABB box : boxes) {
+                            float minX = (float) box.minX;
+                            float minY = (float) box.minY;
+                            float minZ = (float) box.minZ;
+                            float maxX = (float) box.maxX;
+                            float maxY = (float) box.maxY;
+                            float maxZ = (float) box.maxZ;
+                            if (filled) {
+                                Render3DUtility.batchBox(REUSABLE_MATRIX,
+                                        minX - 0.002f, minY - 0.002f, minZ - 0.002f,
+                                        maxX + 0.002f, maxY + 0.002f, maxZ + 0.002f,
+                                        r, g, b, a * 0.25f, true);
+                            }
+                            Render3DUtility.batchBoxWireframe(REUSABLE_MATRIX,
+                                    minX, minY, minZ, maxX, maxY, maxZ,
+                                    r, g, b, a, base, true);
+                        }
                     }
                 } catch (Exception ignored) {}
             }
@@ -337,6 +409,36 @@ public class MixinLevelRenderer {
                 ravex.modules.player.AirPlace.renderB,
                 camPos, modelViewMatrix
             );
+        }
+
+        SourceFiller sf = Modules.get(SourceFiller.class);
+        boolean sfActive = Modules.enabled(SourceFiller.class) && sf != null && sf.render && sf.getRenderTarget() != null;
+        if (sfActive) {
+            BlockPos sfPos = sf.getRenderTarget();
+            double tx = sfPos.getX();
+            double ty = sfPos.getY();
+            double tz = sfPos.getZ();
+            if (!sfInitialized) {
+                sfX = tx; sfY = ty; sfZ = tz;
+                sfInitialized = true;
+            } else {
+                sfX += (tx - sfX) * slideFactor;
+                sfY += (ty - sfY) * slideFactor;
+                sfZ += (tz - sfZ) * slideFactor;
+            }
+            sfAlpha += (1.0f - sfAlpha) * factor;
+        } else {
+            sfAlpha += (0.0f - sfAlpha) * factor;
+            if (sfAlpha < 0.01f) {
+                sfAlpha = 0.0f;
+                sfInitialized = false;
+            }
+        }
+        if (Modules.enabled(SourceFiller.class) && sf != null && sf.render && sfAlpha > 0.001f) {
+            int sfc = sf.color;
+            renderBlockHighlight(new Vec3(sfX, sfY, sfZ), sfAlpha, 1.002,
+                    ((sfc >> 16) & 0xFF) / 255.0f, ((sfc >> 8) & 0xFF) / 255.0f, (sfc & 0xFF) / 255.0f,
+                    camPos, modelViewMatrix);
         }
 
 
@@ -1005,7 +1107,6 @@ public class MixinLevelRenderer {
 
         if (Modules.enabled(Borders.class)) {
             int rd = (int) Modules.get(Borders.class).renderDistance;
-            boolean showCurrent = Modules.get(Borders.class).showCurrentChunk;
             boolean showAll = Modules.get(Borders.class).showChunkBorders;
             int lc = Modules.get(Borders.class).chunkColor;
             float lr = ((lc >> 16) & 0xFF) / 255.0f;
@@ -1019,7 +1120,7 @@ public class MixinLevelRenderer {
                 int cz = mc.player.chunkPosition().z;
                 for (int dx = -rd / 16; dx <= rd / 16; dx++) {
                     for (int dz = -rd / 16; dz <= rd / 16; dz++) {
-                        if (showCurrent && dx == 0 && dz == 0) continue;
+                        if (dx == 0 && dz == 0) continue;
                         int bx = (cx + dx) << 4;
                         int bz = (cz + dz) << 4;
                         try {
@@ -1029,22 +1130,30 @@ public class MixinLevelRenderer {
                 }
             }
 
-            if (showCurrent) {
+            if (mc.player != null) {
                 int cc = Modules.get(Borders.class).currentColor;
                 float cr = ((cc >> 16) & 0xFF) / 255.0f;
                 float cg = ((cc >> 8) & 0xFF) / 255.0f;
                 float cb = (cc & 0xFF) / 255.0f;
                 float ca = ((cc >> 24) & 0xFF) / 255.0f;
-                if (mc.player != null) {
-                    int cx = mc.player.chunkPosition().x;
-                    int cz = mc.player.chunkPosition().z;
-                    int bx = cx << 4;
-                    int bz = cz << 4;
-                    float feetY = (float) mc.player.position().y;
-                    try {
-                        renderCurrentChunkHighlight(modelViewMatrix, bx, bz, feetY, cr, cg, cb, ca, camPos, lw * 0.04f);
-                    } catch (Exception ignored) {}
+                int targetBx = mc.player.chunkPosition().x << 4;
+                int targetBz = mc.player.chunkPosition().z << 4;
+                if (!bordInitialized) {
+                    bordX = targetBx;
+                    bordZ = targetBz;
+                    bordInitialized = true;
+                } else {
+                    bordX += (targetBx - bordX) * slideFactor;
+                    bordZ += (targetBz - bordZ) * slideFactor;
+                    if (Math.abs(targetBx - bordX) < 0.01) bordX = targetBx;
+                    if (Math.abs(targetBz - bordZ) < 0.01) bordZ = targetBz;
                 }
+                bordAlpha += (1.0f - bordAlpha) * factor;
+                float feetY = (float) mc.player.position().y;
+                try {
+                    renderCurrentChunkHighlight(modelViewMatrix, (int) Math.round(bordX), (int) Math.round(bordZ),
+                            feetY, cr, cg, cb, ca * bordAlpha, camPos, lw * 0.04f);
+                } catch (Exception ignored) {}
             }
         }
 
@@ -1056,13 +1165,15 @@ public class MixinLevelRenderer {
             float tg = ((tunnelColorVal >> 8) & 0xFF) / 255.0f;
             float tb = (tunnelColorVal & 0xFF) / 255.0f;
             float ta = ((tunnelColorVal >> 24) & 0xFF) / 255.0f;
+            if (ta <= 0.01f) ta = 0.4f;
             boolean filled = tunnelEsp.tunnelFilled;
             boolean wire = tunnelEsp.tunnelWireframe;
+            boolean throughWalls = tunnelEsp.tunnelThroughWalls;
             for (BlockPos pos : tunnelEsp.getTunnelBlocks()) {
                 try {
                     modelViewMatrix.translate((float)(pos.getX() - camPos.x), (float)(pos.getY() - camPos.y), (float)(pos.getZ() - camPos.z), REUSABLE_MATRIX);
-                    if (filled) Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.3f);
-                    if (wire) Render3DUtility.batchWireframe(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.85f);
+                    if (filled) Render3DUtility.batchFilledBox(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.35f, throughWalls);
+                    if (wire) Render3DUtility.batchWireframe(REUSABLE_MATRIX, 1.002, tr, tg, tb, ta * 0.9f, 1.5f, throughWalls);
                 } catch (Exception ignored) {}
             }
         }
@@ -1409,6 +1520,11 @@ public class MixinLevelRenderer {
             Render3DUtility.batchWireframe(REUSABLE_MATRIX, s * 1.004, r, g, b, alpha * 0.95f, 1.6f, true);
             Render3DUtility.batchWireframe(REUSABLE_MATRIX, s * 1.05, r, g, b, alpha * 0.4f * pulse, 1.0f, true);
         } catch (Exception ignored) {}
+    }
+
+    private static boolean isFullCube(AABB box) {
+        return box.minX <= 0.001 && box.minY <= 0.001 && box.minZ <= 0.001
+                && box.maxX >= 0.999 && box.maxY >= 0.999 && box.maxZ >= 0.999;
     }
 
     private void renderChunkBorderLines(Matrix4f modelViewMatrix, int bx, int bz, float r, float g, float b, float a, Vec3 camPos, float th) {

@@ -20,14 +20,21 @@ public class LanguageUtility {
 
     static {
         Map<String, String> en = new HashMap<>();
-        en.put("entered", "§f{0} §7entered");
-        en.put("left", "§f{0} §7left");
-        en.put("pickup", "§f{0} §7pickup §f{1}");
-        en.put("ate_gapple", "§f{0} §7ate §eGolden Apple");
-        en.put("ate_egapple", "§f{0} §7ate §dEnchanted Golden Apple");
-        en.put("drank", "§f{0} §7drank {1}");
-        en.put("pop_totem", "§f{0} §7pop §cTotem");
-        en.put("shield_broke", "§f{0} §7shield broke");
+        en.put("entered", "{0} entered");
+        en.put("left", "{0} left");
+        en.put("pickup", "{0} picked up {1}");
+        en.put("pickup_self", "You picked up {0}");
+        en.put("ate_gapple", "{0} ate a Golden Apple");
+        en.put("ate_egapple", "{0} ate an Enchanted Golden Apple");
+        en.put("drank", "{0} drank {1}");
+        en.put("pop_totem", "{0} popped a Totem");
+        en.put("shield_broke", "{0} broke a shield");
+        en.put("tracker_crystals", "{0} has {1} crystals in hand");
+        en.put("tracker_egapple", "{0} has {1} enchanted golden apples");
+        en.put("tracker_gapple", "{0} has {1} golden apples");
+        en.put("tracker_potion", "{0} has {1}");
+        en.put("tracker_shield", "{0} has a shield");
+        en.put("tracker_totem", "{0} has a totem");
         en.put("enabled", "Enabled");
         en.put("disabled", "Disabled");
         en.put("has_been", "has been");
@@ -71,6 +78,10 @@ public class LanguageUtility {
         en.put("holefill_filled", "Filled {0} block(s)");
         en.put("holefill_notenough", "Not enough blocks, disabling");
         en.put("baseplace_placed", "§a[BasePlace] Placed obsidian at §f{0}, {1}, {2}");
+        en.put("baseplace_no_ac", "[BasePlace] AutoCrystal is disabled - disabling BasePlace");
+        en.put("baseplace_no_target", "[BasePlace] AutoCrystal has no target - disabling BasePlace");
+        en.put("baseplace_no_obsidian", "[BasePlace] No obsidian in hotbar");
+        en.put("baseplace_no_crystals", "[BasePlace] No end crystals in inventory");
         en.put("desc_KillAura", "Attack enemies");
         en.put("desc_mode_Mode_Snap2", "Alternative to Snap (aim at target)");
         en.put("desc_mode_Mode_NoClick", "No clicks while moving");
@@ -86,7 +97,7 @@ public class LanguageUtility {
         en.put("desc_mode_PitchMode_None", "Do not touch the pitch");
         en.put("desc_IllegalDisconnect", "Force a kick from the server");
         en.put("desc_BindListHud", "List of modules that have a keybind");
-        en.put("pop_count", "§f{0} §7popped §6{1}§7x §cTotem");
+        en.put("pop_count", "{0} popped {1}x Totem");
         en.put("book_edit_button", "Edit title & author");
         en.put("book_title", "Title");
         en.put("book_author", "Author");
@@ -118,6 +129,7 @@ public class LanguageUtility {
         en.put("desc_NoBob", "No head bob");
         en.put("desc_Ambient", "Change light");
         en.put("desc_Weather", "Change weather");
+        en.put("weather_norender_conflict", "Why do you need Weather if you removed it in NoRender?");
         en.put("desc_WorldColor", "World colors");
         en.put("desc_Trails", "Show paths");
         en.put("desc_Trajectories", "Show where shots land");
@@ -289,7 +301,7 @@ public class LanguageUtility {
         en.put("desc_Skeleton", "Show bodies");
         en.put("desc_ChatHud", "Chat overlay");
         en.put("desc_CooldownsHud", "Show cooldowns");
-        en.put("desc_IndicatorsHud", "Target info");
+        en.put("desc_IndicatorsHud", "Health, armor, TPS, speed and KB indicators");
         en.put("desc_Radar", "Minimap with entity dots");
         en.put("desc_InvPreviewHud", "Preview items");
         en.put("desc_MediaHud", "Music info");
@@ -504,14 +516,21 @@ public class LanguageUtility {
         en.put("upd_toast", "Update available: {0}");
 
         Map<String, String> ru = new HashMap<>();
-        ru.put("entered", "§f{0} §7зашёл");
-        ru.put("left", "§f{0} §7вышел");
-        ru.put("pickup", "§f{0} §7подобрал §f{1}");
-        ru.put("ate_gapple", "§f{0} §7съел §eЗолотое Яблоко");
-        ru.put("ate_egapple", "§f{0} §7съел §dЗачарованное Золотое Яблоко");
-        ru.put("drank", "§f{0} §7выпил {1}");
-        ru.put("pop_totem", "§f{0} §7попнул §cТотем");
-        ru.put("shield_broke", "§f{0} §7сломал щит");
+        ru.put("entered", "{0} зашёл");
+        ru.put("left", "{0} вышел");
+        ru.put("pickup", "{0} подобрал {1}");
+        ru.put("pickup_self", "Вы подобрали {0}");
+        ru.put("ate_gapple", "{0} съел Золотое Яблоко");
+        ru.put("ate_egapple", "{0} съел Зачарованное Золотое Яблоко");
+        ru.put("drank", "{0} выпил {1}");
+        ru.put("pop_totem", "{0} попнул Тотем");
+        ru.put("shield_broke", "{0} сломал щит");
+        ru.put("tracker_crystals", "{0}: {1} кристаллов в руке");
+        ru.put("tracker_egapple", "{0}: {1} зачарованных золотых яблок");
+        ru.put("tracker_gapple", "{0}: {1} золотых яблок");
+        ru.put("tracker_potion", "{0}: {1}");
+        ru.put("tracker_shield", "{0}: щит");
+        ru.put("tracker_totem", "{0}: тотем");
         ru.put("enabled", "Включен");
         ru.put("disabled", "Выключен");
         ru.put("has_been", "был");
@@ -555,6 +574,10 @@ public class LanguageUtility {
         ru.put("holefill_filled", "Заполнено блоков: {0}");
         ru.put("holefill_notenough", "Нехватка блоков, отключение");
         ru.put("baseplace_placed", "§a[BasePlace] Обсидиан установлен на §f{0}, {1}, {2}");
+        ru.put("baseplace_no_ac", "[BasePlace] AutoCrystal выключен - выключаю BasePlace");
+        ru.put("baseplace_no_target", "[BasePlace] У AutoCrystal нет цели - выключаю BasePlace");
+        ru.put("baseplace_no_obsidian", "[BasePlace] В хотбаре нет обсидиана");
+        ru.put("baseplace_no_crystals", "[BasePlace] В инвентаре нет кристаллов Края");
         ru.put("desc_KillAura", "Атака врагов");
         ru.put("desc_mode_Mode_Snap2", "Альтернатива Snap (наводись на цель)");
         ru.put("desc_mode_Mode_NoClick", "В движении кликать нельзя");
@@ -570,7 +593,7 @@ public class LanguageUtility {
         ru.put("desc_mode_PitchMode_None", "Не трогать наклон");
         ru.put("desc_IllegalDisconnect", "Принудительный кик с сервера");
         ru.put("desc_BindListHud", "Список модулей с биндом");
-        ru.put("pop_count", "§f{0} §7попнул §6{1}§7x §cТотем");
+        ru.put("pop_count", "{0} попнул {1}x Тотем");
         ru.put("book_edit_button", "Изменить название и автора");
         ru.put("book_title", "Название");
         ru.put("book_author", "Автор");
@@ -602,6 +625,7 @@ public class LanguageUtility {
         ru.put("desc_NoBob", "Убрать качание головы");
         ru.put("desc_Ambient", "Изменить освещение");
         ru.put("desc_Weather", "Изменить погоду");
+        ru.put("weather_norender_conflict", "Зачем тебе погода, если ты в NoRender её убрал?");
         ru.put("desc_WorldColor", "Цвета мира");
         ru.put("desc_Trails", "Показать путь");
         ru.put("desc_Trajectories", "Показывает, где упадёт снаряд");
@@ -772,7 +796,7 @@ public class LanguageUtility {
         ru.put("desc_Skeleton", "Показать тела");
         ru.put("desc_ChatHud", "Оверлей чата");
         ru.put("desc_CooldownsHud", "Кулдауны предметов");
-        ru.put("desc_IndicatorsHud", "Информация о цели");
+        ru.put("desc_IndicatorsHud", "Индикаторы здоровья, брони, TPS, скорости и KB");
         ru.put("desc_Radar", "Мини-карта с точками сущностей");
         ru.put("desc_InvPreviewHud", "Превью инвентаря");
         ru.put("desc_MediaHud", "Информация о музыке");

@@ -6,6 +6,7 @@ import ravex.mcwrapper.MinecraftWrapper;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.ItemStack;
 import ravex.utility.notification.NotificationUtility;
 import ravex.utility.render.ColorUtility;
 import ravex.utility.render.FontRenderUtility;
@@ -194,7 +195,11 @@ public class NotificationManager {
     }
 
     public static void addToast(String text, int color, ToastType type, double opacity, int iconSize) {
-        toasts.add(new ToastEntry(text, color, type, opacity, iconSize));
+        addToast(text, color, type, opacity, iconSize, ItemStack.EMPTY);
+    }
+
+    public static void addToast(String text, int color, ToastType type, double opacity, int iconSize, ItemStack stack) {
+        toasts.add(new ToastEntry(text, color, type, opacity, iconSize, stack));
         if (toasts.size() > 6) {
             toasts.remove(0);
         }
@@ -262,7 +267,6 @@ public class NotificationManager {
 
     public static void renderToasts(GuiGraphics graphics) {
         ensureTextures();
-        if (enableIcon == null || disableIcon == null) return;
 
         int screenW = graphics.guiWidth();
         int screenH = graphics.guiHeight();
@@ -321,18 +325,30 @@ public class NotificationManager {
             int iconX = panelX + TOAST_PADDING_X;
             int iconY = panelY + (panelH - iconSize) / 2;
 
-            int iconColor = ColorUtility.withAlpha(0x00FFFFFF, (int)(0xFF * alpha));
-            Identifier iconTex;
-            if (t.type == ToastType.INFO) {
-                iconTex = infoIcon != null ? infoIcon : enableIcon;
-            } else if (t.type == ToastType.ENABLE) {
-                iconTex = enableIcon;
+            if (t.itemStack != null && !t.itemStack.isEmpty()) {
+                int itemSize = 16;
+                int itemX = panelX + TOAST_PADDING_X + Math.max(0, (iconSize - itemSize) / 2);
+                int itemY = panelY + (panelH - itemSize) / 2;
+                graphics.renderItem(t.itemStack, itemX, itemY);
+                if (t.itemStack.getCount() > 1) {
+                    graphics.renderItemDecorations(MinecraftWrapper.getWrapper().getFont(), t.itemStack, itemX, itemY);
+                }
             } else {
-                iconTex = disableIcon;
+                int iconColor = ColorUtility.withAlpha(0x00FFFFFF, (int)(0xFF * alpha));
+                Identifier iconTex;
+                if (t.type == ToastType.INFO) {
+                    iconTex = infoIcon != null ? infoIcon : enableIcon;
+                } else if (t.type == ToastType.ENABLE) {
+                    iconTex = enableIcon;
+                } else {
+                    iconTex = disableIcon;
+                }
+                if (iconTex != null) {
+                    graphics.blit(RenderPipelines.GUI_TEXTURED, iconTex,
+                        iconX, iconY, 0f, 0f, iconSize, iconSize, iconSize, iconSize,
+                        iconColor);
+                }
             }
-            graphics.blit(RenderPipelines.GUI_TEXTURED, iconTex,
-                iconX, iconY, 0f, 0f, iconSize, iconSize, iconSize, iconSize,
-                iconColor);
 
             int textX = iconX + iconSize + TOAST_PADDING_X;
             int textY2 = panelY + (panelH - FontRenderUtility.getFontHeight()) / 2;
@@ -352,18 +368,20 @@ public class NotificationManager {
         final long startTime;
         final double opacity;
         final int iconSize;
+        final ItemStack itemStack;
 
-        ToastEntry(String text, int color, ToastType type, double opacity, int iconSize) {
+        ToastEntry(String text, int color, ToastType type, double opacity, int iconSize, ItemStack itemStack) {
             this.text = text;
             this.color = color;
             this.type = type;
             this.opacity = opacity;
             this.iconSize = iconSize;
+            this.itemStack = itemStack == null ? ItemStack.EMPTY : itemStack.copy();
             this.startTime = System.currentTimeMillis();
         }
 
         ToastEntry(String text, int color, boolean enabled, double opacity, int iconSize) {
-            this(text, color, enabled ? ToastType.ENABLE : ToastType.DISABLE, opacity, iconSize);
+            this(text, color, enabled ? ToastType.ENABLE : ToastType.DISABLE, opacity, iconSize, ItemStack.EMPTY);
         }
     }
 }

@@ -9,7 +9,7 @@ import ravex.modules.Modules;
 
 @Module(name = "SwingAnimation", category = "Render")
 public class SwingAnimation {
-    @Parameter(name = "Mode", modes = {"Default", "Swipe", "Akrien", "Rich", "WexSide"})
+    @Parameter(name = "Mode", modes = {"Default", "Swipe", "Akrien", "Rich", "WexSide", "Vanilla"})
     public String mode = "Akrien";
     @Parameter(name = "Speed", min = 0.1, max = 5.0, step = 0.1)
     public double speed = 1.0;

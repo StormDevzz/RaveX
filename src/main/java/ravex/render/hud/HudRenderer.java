@@ -175,42 +175,67 @@ public final class HudRenderer {
         if ("ArrowOld".equals(tracers.mode) || "ArrowNew".equals(tracers.mode)) {
             Tracers.renderArrows(context, tracerEntities, tracerColors, pt, cameraPos, cameraLook, guiWidth, guiHeight);
         } else {
-            float width = 1.5f;
-            for (int i = 0; i < tracerEntities.size(); i++) {
-                Entity target = tracerEntities.get(i);
-                int color = tracerColors.get(i);
-                Vec3 basePos = target.getPosition(pt);
-                float bbHeight = target.getBbHeight();
-                Vec3 headPos = basePos.add(0, bbHeight, 0);
-                Vec3 baseProj = projectPointToScreenUnbobbed(basePos);
-                Vec3 headProj = projectPointToScreenUnbobbed(headPos);
-                if (baseProj != null && headProj != null) {
-                    double cx = guiWidth / 2.0;
-                    double cy = guiHeight / 2.0;
-                    Vec3 toEntity = basePos.subtract(cameraPos);
-                    boolean isBehind = cameraLook.dot(toEntity) < 0;
-                    double ex = (baseProj.x + 1.0) / 2.0 * guiWidth;
-                    double ey_base = (1.0 - baseProj.y) / 2.0 * guiHeight;
-                    double ey_head = (1.0 - headProj.y) / 2.0 * guiHeight;
-                    double ey = (ey_base + ey_head) / 2.0;
-                    if (isBehind) { ex = guiWidth - ex; ey = guiHeight - ey; }
-                    boolean isOffscreen = isBehind || ex < 0 || ex > guiWidth || ey < 0 || ey > guiHeight;
-                    if (isOffscreen) {
-                        double dx = ex - cx, dy = ey - cy;
-                        double tX = Double.MAX_VALUE, tY = Double.MAX_VALUE;
-                        double borderPadding = 2.0;
-                        if (dx > 0) tX = (guiWidth - borderPadding - cx) / dx;
-                        else if (dx < 0) tX = (borderPadding - cx) / dx;
-                        if (dy > 0) tY = (guiHeight - borderPadding - cy) / dy;
-                        else if (dy < 0) tY = (borderPadding - cy) / dy;
-                        double t = Math.min(tX, tY);
-                        if (t > 0 && t < 1.0) { ex = cx + t * dx; ey = cy + t * dy; }
-                        else {
-                            double len = Math.sqrt(dx * dx + dy * dy);
-                            if (len > 0) { ex = cx + (dx / len) * (cx - borderPadding); ey = cy + (dy / len) * (cy - borderPadding); }
+            float width = (float) tracers.lineWidth;
+            net.minecraft.client.Camera camera = mc.getGameRenderer().getMainCamera();
+            Matrix4f projectionMatrix = ShaderManager.INSTANCE.getProjectionMatrix();
+            if (projectionMatrix != null) {
+                Quaternionf cameraRotation = new Quaternionf(camera.rotation());
+                Matrix4f modelViewMatrix = new Matrix4f().rotation(cameraRotation.conjugate());
+                Vec3 camPos = camera.position();
+                double cx = guiWidth / 2.0;
+                double cy = guiHeight / 2.0;
+                for (int i = 0; i < tracerEntities.size(); i++) {
+                    Entity target = tracerEntities.get(i);
+                    int color = tracerColors.get(i);
+                    Vec3 basePos = target.getPosition(pt);
+                    float bbHeight = target.getBbHeight();
+                    Vec3 targetPos = basePos.add(0, bbHeight * 0.5, 0);
+                    Vec3 rel = targetPos.subtract(camPos);
+                    Vector4f camSpace = new Vector4f((float) rel.x, (float) rel.y, (float) rel.z, 1.0F);
+                    modelViewMatrix.transform(camSpace);
+                    boolean behind = camSpace.z > 0.0F;
+
+                    double ex;
+                    double ey;
+                    if (behind) {
+                        double dirX = camSpace.x;
+                        double dirY = -camSpace.y;
+                        double dirLen = Math.sqrt(dirX * dirX + dirY * dirY);
+                        if (dirLen < 1.0E-4) {
+                            dirX = 0.0;
+                            dirY = 1.0;
+                            dirLen = 1.0;
+                        }
+                        ex = cx + dirX / dirLen * 10000.0;
+                        ey = cy + dirY / dirLen * 10000.0;
+                    } else {
+                        Vector4f v = new Vector4f(camSpace.x, camSpace.y, camSpace.z, 1.0F);
+                        projectionMatrix.transform(v);
+                        float w = Math.abs(v.w);
+                        if (w < 1.0E-6F) w = 1.0E-6F;
+                        float nx = v.x / w;
+                        float ny = v.y / w;
+                        ex = (nx + 1.0) / 2.0 * guiWidth;
+                        ey = (1.0 - ny) / 2.0 * guiHeight;
+                    }
+
+                    double dx = ex - cx;
+                    double dy = ey - cy;
+                    double len = Math.sqrt(dx * dx + dy * dy);
+                    if (len > 0.001) {
+                        double border = 2.0;
+                        double tx = dx > 0.0 ? (guiWidth - border - cx) / dx : (dx < 0.0 ? (border - cx) / dx : Double.MAX_VALUE);
+                        double ty = dy > 0.0 ? (guiHeight - border - cy) / dy : (dy < 0.0 ? (border - cy) / dy : Double.MAX_VALUE);
+                        double t = Math.min(tx, ty);
+                        if (t > 0.0 && t < 1.0) {
+                            ex = cx + dx * t;
+                            ey = cy + dy * t;
+                        } else if (ex < 0.0 || ex > guiWidth || ey < 0.0 || ey > guiHeight) {
+                            ex = cx + (dx / len) * (Math.min(cx, cy) - border);
+                            ey = cy + (dy / len) * (Math.min(cx, cy) - border);
                         }
                     }
-                    Render2DUtility.drawLine(context, (float) cx, (float) cy, (float) ex, (float) ey, width, color);
+                    Render2DUtility.drawSmoothLine(context, (float) cx, (float) cy, (float) ex, (float) ey, width, color);
                 }
             }
         }

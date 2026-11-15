@@ -6,8 +6,6 @@ import ravex.utility.misc.PhysicUtility;
 import ravex.utility.player.InventoryUtility;
 import ravex.utility.player.rotation.RotationUtility;
 import ravex.utility.player.SwingUtility;
-import java.util.ArrayList;
-import java.util.List;
 import ravex.mcwrapper.MinecraftWrapper;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,11 +23,25 @@ public class SourceFiller {
     public boolean rotate = true;
     @Parameter(name = "Delay", min = 0.0, max = 1000.0, step = 10.0)
     public double delay = 200.0;
+    @Parameter(name = "Render")
+    public boolean render = true;
+    @Parameter(name = "Color", color = true, visible = "render")
+    public int color = 0x5540A9F8;
+
     private long lastPlaceTime = 0;
+    private net.minecraft.core.BlockPos currentTarget;
+
+    public net.minecraft.core.BlockPos getRenderTarget() {
+        return currentTarget;
+    }
+
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         var p = mc.getPlayer();
         if (p == null || mc.getLevel() == null) return;
+        net.minecraft.core.BlockPos targetPos = findTargetWater(p, mc);
+        currentTarget = targetPos;
+        if (targetPos == null) return;
         if (System.currentTimeMillis() - lastPlaceTime < delay) return;
         int spongeSlot = InventoryUtility.findHotbarSlot(p, "sponge");
         int selectedSlot = InventoryUtility.getSelectedSlot(p);
@@ -43,8 +55,6 @@ public class SourceFiller {
             swapped = false;
         }
         if (p.getInventory().getItem(slotToUse).isEmpty()) return;
-        net.minecraft.core.BlockPos targetPos = findTargetWater(p, mc);
-        if (targetPos == null) return;
         if (rotate) {
             float[] rots = RotationUtility.anglesTo(p.getEyePosition(), PhysicUtility.centerOf(targetPos));
             p.setYBodyRot(rots[0]);
@@ -68,16 +78,20 @@ public class SourceFiller {
     @Nullable
     private net.minecraft.core.BlockPos findTargetWater(net.minecraft.client.player.LocalPlayer p, MinecraftWrapper mc) {
         double r = range;
-        List<net.minecraft.core.BlockPos> candidates = new ArrayList<>();
+        net.minecraft.core.BlockPos best = null;
+        double bestDist = Double.MAX_VALUE;
         for (int x = (int) Math.floor(p.getX() - r); x <= Math.ceil(p.getX() + r); x++)
             for (int y = (int) Math.floor(p.getY() - r); y <= Math.ceil(p.getY() + r); y++)
                 for (int z = (int) Math.floor(p.getZ() - r); z <= Math.ceil(p.getZ() + r); z++) {
                     net.minecraft.core.BlockPos bp = BlockUtility.pos(x, y, z);
-                    if (p.getEyePosition().distanceToSqr(PhysicUtility.centerOf(bp)) > r * r) continue;
-                    if (mc.getLevel().getFluidState(bp).is(net.minecraft.tags.FluidTags.WATER)) candidates.add(bp);
+                    double dist = p.getEyePosition().distanceToSqr(PhysicUtility.centerOf(bp));
+                    if (dist > r * r) continue;
+                    if (mc.getLevel().getFluidState(bp).is(net.minecraft.tags.FluidTags.WATER) && dist < bestDist) {
+                        bestDist = dist;
+                        best = bp;
+                    }
                 }
-        if (candidates.isEmpty()) return null;
-        return candidates.get(0);
+        return best;
     }
 
 

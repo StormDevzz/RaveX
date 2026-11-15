@@ -215,6 +215,10 @@ public abstract class MixinItemInHandRenderer {
             capturedStack = null;
             return;
         }
+        if ("Vanilla".equals(Modules.get(SwingAnimation.class).mode)) {
+            capturedStack = null;
+            return;
+        }
         if (hand != InteractionHand.MAIN_HAND) {
             capturedStack = null;
             return;

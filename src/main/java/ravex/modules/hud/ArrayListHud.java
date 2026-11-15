@@ -26,6 +26,8 @@ public class ArrayListHud extends ravex.modules.Module {
     public String sort = "Biggest";
     @Parameter(name = "Align", modes = {"Left", "Right", "Auto"})
     public String align = "Left";
+    @Parameter(name = "Animation", modes = {"Default", "Slide", "Fade", "Bounce", "Wave"})
+    public String animation = "Default";
 
     private static class EntryAnim {
         final AnimationUtility.SpringAnimation spring;
@@ -42,6 +44,7 @@ public class ArrayListHud extends ravex.modules.Module {
     private final AnimationUtility.SpringAnimation panelOpacity = new AnimationUtility.SpringAnimation(0f);
     private boolean hadEnabled = false;
     private long lastFrameNanos = System.nanoTime();
+    private String lastAnimationMode = null;
 
     {
         panelOpacity.stiffness(80f).damping(2f * (float) Math.sqrt(80f)).mass(1f);
@@ -60,6 +63,14 @@ public class ArrayListHud extends ravex.modules.Module {
         boolean shadow = this.shadow;
         String caseMode = this._case;
         String sortMode = this.sort;
+        String animationMode = this.animation;
+        if (!animationMode.equals(lastAnimationMode)) {
+            lastAnimationMode = animationMode;
+            for (EntryAnim anim : entryAnims.values()) {
+                anim.spring.setValue(0f);
+                anim.opacity = 0f;
+            }
+        }
         List<ravex.modules.Module> allModules = ravex.manager.ModuleManager.INSTANCE.getClickGuiModules();
 
         // own frame clock, shared delta gets eaten
@@ -187,6 +198,7 @@ public class ArrayListHud extends ravex.modules.Module {
         idx = 0;
         long time = System.currentTimeMillis();
         float angleBase = (time % 4000) / 4000f * (float) Math.PI * 2;
+        boolean waveMode = "Wave".equals(animationMode);
 
         // mirror mode: rows are anchored to the right edge and clipped to the panel
         // so the reversed slide-in never pokes outside
@@ -196,20 +208,65 @@ public class ArrayListHud extends ravex.modules.Module {
             if (anim == null) continue;
             float prog = anim.opacity;
             float springVal = AnimationUtility.Easing.CUBIC_OUT.apply(Math.min(1f, prog * 3f));
+            float slideEase = AnimationUtility.Easing.CUBIC_OUT.apply(Math.max(0f, Math.min(1f, prog)));
 
-            int offsetY = Math.round((1f - springVal) * 20 * (1f - prog * 0.5f));
-            int itemAlpha = Math.round(255 * Math.min(1f, prog * 2f));
-            int slideOffset = Math.round((1f - springVal) * 30);
+            int offsetY;
+            int itemAlpha;
+            int slideOffset;
+            switch (animationMode) {
+                case "Slide" -> {
+                    offsetY = 0;
+                    slideOffset = Math.round((1f - slideEase) * 60f);
+                    itemAlpha = Math.round(255 * Math.min(1f, prog));
+                }
+                case "Fade" -> {
+                    offsetY = 0;
+                    slideOffset = 0;
+                    itemAlpha = Math.round(255 * Math.min(1f, prog));
+                }
+                case "Bounce" -> {
+                    float bounce = AnimationUtility.Easing.BOUNCE_OUT.apply(Math.max(0f, Math.min(1f, prog)));
+                    offsetY = Math.round((1f - bounce) * 22f);
+                    slideOffset = 0;
+                    itemAlpha = Math.round(255 * Math.min(1f, prog * 2f));
+                }
+                case "Wave" -> {
+                    offsetY = 0;
+                    slideOffset = 0;
+                    itemAlpha = Math.round(255 * Math.min(1f, prog));
+                }
+                default -> {
+                    offsetY = Math.round((1f - springVal) * 20 * (1f - prog * 0.5f));
+                    itemAlpha = Math.round(255 * Math.min(1f, prog * 2f));
+                    slideOffset = Math.round((1f - springVal) * 30);
+                }
+            }
 
             int startX = rightSide ? tx - FontRenderUtility.getStringWidth(n) : tx;
             // left: enters shifted right of its spot, right: enters shifted left of it
             int charX = rightSide ? startX - slideOffset : startX + slideOffset;
             for (int ci = 0; ci < n.length(); ci++) {
                 String ch = String.valueOf(n.charAt(ci));
-                float angle = angleBase + (idx * 8f + ci) * 0.35f;
-                float blend = (float) Math.sin(angle) * 0.5f + 0.5f;
-                int chColor = ColorUtility.interpolate(0xFFFFFFFF, 0xFF0055EE, blend);
-                HudRendererUtility.drawText(graphics, ch, charX, cy + offsetY, ColorUtility.setAlpha(chColor, itemAlpha), shadow);
+                int chColor;
+                if ("Slide".equals(animationMode)) {
+                    float sweep = (time * 0.0008f) % 1f;
+                    chColor = highlightColor(n, ci, sweep);
+                } else if ("Bounce".equals(animationMode)) {
+                    float cycle = (time * 0.0011f) % 2f;
+                    float sweep = cycle <= 1f ? cycle : 2f - cycle;
+                    chColor = highlightColor(n, ci, sweep);
+                } else if ("Fade".equals(animationMode)) {
+                    float pulse = (float) (Math.sin(time * 0.0035) * 0.5 + 0.5);
+                    chColor = ColorUtility.interpolate(0xFF2E63FF, 0xFFFFFFFF, 0.25f + pulse * 0.75f);
+                } else {
+                    float angle = angleBase + (idx * 8f + ci) * 0.35f;
+                    float blend = (float) Math.sin(angle) * 0.5f + 0.5f;
+                    chColor = ColorUtility.interpolate(0xFFFFFFFF, 0xFF0055EE, blend);
+                }
+                int waveY = waveMode
+                        ? Math.round((float) Math.sin(time * 0.004 + idx * 0.55 + ci * 0.35) * 2.0f)
+                        : 0;
+                HudRendererUtility.drawText(graphics, ch, charX, cy + offsetY + waveY, ColorUtility.setAlpha(chColor, itemAlpha), shadow);
                 charX += FontRenderUtility.getStringWidth(ch);
             }
 
@@ -217,6 +274,13 @@ public class ArrayListHud extends ravex.modules.Module {
             idx++;
         }
         Render2DUtility.popScissor(graphics);
+    }
+
+    private int highlightColor(String text, int charIndex, float sweep) {
+        float t = text.length() <= 1 ? 0f : (float) charIndex / (text.length() - 1);
+        float glow = Math.max(0f, 1f - Math.abs(t - sweep) * 2.6f);
+        glow = AnimationUtility.Easing.CUBIC_OUT.apply(glow);
+        return ColorUtility.interpolate(0xFF2E63FF, 0xFFFFFFFF, 0.25f + glow * 0.75f);
     }
 
     // right aligns to the panel's right edge; Auto picks the side by screen half
