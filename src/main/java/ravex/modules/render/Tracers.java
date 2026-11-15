@@ -26,6 +26,8 @@ import ravex.utility.render.Render2DUtility;
 public class Tracers {
     @Parameter(name = "Mode", modes = {"Default", "ArrowOld", "ArrowNew"})
     public String mode = "Default";
+    @Parameter(name = "LineWidth", min = 0.1, max = 6.0, step = 0.1, visible = "mode=Default")
+    public double lineWidth = 1.0;
     @Parameter(name = "ColorMode", modes = {"Custom", "Rainbow", "Astolfo", "Client"}, visible = "mode=ArrowNew")
     public String colorMode = "Custom";
     @Parameter(name = "Players")
@@ -38,9 +40,9 @@ public class Tracers {
     public boolean items = false;
     @Parameter(name = "Distance", min = 10.0, max = 300.0, step = 10.0)
     public double maxDistance = 100.0;
-    @Parameter(name = "ArrowSize", min = 6.0, max = 36.0, step = 1.0)
+    @Parameter(name = "ArrowSize", min = 6.0, max = 36.0, step = 1.0, visible = "mode!=Default")
     public double arrowSize = 14.0;
-    @Parameter(name = "ArrowMargin", min = 0.0, max = 30.0, step = 1.0)
+    @Parameter(name = "ArrowMargin", min = 0.0, max = 30.0, step = 1.0, visible = "mode!=Default")
     public double arrowMargin = 4.0;
     @Parameter(name = "PlayerColor", color = true, visible = "players")
     public int playerColor = 0xFFFF3333;

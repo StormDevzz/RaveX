@@ -1013,6 +1013,33 @@ public class Render2DUtility {
         drawTriangle(graphics, ix1, iy1, ix3, iy3, ix4, iy4, color);
     }
 
+    public static void drawSmoothLine(GuiGraphics graphics, float x1, float y1, float x2, float y2, float width, int color) {
+        int a = (color >> 24) & 0xFF;
+        if (a == 0) return;
+        float dx = x2 - x1;
+        float dy = y2 - y1;
+        float len = (float) Math.sqrt(dx * dx + dy * dy);
+        if (len < 0.01f) return;
+        Identifier tex = getSmoothBar();
+        if (tex == null) {
+            drawLine(graphics, x1, y1, x2, y2, width, color);
+            return;
+        }
+        float angle = (float) Math.atan2(dy, dx);
+        float cx = (x1 + x2) * 0.5f;
+        float cy = (y1 + y2) * 0.5f;
+        float pad = Math.max(1.0f, width * 0.75f);
+        int drawW = Math.max(2, (int) Math.ceil(len + pad * 2.0f));
+        int drawH = Math.max(2, (int) Math.ceil(width + pad * 2.0f));
+        var pose = graphics.pose();
+        pose.pushMatrix();
+        pose.translate(cx, cy);
+        pose.rotate(angle);
+        pose.translate(-drawW / 2f, -drawH / 2f);
+        graphics.blit(RenderPipelines.GUI_TEXTURED, tex, 0, 0, 0f, 0f, drawW, drawH, drawW, drawH, color);
+        pose.popMatrix();
+    }
+
     public static void drawBlurredShadow(GuiGraphics graphics, float x, float y, float width, float height, int radius, int color) {
         int a = (color >> 24) & 0xFF;
         if (a == 0) return;
