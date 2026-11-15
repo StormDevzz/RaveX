@@ -519,6 +519,66 @@ public class TextureLoaderUtility {
         return Identifier.fromNamespaceAndPath(NS, "tinted/" + name.toLowerCase());
     }
 
+    private static final class ParticleBase {
+        final int width;
+        final int height;
+        final int[] pixels;
+
+        ParticleBase(int width, int height, int[] pixels) {
+            this.width = width;
+            this.height = height;
+            this.pixels = pixels;
+        }
+    }
+
+    private static final Map<String, ParticleBase> PARTICLE_BASES = new HashMap<>();
+    private static final Map<Identifier, Integer> lastTintedColor = new HashMap<>();
+
+    @Nullable private static ParticleBase getParticleBase(String name) {
+        ParticleBase cached = PARTICLE_BASES.get(name);
+        if (cached != null) return cached;
+        String resPath = "/assets/ravex/particles/" + name + ".png";
+        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resPath)) {
+            if (stream == null) {
+                RaveX.LOGGER.warn("[TextureLoaderUtility] Particle stream NULL: {}", resPath);
+                return null;
+            }
+            NativeImage image = NativeImage.read(stream);
+            try {
+                int w = image.getWidth();
+                int h = image.getHeight();
+                int[] pixels = new int[w * h];
+                for (int y = 0; y < h; y++) {
+                    for (int x = 0; x < w; x++) {
+                        pixels[y * w + x] = image.getPixel(x, y);
+                    }
+                }
+                ParticleBase base = new ParticleBase(w, h, pixels);
+                PARTICLE_BASES.put(name, base);
+                return base;
+            } finally {
+                image.close();
+            }
+        } catch (Exception e) {
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load particle base {}: {}", name, e.getMessage());
+            return null;
+        }
+    }
+
+    private static void releaseTexture(Identifier id) {
+        AbstractTexture old = loaded.remove(id);
+        lastTintedColor.remove(id);
+        if (old != null) {
+            try {
+                if (old instanceof AutoCloseable closeable) {
+                    closeable.close();
+                }
+            } catch (Exception e) {
+                RaveX.LOGGER.debug("[TextureLoaderUtility] Failed to release texture {}: {}", id, e.getMessage());
+            }
+        }
+    }
+
     @Nullable public static Identifier getParticleTexture(String name, int color) {
         name = name.toLowerCase();
         Identifier tintedId = tintedParticleId(name);
@@ -526,39 +586,38 @@ public class TextureLoaderUtility {
             return tintedId;
         }
 
-        String resPath = "/assets/ravex/particles/" + name + ".png";
-        try (InputStream stream = TextureLoaderUtility.class.getResourceAsStream(resPath)) {
-            if (stream == null) {
-                RaveX.LOGGER.warn("[TextureLoaderUtility] Particle stream NULL: {}", resPath);
-                Identifier baseId = Identifier.fromNamespaceAndPath(NS, "particles/" + name);
-                if (loaded.containsKey(baseId)) return baseId;
-                return null;
-            }
-            NativeImage image = NativeImage.read(stream);
+        ParticleBase base = getParticleBase(name);
+        if (base == null) {
+            Identifier baseId = Identifier.fromNamespaceAndPath(NS, "particles/" + name);
+            if (loaded.containsKey(baseId)) return baseId;
+            return null;
+        }
+
+        try {
+            NativeImage image = new NativeImage(base.width, base.height, false);
             int cR = (color >> 16) & 0xFF;
             int cG = (color >> 8) & 0xFF;
             int cB = color & 0xFF;
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    int rgba = image.getPixel(x, y);
+            for (int y = 0; y < base.height; y++) {
+                for (int x = 0; x < base.width; x++) {
+                    int rgba = base.pixels[y * base.width + x];
                     int a = (rgba >> 24) & 0xFF;
                     image.setPixel(x, y, (a << 24) | (cR << 16) | (cG << 8) | cB);
                 }
             }
             AbstractTexture tex = createLinearTexture(image);
+            releaseTexture(tintedId);
             MinecraftWrapper.getWrapper().getTextureManager().register(tintedId, tex);
             loaded.put(tintedId, tex);
             lastTintedColor.put(tintedId, color);
             return tintedId;
         } catch (Exception e) {
-            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to load particle {}: {}", name, e.getMessage());
+            RaveX.LOGGER.warn("[TextureLoaderUtility] Failed to tint particle {}: {}", name, e.getMessage());
             Identifier baseId = Identifier.fromNamespaceAndPath(NS, "particles/" + name);
             if (loaded.containsKey(baseId)) return baseId;
             return null;
         }
     }
-
-    private static final Map<Identifier, Integer> lastTintedColor = new HashMap<>();
 
     public static void preloadAll() {
         ensureLoaded(SEARCH, "search");

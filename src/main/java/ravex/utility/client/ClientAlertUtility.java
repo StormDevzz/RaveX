@@ -16,6 +16,9 @@ public final class ClientAlertUtility {
     }
 
     public static void alert(String message, int toastColor) {
+        if (message != null) {
+            message = message.replace("\u00C2", "").replace("Â", "");
+        }
         Notifications notif = null;
         try {
             notif = ModuleManager.get(Notifications.class);

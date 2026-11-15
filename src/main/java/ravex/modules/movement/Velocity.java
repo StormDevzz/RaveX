@@ -38,8 +38,16 @@ public class Velocity {
         double h = horizontal;
         double v = vertical;
 
+        if ("Cancel".equals(modeVal) || (h == 0.0 && v == 0.0)) {
+            event.setCancelled(true);
+            return;
+        }
+
         switch (modeVal) {
-            case "Cancel" -> event.setVelocity(net.minecraft.world.phys.Vec3.ZERO);
+            case "Cancel" -> {
+                event.setCancelled(true);
+                return;
+            }
             case "Matrix" -> {
                 double noise = (Math.random() - 0.5) * 0.015;
                 event.setVelocity(new net.minecraft.world.phys.Vec3(cur.x * h + noise, cur.y * v, cur.z * h + noise));

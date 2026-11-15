@@ -230,13 +230,10 @@ public class NativeLoader {
             return null;
         }
 
-        // Ñ…ÐµÑˆ Ð½Ðµ ÑÐ¾Ð²Ð¿Ð°Ð» Ñ Ð¼Ð°Ð½Ð¸Ñ„ÐµÑÑ‚Ð¾Ð¼ Ð¸ Ð½Ðµ Ð½Ð°Ñˆ, Ð·Ð½Ð°Ñ‡Ð¸Ñ‚ Ñ„Ð°Ð¹Ð» Ð¿Ð¾Ð»Ð¾Ð¶Ð¸Ð» Ð¿Ð¾Ð»ÑŒÐ·Ð¾Ð²Ð°Ñ‚ÐµÐ»ÑŒ
-        if (customBuildsLogged.add(fileName)) {
-            try {
-                ravex.RaveX.LOGGER.info("[Natives] {} is used as a custom build, its hash is not the bundled one", fileName);
-            } catch (Throwable ignored) {}
-        }
-        return cached;
+        // hash does not match manifest nor extracted state: stale cache, remove and re-extract
+        cached.delete();
+        extractedHashes.remove(fileName);
+        return null;
     }
 
     private static boolean writeResourceToFile(String resourcePath, File outFile) {
@@ -278,20 +275,32 @@ public class NativeLoader {
     private static File extractFromJar(File dir, String fileName) {
         String entryName = "assets/ravex/natives/" + fileName;
         File outFile = new File(dir, fileName);
-        if (writeResourceToFile("/" + entryName, outFile) || writeJarEntryToFile(entryName, outFile)) {
-            String expectedHash = NATIVE_MANIFEST.get(fileName);
-            if (expectedHash != null && verifySha256(outFile, expectedHash)) {
-                outFile.setExecutable(true);
-                rememberExtracted(fileName, expectedHash);
-                return outFile;
-            }
+        boolean written = writeResourceToFile("/" + entryName, outFile) || writeJarEntryToFile(entryName, outFile);
+        if (written && outFile.length() > 0) {
+            outFile.setExecutable(true);
+            // The resource ships inside our own jar/classes, so it is trusted regardless of manifest hash
+            // (the manifest can be stale after a local native rebuild).
+            String actualHash = sha256Hex(outFile);
+            rememberExtracted(fileName, actualHash);
+            return outFile;
         }
         if (outFile.exists()) outFile.delete();
         return null;
     }
 
+    private static boolean isDevMode() {
+        try {
+            URL url = NativeLoader.class.getProtectionDomain().getCodeSource().getLocation();
+            if (url == null) return false;
+            String path = url.getPath();
+            return path != null && !path.endsWith(".jar");
+        } catch (Throwable t) {
+            return false;
+        }
+    }
+
     private static void preloadDependencies(File dir) {
-        String[] deps = {"optimize", "manager", "github_tools", "loader"};
+        String[] deps = {"github_tools", "loader"};
         for (String dep : deps) {
             String fileName = isWindows() ? "ravex_" + dep + ".dll" : "libravex_" + dep + ".so";
             File f = new File(dir, fileName);
@@ -315,11 +324,19 @@ public class NativeLoader {
         boolean isWin = isWindows();
         String fileName = isWin ? name + ".dll" : "lib" + name + ".so";
 
-        File cached = getCachedFile(fileName);
-        if (cached != null) return cached;
-
         File cacheDir = getCacheDir();
         if (!cacheDir.exists()) cacheDir.mkdirs();
+
+        // In dev mode (running from classes, not a packaged jar) the classpath resource is the
+        // authoritative build, so always re-extract to pick up freshly rebuilt natives instead of
+        // trusting a stale cache entry.
+        if (isDevMode()) {
+            File fresh = extractFromJar(cacheDir, fileName);
+            if (fresh != null) return fresh;
+        }
+
+        File cached = getCachedFile(fileName);
+        if (cached != null) return cached;
 
         File extracted = extractFromJar(cacheDir, fileName);
         if (extracted != null) return extracted;

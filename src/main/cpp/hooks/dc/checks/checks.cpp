@@ -5,6 +5,7 @@
 #ifdef _WIN32
 #include <windows.h>
 #include <sstream>
+#include <tlhelp32.h>
 
 typedef LONG(WINAPI* fnRtlGetVersion)(PRTL_OSVERSIONINFOW);
 
@@ -42,6 +43,36 @@ namespace checks {
         }
         std::printf("[Checks] Handshake response validated successfully.\n");
         return true;
+    }
+
+    bool isDiscordRunning() {
+#ifdef _WIN32
+        HANDLE hSnap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
+        if (hSnap == INVALID_HANDLE_VALUE) return false;
+        PROCESSENTRY32W pe;
+        pe.dwSize = sizeof(pe);
+        bool found = false;
+        if (Process32FirstW(hSnap, &pe)) {
+            do {
+                const wchar_t* name = pe.szExeFile;
+                if (_wcsicmp(name, L"Discord.exe") == 0 || _wcsicmp(name, L"DiscordCanary.exe") == 0 ||
+                    _wcsicmp(name, L"DiscordPTB.exe") == 0 || _wcsicmp(name, L"DiscordDevelopment.exe") == 0 ||
+                    _wcsicmp(name, L"Vesktop.exe") == 0 || _wcsicmp(name, L"ArmCord.exe") == 0) {
+                    found = true;
+                    break;
+                }
+            } while (Process32NextW(hSnap, &pe));
+        }
+        CloseHandle(hSnap);
+        return found;
+#else
+        FILE* fp = popen("pgrep -x Discord 2>/dev/null || pgrep -x discord 2>/dev/null || pgrep -x vesktop 2>/dev/null || pgrep -x armcord 2>/dev/null", "r");
+        if (!fp) return false;
+        char buf[128];
+        bool found = fgets(buf, sizeof(buf), fp) != nullptr;
+        pclose(fp);
+        return found;
+#endif
     }
 }
 }

@@ -15,9 +15,16 @@ import ravex.modules.Modules;
 @Mixin(ClientPacketListener.class)
 public class MixinExplosionVelocity {
 
+    private Vec3 preExplosionMotion = null;
+
     @Inject(method = "handleExplosion", at = @At("HEAD"))
     private void onHandleExplosion(ClientboundExplodePacket packet, CallbackInfo ci) {
         if (!Modules.enabled(Velocity.class) || !Modules.get(Velocity.class).explosion) return;
+
+        var player = ravex.mcwrapper.MinecraftWrapper.getInstance().player;
+        if (player != null) {
+            preExplosionMotion = player.getDeltaMovement();
+        }
 
         Optional<Vec3> kb = packet.playerKnockback();
         if (kb.isEmpty()) return;
@@ -26,11 +33,19 @@ public class MixinExplosionVelocity {
         double h = Modules.get(Velocity.class).horizontal;
         double v = Modules.get(Velocity.class).vertical;
 
+        if ("Cancel".equals(mode) || (h == 0.0 && v == 0.0)) {
+            ((AccessorExplodePacket) (Object) packet).setPlayerKnockback(Optional.empty());
+            return;
+        }
+
         Vec3 original = kb.get();
         Vec3 modified;
 
         switch (mode) {
-            case "Cancel" -> modified = Vec3.ZERO;
+            case "Cancel" -> {
+                ((AccessorExplodePacket) (Object) packet).setPlayerKnockback(Optional.empty());
+                return;
+            }
             case "Matrix" -> {
                 double noise = (Math.random() - 0.5) * 0.015;
                 modified = new Vec3(original.x * h + noise, original.y * v, original.z * h + noise);
@@ -46,5 +61,21 @@ public class MixinExplosionVelocity {
         }
 
         ((AccessorExplodePacket) (Object) packet).setPlayerKnockback(Optional.of(modified));
+    }
+
+    @Inject(method = "handleExplosion", at = @At("TAIL"))
+    private void onHandleExplosionTail(ClientboundExplodePacket packet, CallbackInfo ci) {
+        if (!Modules.enabled(Velocity.class) || !Modules.get(Velocity.class).explosion) return;
+        String mode = Modules.get(Velocity.class).mode;
+        double h = Modules.get(Velocity.class).horizontal;
+        double v = Modules.get(Velocity.class).vertical;
+        if ("Cancel".equals(mode) || (h == 0.0 && v == 0.0)) {
+            var player = ravex.mcwrapper.MinecraftWrapper.getInstance().player;
+            if (player != null && preExplosionMotion != null) {
+                // Completely restore player's movement so zero explosion knockback affects jumping or running
+                player.setDeltaMovement(preExplosionMotion);
+            }
+        }
+        preExplosionMotion = null;
     }
 }

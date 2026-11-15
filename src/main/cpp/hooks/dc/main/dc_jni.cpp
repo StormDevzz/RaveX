@@ -85,4 +85,10 @@ Java_ravex_modules_client_RichPresence_nativeIsConnected(JNIEnv* env, jclass) {
     return DiscordRPC::isConnected() ? JNI_TRUE : JNI_FALSE;
 }
 
+JNIEXPORT jboolean JNICALL
+Java_ravex_modules_client_RichPresence_nativeIsDiscordRunning(JNIEnv* env, jclass) {
+    if (ravex::jni::checkAndClearException(env)) return JNI_FALSE;
+    return ravex::checks::isDiscordRunning() ? JNI_TRUE : JNI_FALSE;
+}
+
 }

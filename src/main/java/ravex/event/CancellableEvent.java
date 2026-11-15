@@ -11,4 +11,6 @@ public class CancellableEvent implements Event {
 
     @Override
     public void setCancelled(boolean cancelled) { this.cancelled = cancelled; }
+
+    public void cancel() { this.cancelled = true; }
 }

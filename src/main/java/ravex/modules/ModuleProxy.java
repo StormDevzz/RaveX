@@ -44,6 +44,17 @@ public final class ModuleProxy extends Module {
             if ("render".equals(name)) renderMethods.add(m);
         }
         try { pojoConsumesKeyBind = compClass.getMethod("consumesKeyBindPress"); } catch (NoSuchMethodException ignored) {}
+        try {
+            Method canEnableMethod = compClass.getMethod("canEnable");
+            canEnableMethod.setAccessible(true);
+            setEnableCondition(() -> {
+                try {
+                    return (boolean) canEnableMethod.invoke(component);
+                } catch (Exception e) {
+                    return false;
+                }
+            });
+        } catch (NoSuchMethodException ignored) {}
         // pojo modules keep extra data, forward the config hooks
         try { pojoSaveExtra = compClass.getMethod("saveExtra", JsonObject.class); } catch (NoSuchMethodException ignored) {}
         try { pojoLoadExtra = compClass.getMethod("loadExtra", JsonObject.class); } catch (NoSuchMethodException ignored) {}

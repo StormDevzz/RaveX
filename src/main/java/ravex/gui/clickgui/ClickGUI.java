@@ -537,11 +537,12 @@ public class ClickGUI extends Screen {
 
                 drawDescriptionBackground(graphics, descX, descY, tw, th, descPanelAnim);
 
-                int ly = descY + padY;
-                for (String line : lines) {
-                    FontRenderUtility.drawString(graphics, line, descX + padX, ly, ColorUtility.setAlpha(0xE0E0E0, da), true);
-                    ly += lineH;
-                }
+                    int ly = descY + padY;
+                    boolean isYellow = false;
+                    for (String line : lines) {
+                        isYellow = drawDescriptionLine(graphics, line, descX + padX, ly, descPanelAnim, isYellow);
+                        ly += lineH;
+                    }
             }
         } else {
             if (hoveredDescription != null) {
@@ -581,8 +582,9 @@ public class ClickGUI extends Screen {
                 drawDescriptionBackground(graphics, tx, ty, tw, th, tooltipAlpha);
 
                 int ly = ty + padY;
+                boolean isYellow = false;
                 for (String line : lines) {
-                    FontRenderUtility.drawString(graphics, line, tx + padX, ly, ColorUtility.setAlpha(0xE0E0E0, ta), true);
+                    isYellow = drawDescriptionLine(graphics, line, tx + padX, ly, tooltipAlpha, isYellow);
                     ly += lineH;
                 }
             }
@@ -1074,13 +1076,54 @@ public class ClickGUI extends Screen {
     // shared by the click gui and the hud editor, keeps the tooltip backdrop light
     private static final float DESCRIPTION_BG_ALPHA_SCALE = 0.5f;
 
+    public static int getDescriptionTextColor(String text, int alpha) {
+        int rgb = 0xE0E0E0;
+        return ColorUtility.setAlpha(rgb, Math.max(0, Math.min(255, alpha)));
+    }
+
+    public static int getDescriptionTextColor(String text, float alpha) {
+        return getDescriptionTextColor(text, Math.round(alpha * 255f));
+    }
+
+    public static boolean drawDescriptionLine(GuiGraphics graphics, String line, int x, int y, float alpha, boolean inYellow) {
+        int normalColor = ColorUtility.setAlpha(0xE0E0E0, Math.round(alpha * 255f));
+        int yellowColor = ColorUtility.setAlpha(0xFFFFD54F, Math.round(alpha * 255f));
+        if (inYellow) {
+            FontRenderUtility.drawString(graphics, line, x, y, yellowColor, true);
+            return true;
+        }
+        int idx = line.indexOf("You can freely");
+        if (idx == -1) idx = line.indexOf("Вы можете свободно");
+        if (idx >= 0) {
+            String before = line.substring(0, idx);
+            String after = line.substring(idx);
+            if (!before.isEmpty()) {
+                FontRenderUtility.drawString(graphics, before, x, y, normalColor, true);
+            }
+            int offX = before.isEmpty() ? 0 : FontRenderUtility.getStringWidth(before);
+            FontRenderUtility.drawString(graphics, after, x + offX, y, yellowColor, true);
+            return true;
+        } else {
+            FontRenderUtility.drawString(graphics, line, x, y, normalColor, true);
+            return false;
+        }
+    }
+
+    public static void drawDescriptionText(GuiGraphics graphics, String line, int x, int y, int alpha, String context) {
+        drawDescriptionLine(graphics, line, x, y, alpha / 255f, false);
+    }
+
+    public static void drawDescriptionText(GuiGraphics graphics, String line, int x, int y, float alpha, String context) {
+        drawDescriptionLine(graphics, line, x, y, alpha, false);
+    }
+
     public static void drawDescriptionBackground(GuiGraphics graphics, int x, int y, int w, int h, float alpha) {
         if (alpha <= 0f || w <= 0 || h <= 0) return;
         ClickGui cfg = ModuleManager.get(ClickGui.class);
         int bgAlpha = (int) (cfg.descriptionOpacity * alpha * DESCRIPTION_BG_ALPHA_SCALE);
         if (bgAlpha > 0) {
             Render2DUtility.drawRound(graphics, x, y, w, h, 4,
-                ColorUtility.withAlpha(0x0A0A14, bgAlpha));
+                ColorUtility.setAlpha(0x000A0A14, bgAlpha));
         }
         if (cfg.outlines) {
             Render2DUtility.drawSmoothRoundOutline(graphics, x, y, w, h, 4, 1,
@@ -1103,6 +1146,19 @@ public class ClickGUI extends Screen {
         return lines;
     }
 
+    private static String lastFormatCode(String s) {
+        if (s == null || s.isEmpty()) return "";
+        for (int i = s.length() - 2; i >= 0; i--) {
+            if (s.charAt(i) == '\u00A7') {
+                char c = Character.toLowerCase(s.charAt(i + 1));
+                if ((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || c == 'r') {
+                    return s.substring(i, i + 2);
+                }
+            }
+        }
+        return "";
+    }
+
     private static List<String> wrapText(String text, int maxWidthPx) {
         List<String> lines = new ArrayList<>();
         if (text == null || text.isEmpty()) {
@@ -1115,17 +1171,25 @@ public class ClickGUI extends Screen {
                 lines.add(segment);
                 continue;
             }
+            String active = "";
             StringBuilder line = new StringBuilder();
             for (String word : segment.split(" ")) {
-                String test = line.isEmpty() ? word : line + " " + word;
-                if (FontRenderUtility.getStringWidth(test) > maxWidthPx && !line.isEmpty()) {
-                    lines.add(line.toString());
-                    line = new StringBuilder(word);
+                String prefix = line.length() == 0 ? active : "";
+                String candidate = line.length() == 0 ? prefix + word : line.toString() + " " + word;
+                if (FontRenderUtility.getStringWidth(candidate) > maxWidthPx && line.length() > 0) {
+                    String finished = line.toString();
+                    lines.add(finished);
+                    active = lastFormatCode(finished);
+                    line = new StringBuilder(active + word);
                 } else {
-                    line = new StringBuilder(test);
+                    if (line.length() == 0) {
+                        line.append(prefix).append(word);
+                    } else {
+                        line.append(' ').append(word);
+                    }
                 }
             }
-            if (!line.isEmpty()) lines.add(line.toString());
+            if (line.length() > 0) lines.add(line.toString());
         }
         return lines;
     }

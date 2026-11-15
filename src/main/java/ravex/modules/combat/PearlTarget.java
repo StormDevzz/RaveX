@@ -26,72 +26,83 @@ import ravex.modules.Modules;
 import org.jetbrains.annotations.Nullable;
 @Module(name = "PearlTarget", category = "Combat")
 public class PearlTarget {
-    @Parameter(name = "Mode", modes = {"Combat", "Pearl", "Follow"})
-    public String mode = "Combat";
     @Parameter(name = "Range", min = 1.0, max = 32.0, step = 0.5)
     public double range = 16.0;
-    @Parameter(name = "TargetMode", modes = {"Nearest", "Health", "Crosshair", "Distance"})
-    public String targetMode = "Nearest";
-    @Parameter(name = "SwitchDelay", min = 0.0, max = 2000.0, step = 50.0)
-    public double switchDelay = 500.0;
-    @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.1)
+
+    @Parameter(name = "Advanced", group = true)
+    public boolean advanced = false;
+
+    @Parameter(name = "Speed", min = 0.5, max = 5.0, step = 0.1, visible = "advanced")
     public double speed = 1.8;
-    @Parameter(name = "Strafe")
+    @Parameter(name = "TargetMode", modes = {"Nearest", "Health", "Crosshair", "Distance"}, visible = "advanced")
+    public String targetMode = "Nearest";
+    @Parameter(name = "SwitchDelay", min = 0.0, max = 2000.0, step = 50.0, visible = "advanced")
+    public double switchDelay = 500.0;
+    @Parameter(name = "Strafe", visible = "advanced")
     public boolean strafe = true;
-    @Parameter(name = "Jump")
+    @Parameter(name = "Jump", visible = "advanced")
     public boolean jump = true;
-    @Parameter(name = "PredictTicks", min = 20.0, max = 300.0, step = 10.0)
-    public double predictTicks = 100.0;
-    @Parameter(name = "ChaseTime", min = 500.0, max = 10000.0, step = 100.0)
-    public double chaseTime = 3000.0;
-    @Parameter(name = "Sprint")
+    @Parameter(name = "Sprint", visible = "advanced")
     public boolean sprint = true;
-    @Parameter(name = "AutoWeapon")
-    public boolean autoWeapon = true;
-    @Parameter(name = "WeaponMode", modes = {"Sword", "Axe", "Both"})
-    public String weaponMode = "Sword";
-    @Parameter(name = "AutoGap")
-    public boolean autoGap = false;
-    @Parameter(name = "GapHealth", min = 1.0, max = 20.0, step = 1.0)
-    public double gapHealth = 10.0;
-    @Parameter(name = "AutoPearl")
-    public boolean autoPearl = false;
-    @Parameter(name = "PearlRange", min = 5.0, max = 50.0, step = 5.0)
-    public double pearlRange = 20.0;
-    @Parameter(name = "AutoTotem")
-    public boolean autoTotem = false;
-    @Parameter(name = "TotemMode", modes = {"Always", "LowHP", "AfterKill"})
-    public String totemMode = "Always";
-    @Parameter(name = "TotemHealth", min = 1.0, max = 20.0, step = 1.0)
-    public double totemHealth = 6.0;
-    @Parameter(name = "Attack")
+    @Parameter(name = "ChaseTime", min = 500.0, max = 10000.0, step = 100.0, visible = "advanced")
+    public double chaseTime = 3000.0;
+    @Parameter(name = "PredictTicks", min = 20.0, max = 300.0, step = 10.0, visible = "advanced")
+    public double predictTicks = 100.0;
+
+    @Parameter(name = "Combat", group = true, visible = "advanced")
+    public boolean combatGroup = false;
+    @Parameter(name = "Attack", visible = "advanced")
     public boolean attack = true;
-    @Parameter(name = "AttackRange", min = 2.0, max = 6.0, step = 0.1)
+    @Parameter(name = "AttackRange", min = 2.0, max = 6.0, step = 0.1, visible = "advanced")
     public double attackRange = 4.0;
-    @Parameter(name = "AttackCPS", min = 1.0, max = 20.0, step = 1.0)
+    @Parameter(name = "AttackCPS", min = 1.0, max = 20.0, step = 1.0, visible = "advanced")
     public double attackCps = 12.0;
-    @Parameter(name = "Rotate")
+    @Parameter(name = "AutoWeapon", visible = "advanced")
+    public boolean autoWeapon = true;
+    @Parameter(name = "WeaponMode", modes = {"Sword", "Axe", "Both"}, visible = "advanced")
+    public String weaponMode = "Sword";
+
+    @Parameter(name = "Utility", group = true, visible = "advanced")
+    public boolean utilityGroup = false;
+    @Parameter(name = "Rotate", visible = "advanced")
     public boolean rotate = true;
-    @Parameter(name = "KeepRotate")
+    @Parameter(name = "KeepRotate", visible = "advanced")
     public boolean keepRotate = false;
+    @Parameter(name = "AutoGap", visible = "advanced")
+    public boolean autoGap = false;
+    @Parameter(name = "GapHealth", min = 1.0, max = 20.0, step = 1.0, visible = "advanced")
+    public double gapHealth = 10.0;
+    @Parameter(name = "AutoPearl", visible = "advanced")
+    public boolean autoPearl = false;
+    @Parameter(name = "PearlRange", min = 5.0, max = 50.0, step = 5.0, visible = "advanced")
+    public double pearlRange = 20.0;
+    @Parameter(name = "AutoTotem", visible = "advanced")
+    public boolean autoTotem = false;
+    @Parameter(name = "TotemMode", modes = {"Always", "LowHP", "AfterKill"}, visible = "advanced")
+    public String totemMode = "Always";
+    @Parameter(name = "TotemHealth", min = 1.0, max = 20.0, step = 1.0, visible = "advanced")
+    public double totemHealth = 6.0;
+
+    @Parameter(name = "Visuals", group = true, visible = "advanced")
+    public boolean visualsGroup = false;
     @Parameter(name = "Render")
     public boolean render = true;
-    @Parameter(name = "LineColor", color = true, visible = "render")
-    public int lineColor = 0xFFFF5500;
-    @Parameter(name = "LandingColor", color = true, visible = "render")
-    public int landingColor = 0xFFFF3333;
-    @Parameter(name = "PearlColor", color = true, visible = "render")
-    public int pearlColor = 0xFFFFFF00;
-    @Parameter(name = "LineWidth", min = 0.5, max = 5.0, step = 0.5, visible = "render")
-    public double lineWidth = 2.0;
-    @Parameter(name = "RenderLine")
+    @Parameter(name = "RenderLine", visible = "render")
     public boolean renderLine = true;
-    @Parameter(name = "RenderLanding")
-    public boolean renderLanding = true;
-    @Parameter(name = "ThroughWalls")
-    public boolean renderThroughWalls = false;
-    @Parameter(name = "PredictionLine")
+    @Parameter(name = "PredictionLine", visible = "render")
     public boolean renderPredictionLine = true;
+    @Parameter(name = "RenderLanding", visible = "render")
+    public boolean renderLanding = true;
+    @Parameter(name = "ThroughWalls", visible = "advanced&&render")
+    public boolean renderThroughWalls = false;
+    @Parameter(name = "LineWidth", min = 0.5, max = 5.0, step = 0.5, visible = "advanced&&render")
+    public double lineWidth = 2.0;
+    @Parameter(name = "LineColor", color = true, visible = "advanced&&render")
+    public int lineColor = 0xFFFF5500;
+    @Parameter(name = "LandingColor", color = true, visible = "advanced&&render")
+    public int landingColor = 0xFFFF3333;
+    @Parameter(name = "PearlColor", color = true, visible = "advanced&&render")
+    public int pearlColor = 0xFFFFFF00;
     private static final NativeLibraryUtility NATIVE = NativeLibraryUtility.of("ravex_pearltarget");
     private final Map<Integer, PearlData> trackedPearls = new HashMap<>();
     private net.minecraft.world.entity.player.Player target = null;
@@ -149,7 +160,7 @@ public class PearlTarget {
                     targetPos = landing;
                     lastTargetSwitchTime = System.currentTimeMillis();
                 }
-            } else if ("Pearl".equals(mode)) {
+            } else {
                 targetPos = landing;
             }
         }
@@ -162,7 +173,7 @@ public class PearlTarget {
                 it.remove();
             }
         }
-        if (target == null && !players.isEmpty() && !"Pearl".equals(mode)) {
+        if (target == null && !players.isEmpty()) {
             target = findBestTarget(mc, players);
             if (target != null) targetPos = target.position();
         }
@@ -173,7 +184,7 @@ public class PearlTarget {
         }
         if (target == null && targetPos == null) return;
         net.minecraft.world.phys.Vec3 myPos = mc.getPlayer().position();
-        net.minecraft.world.phys.Vec3 moveTarget = "Follow".equals(mode) && target != null
+        net.minecraft.world.phys.Vec3 moveTarget = target != null
             ? target.position() : targetPos;
         if (moveTarget == null) return;
         double dist = myPos.distanceTo(moveTarget);

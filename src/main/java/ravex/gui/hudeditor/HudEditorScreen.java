@@ -414,10 +414,9 @@ public class HudEditorScreen extends Screen {
         ClickGUI.drawDescriptionBackground(graphics, dx, dy, tw, th, animAlpha);
 
         int ly = dy + padY;
-        int textAlpha = (int) (alpha * 0.9f);
+        int textColor = ClickGUI.getDescriptionTextColor(desc, (int) (alpha * 0.9f));
         for (String line : lines) {
-            FontRenderUtility.drawString(graphics, line, dx + padX, ly,
-                ColorUtility.setAlpha(0xE0E0E0, textAlpha), true);
+            FontRenderUtility.drawString(graphics, line, dx + padX, ly, textColor, true);
             ly += lineH;
         }
     }

@@ -21,8 +21,6 @@ public class HotbarHud extends ravex.modules.Module {
     private static final int PANEL_W = PAD * 2 + 9 * SLOT + 8 * GAP;
     private static final int PANEL_H = PAD * 2 + SLOT;
     private static final float SMALL_SCALE = 0.78f;
-    private static final int OFFSET_X = 10;
-    private static final int OFFSET_Y = 3;
 
     private float animSlotX = -1f;
     private float slotPop = 0f;
@@ -49,14 +47,14 @@ public class HotbarHud extends ravex.modules.Module {
             int gw = window != null ? window.getGuiScaledWidth() : 320;
             int gh = window != null ? window.getGuiScaledHeight() : 240;
             setX((gw - PANEL_W) / 2);
-            setY(gh - PANEL_H);
+            setY(gh - PANEL_H - 28);
         }
 
         long now = System.nanoTime();
         float dt = lastFrameNs == 0L ? 0.016f : Math.min(0.05f, (now - lastFrameNs) / 1_000_000_000f);
         lastFrameNs = now;
 
-        int bx = getX() + OFFSET_X, by = getY() + OFFSET_Y;
+        int bx = getX(), by = getY();
         int ac = ColorUtility.getActiveColor();
         int sel = InventoryUtility.getSelectedSlot(mc.getPlayer());
         int slotY = by + PAD;
