@@ -217,100 +217,12 @@ public final class HudRenderer {
     }
 
     private void renderNameTagsAndESP(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, Vec3 cameraPos, Vec3 cameraLook, Quaternionf cRotation, float pt, int guiWidth, int guiHeight, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled, Vec3 playerViewVec) {
-
-        boolean nativeSuccess = false;
-        int count = candidates.size();
-        double[] outLayouts = null;
-        int[] outIndices = null;
-        int renderedCount = 0;
-
-        if (count > 0 && ravex.utility.nativelib.NativeLoader.isNativeAvailable() && !nameTagsEnabled) {
-            try {
-                double[] cameraPosArr = new double[]{cameraPos.x, cameraPos.y, cameraPos.z};
-                Matrix4f projMatrix = ShaderManager.INSTANCE.getProjectionMatrix();
-                Quaternionf cameraRotation = new Quaternionf(mc.getGameRenderer().getMainCamera().rotation());
-                Matrix4f mvMatrix = new Matrix4f().rotation(cameraRotation.conjugate());
-                float[] projectionArr = new float[16];
-                float[] modelViewArr = new float[16];
-                projMatrix.get(projectionArr);
-                mvMatrix.get(modelViewArr);
-                double[] playerViewVecArr = new double[]{playerViewVec != null ? playerViewVec.x : 0.0, playerViewVec != null ? playerViewVec.y : 0.0, playerViewVec != null ? playerViewVec.z : 0.0};
-
-                double[] positions = new double[count * 9];
-                double[] textWidths = new double[count * 2];
-                int[] booleans = new int[count * 5];
-                int[] armorCounts = new int[count];
-
-                for (int i = 0; i < count; i++) {
-                    Entity target = candidates.get(i);
-                    Vec3 basePos = target.getPosition(pt);
-                    float bbHeight = target.getBbHeight();
-                    float bbWidth = target.getBbWidth();
-                    Vec3 headPos = basePos.add(0, bbHeight, 0);
-                    Vec3 sidePos = basePos.add(bbWidth / 2.0f, bbHeight / 2.0f, 0);
-                    positions[i * 9 + 0] = basePos.x; positions[i * 9 + 1] = basePos.y; positions[i * 9 + 2] = basePos.z;
-                    positions[i * 9 + 3] = headPos.x; positions[i * 9 + 4] = headPos.y; positions[i * 9 + 5] = headPos.z;
-                    positions[i * 9 + 6] = sidePos.x; positions[i * 9 + 7] = sidePos.y; positions[i * 9 + 8] = sidePos.z;
-
-                    boolean drawNametags = nameTagsEnabled && (target instanceof LivingEntity) && Modules.get(NameTags.class).shouldDraw(target);
-                    String ownerName = (mobOwnerEnabled && target instanceof LivingEntity living) ? MobOwner.getOwnerName(living) : null;
-                    boolean hasOwner = ownerName != null;
-
-                    double tw = 0, ow = 0;
-                    boolean showArmor = false, showHands = false, hasMainHand = false, hasOffHand = false;
-                    int armorCnt = 0;
-
-                    if (drawNametags || hasOwner) {
-                        LivingEntity livingTarget = (LivingEntity) target;
-                        if (drawNametags) {
-                            String displayName = livingTarget.getDisplayName().getString();
-                            int health = (int) Math.ceil(livingTarget.getHealth());
-                            int maxHealth = (int) Math.ceil(livingTarget.getMaxHealth());
-                            String tagText = displayName + " " + healthColor(health, maxHealth) + health + "§7/" + healthColor(health, maxHealth) + maxHealth;
-                            tw = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth(tagText) : mc.getFont().width(tagText);
-                            showArmor = ModuleManager.get(NameTags.class).armor;
-                            showHands = ModuleManager.get(NameTags.class).handItems;
-                            hasMainHand = !livingTarget.getMainHandItem().isEmpty();
-                            hasOffHand = !livingTarget.getOffhandItem().isEmpty();
-                            if (showArmor) {
-                                if (!livingTarget.getItemBySlot(EquipmentSlot.FEET).isEmpty()) armorCnt++;
-                                if (!livingTarget.getItemBySlot(EquipmentSlot.LEGS).isEmpty()) armorCnt++;
-                                if (!livingTarget.getItemBySlot(EquipmentSlot.CHEST).isEmpty()) armorCnt++;
-                                if (!livingTarget.getItemBySlot(EquipmentSlot.HEAD).isEmpty()) armorCnt++;
-                            }
-                        }
-                        if (hasOwner) {
-                            ow = ModuleManager.get(NameTags.class).customFont ? FontRenderUtility.getStringWidth("Owner: " + ownerName) : mc.getFont().width("Owner: " + ownerName);
-                        }
-                    }
-                    textWidths[i * 2 + 0] = tw;
-                    textWidths[i * 2 + 1] = ow;
-                    booleans[i * 5 + 0] = showArmor ? 1 : 0;
-                    booleans[i * 5 + 1] = showHands ? 1 : 0;
-                    booleans[i * 5 + 2] = hasOwner ? 1 : 0;
-                    booleans[i * 5 + 3] = hasMainHand ? 1 : 0;
-                    booleans[i * 5 + 4] = hasOffHand ? 1 : 0;
-                    armorCounts[i] = armorCnt;
-                }
-
-                outLayouts = new double[count * 16];
-                outIndices = new int[count];
-                renderedCount = GuiOptimizerUtility.nativeOptimizeNameTags(
-                    cameraPosArr, modelViewArr, projectionArr, playerViewVecArr,
-                    positions, textWidths, booleans, armorCounts, count,
-                    ModuleManager.get(NameTags.class).size, true,
-                    Math.max(ModuleManager.get(ESP.class).maxDistance, nameTagsEnabled ? ModuleManager.get(NameTags.class).range : 0.0),
-                    guiWidth, guiHeight, outLayouts, outIndices
-                );
-                nativeSuccess = true;
-            } catch (Throwable t) { nativeSuccess = false; }
-        }
-
-        if (nativeSuccess) {
-            renderNativeLayout(context, mc, candidates, renderedCount, outIndices, outLayouts, espEnabled, nameTagsEnabled, mobOwnerEnabled);
-        } else {
-            renderFallbackLayout(context, mc, candidates, cameraPos, cameraLook, cRotation, pt, guiWidth, guiHeight, espEnabled, nameTagsEnabled, mobOwnerEnabled);
-        }
+        // The native name-tag optimizer (GuiOptimizerUtility.nativeOptimizeNameTags) is not
+        // exported by any shipped ravex native, so the old probe threw UnsatisfiedLinkError
+        // on every frame (a full stack trace) and fell back anyway. The Java layout path is
+        // the only working implementation; use it directly.
+        renderFallbackLayout(context, mc, candidates, cameraPos, cameraLook, cRotation, pt,
+            guiWidth, guiHeight, espEnabled, nameTagsEnabled, mobOwnerEnabled);
     }
 
     private void renderNativeLayout(GuiGraphics context, MinecraftWrapper mc, List<Entity> candidates, int renderedCount, int[] outIndices, double[] outLayouts, boolean espEnabled, boolean nameTagsEnabled, boolean mobOwnerEnabled) {

@@ -27,11 +27,40 @@ public final class SearchUtility {
     }
 
     public static String lower(String s) {
-        return s == null ? "" : s.toLowerCase(Locale.ROOT);
+        if (s == null || s.isEmpty()) return "";
+        if (SearchNative.isAvailable()) return SearchNative.nativeLower(s);
+        return javaLower(s);
     }
 
     public static String stripDiacritics(String s) {
         if (s == null || s.isEmpty()) return "";
+        if (SearchNative.isAvailable()) return SearchNative.nativeStripDiacritics(s);
+        return javaStripDiacritics(s);
+    }
+
+    public static String mapKeys(String s, boolean ruToEn) {
+        if (s == null || s.isEmpty()) return "";
+        if (SearchNative.isAvailable()) return SearchNative.nativeMapKeys(s, ruToEn);
+        return javaMapKeys(s, ruToEn);
+    }
+
+    public static String translit(String s) {
+        if (s == null || s.isEmpty()) return "";
+        if (SearchNative.isAvailable()) return SearchNative.nativeTranslit(s);
+        return javaTranslit(s);
+    }
+
+    public static String swapShaScha(String s) {
+        if (s == null || s.isEmpty()) return s;
+        if (SearchNative.isAvailable()) return SearchNative.nativeSwapShaScha(s);
+        return javaSwapShaScha(s);
+    }
+
+    private static String javaLower(String s) {
+        return s.toLowerCase(Locale.ROOT);
+    }
+
+    private static String javaStripDiacritics(String s) {
         String n = Normalizer.normalize(s, Normalizer.Form.NFD).replaceAll("\\p{M}+", "");
         return n.replace("ß", "ss").replace("æ", "ae").replace("Æ", "ae")
             .replace("ø", "o").replace("Ø", "o").replace("å", "a").replace("Å", "a")
@@ -39,8 +68,7 @@ public final class SearchUtility {
             .replace("ş", "s").replace("ț", "t");
     }
 
-    public static String mapKeys(String s, boolean ruToEn) {
-        if (s == null || s.isEmpty()) return "";
+    private static String javaMapKeys(String s, boolean ruToEn) {
         String from = ruToEn ? RU_KEYS : EN_KEYS;
         String to = ruToEn ? EN_KEYS : RU_KEYS;
         StringBuilder out = new StringBuilder(s.length());
@@ -52,8 +80,7 @@ public final class SearchUtility {
         return out.toString();
     }
 
-    public static String translit(String s) {
-        if (s == null || s.isEmpty()) return "";
+    private static String javaTranslit(String s) {
         String lower = lower(s);
         StringBuilder out = new StringBuilder(lower.length());
         int i = 0;
@@ -75,8 +102,7 @@ public final class SearchUtility {
         return out.toString();
     }
 
-    public static String swapShaScha(String s) {
-        if (s == null || s.isEmpty()) return s;
+    private static String javaSwapShaScha(String s) {
         char[] chars = s.toCharArray();
         for (int i = 0; i < chars.length; i++) {
             if (chars[i] == 'ш') chars[i] = 'щ';
@@ -99,6 +125,22 @@ public final class SearchUtility {
     }
 
     private static List<String> buildVariants(String q) {
+        if (SearchNative.isAvailable()) {
+            try {
+                String[] nativeVariants = SearchNative.nativeQueryVariants(q);
+                if (nativeVariants != null) {
+                    List<String> out = new ArrayList<>(nativeVariants.length);
+                    for (String v : nativeVariants) out.add(v);
+                    return out;
+                }
+            } catch (Throwable ignored) {
+                // fall back to the Java implementation below
+            }
+        }
+        return javaBuildVariants(q);
+    }
+
+    private static List<String> javaBuildVariants(String q) {
         List<String> variants = new ArrayList<>();
         if (q.isEmpty()) return variants;
         addVariant(variants, q);

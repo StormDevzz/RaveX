@@ -35,6 +35,11 @@ public class FontRenderUtility {
     private static final HashMap<Integer, Component> componentCache = new HashMap<>();
     private static final int CACHE_MAX = 1024;
 
+    private static final HashMap<String, Integer> widthCache = new HashMap<>();
+    private static final int WIDTH_CACHE_MAX = 4096;
+    private static FontType widthCacheType = null;
+    private static double widthCacheScale = -1.0;
+
     public enum FontType {
         SF_MEDIUM, SF_BOLD, COMFORTAA, INTER, INTER_BOLD, VANILLA
     }
@@ -213,8 +218,19 @@ public class FontRenderUtility {
     }
 
     public static int getStringWidth(FontType fontType, String text) {
+        if (text == null || text.isEmpty()) return 0;
         double scale = activeFontSize();
-        return (int) (MinecraftWrapper.getWrapper().getFont().width(getFontComponent(fontType, text)) * scale);
+        if (fontType != widthCacheType || Math.abs(scale - widthCacheScale) > 0.0001) {
+            widthCache.clear();
+            widthCacheType = fontType;
+            widthCacheScale = scale;
+        }
+        Integer cached = widthCache.get(text);
+        if (cached != null) return cached;
+        int width = (int) (MinecraftWrapper.getWrapper().getFont().width(getFontComponent(fontType, text)) * scale);
+        if (widthCache.size() >= WIDTH_CACHE_MAX) widthCache.clear();
+        widthCache.put(text, width);
+        return width;
     }
 
     public static int getFontHeight() {

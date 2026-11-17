@@ -44,7 +44,6 @@ public class LanguageUtility {
         en.put("NotEnoughSoulSand", "Not enough soul sand");
         en.put("NotEnoughWitherSkeletonSkulls", "Not enough wither skeleton skulls");
         en.put("autowither_missing", "Need {0} more soul sand and {1} more skull(s) in the hotbar");
-        en.put("autowalk_baritone", "§c[AutoWalk] Baritone mod is required for Baritone mode!");
         en.put("quiver_nobow", "§c[Quiver] No bow found in hotbar! Disabling...");
         en.put("quiver_noarrows", "§c[Quiver] No arrows of type {0} found! Disabling...");
         en.put("breaker_sync", "§c[Breaker] PacketMine was disabled, Sync PacketMine turned off!");
@@ -305,8 +304,6 @@ public class LanguageUtility {
         en.put("desc_PearlTarget", "Track pearls");
         en.put("desc_MiddleClick", "Middle click");
         en.put("desc_Telemetry", "Send data");
-        en.put("desc_Baritone", "Find path");
-        en.put("desc_PauseBaritone", "Pause path");
         en.put("desc_NewChunks", "New chunks");
         en.put("desc_AutoCart", "Send carts");
         en.put("desc_MessageAura", "Message nearby players");
@@ -528,7 +525,6 @@ public class LanguageUtility {
         ru.put("NotEnoughSoulSand", "Нехватка песка душ");
         ru.put("NotEnoughWitherSkeletonSkulls", "Нехватка черепов визер-скелетов");
         ru.put("autowither_missing", "Не хватает: {0} песка душ и {1} черепа(ов) в хотбаре");
-        ru.put("autowalk_baritone", "§c[AutoWalk] Для режима Baritone требуется мод Baritone!");
         ru.put("quiver_nobow", "§c[Quiver] Лук не найден в хотбаре! Отключение...");
         ru.put("quiver_noarrows", "§c[Quiver] Стрелы типа {0} не найдены! Отключение...");
         ru.put("breaker_sync", "§c[Breaker] PacketMine был отключен, Sync PacketMine выключен!");
@@ -788,8 +784,6 @@ public class LanguageUtility {
         ru.put("desc_PearlTarget", "Отслеживать жемчуг");
         ru.put("desc_MiddleClick", "Средняя кнопка");
         ru.put("desc_Telemetry", "Отправка данных");
-        ru.put("desc_Baritone", "Поиск пути");
-        ru.put("desc_PauseBaritone", "Пауза пути");
         ru.put("desc_NewChunks", "Новые чанки");
         ru.put("desc_AutoCart", "Отправлять вагонетки");
         ru.put("desc_MessageAura", "Сообщать игрокам рядом");

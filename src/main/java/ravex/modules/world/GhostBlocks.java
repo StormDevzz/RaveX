@@ -5,10 +5,9 @@ import ravex.utility.misc.block.BlockUtility;
 import ravex.event.Subscribe;
 import ravex.event.network.PacketEvent;
 import ravex.utility.network.NetworkUtility;
-import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 @Module(name = "GhostBlocks", category = "World")
@@ -19,10 +18,11 @@ public class GhostBlocks {
     public boolean placing = true;
     @Parameter(name = "Range", min = 2.0, max = 12.0, step = 0.5)
     public double range = 6.0;
-    private final Set<Long> recentlyMined = new HashSet<>();
-    private final Set<Long> recentlyPlaced = new HashSet<>();
-    private final Map<Long, Long> pendingTime = new HashMap<>();
-    private final Map<Long, String> serverBlocks = new HashMap<>();
+    // written from the netty thread (packet handler), read from the client thread
+    private final Set<Long> recentlyMined = ConcurrentHashMap.newKeySet();
+    private final Set<Long> recentlyPlaced = ConcurrentHashMap.newKeySet();
+    private final Map<Long, Long> pendingTime = new ConcurrentHashMap<>();
+    private final Map<Long, String> serverBlocks = new ConcurrentHashMap<>();
     private long lastCheckTime = 0;
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();

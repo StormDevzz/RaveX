@@ -25,11 +25,25 @@ public class RichPresence {
     @Parameter(name = "ShowOS")
     public boolean showOS = true;
 
-    private static native void nativeInitialize(String clientId);
-    private static native void nativeShutdown();
-    private static native void nativeUpdatePresence(String state, String details, long startTimestamp,
-                                                     boolean showOS, boolean showButton, String largeImageKey);
-    private static native boolean nativeIsConnected();
+    // libravex_dc.so exports its natives under the old package (ravex.modules.player);
+    // delegate there — see ravex.modules.player.RichPresence.
+    private static void nativeInitialize(String clientId) {
+        ravex.modules.player.RichPresence.nativeInitialize(clientId);
+    }
+
+    private static void nativeShutdown() {
+        ravex.modules.player.RichPresence.nativeShutdown();
+    }
+
+    private static void nativeUpdatePresence(String state, String details, long startTimestamp,
+                                             boolean showOS, boolean showButton, String largeImageKey) {
+        ravex.modules.player.RichPresence.nativeUpdatePresence(state, details, startTimestamp,
+            showOS, showButton, largeImageKey);
+    }
+
+    private static boolean nativeIsConnected() {
+        return ravex.modules.player.RichPresence.nativeIsConnected();
+    }
 
     private Thread updateThread;
     private volatile boolean running = false;

@@ -33,6 +33,8 @@ public class NativeLoader {
         Map.entry("libravex_breaker.so", "5be6823edca6d1d8ef7dc1dc516cdab178d2ac8f5d283e46a3471dff893c2096"),
         Map.entry("libravex_burrow.so", "c395a40bc5f87815173eaa859d26af80991f03a37cd0698e14e3f8c025752fa2"),
         Map.entry("libravex_calculator.so", "008e6c95184e99b0ac55014c574056909d3c636512a39f6fc9609f6e54b914bb"),
+        // Rust core (built by the buildRust gradle task, hash must match the shipped libravex_core.so)
+        Map.entry("libravex_core.so", "865ea90cb2167e00a4e26bcb0327aaeb31055259959fc3484ab7aa1109e5c0ad"),
         Map.entry("libravex_dc.so", "9bfce280d0b33129f09f71f223b590252bd79c60bc303f5ecf0acedc77f596ef"),
         Map.entry("libravex_desktopgui.so", "3aea86d43b494bcd6a824a289cd7909f6cb2bd4861b7d00e10da8db64ffc4b1b"),
         Map.entry("libravex_elytraplusplus.so", "8d5b514ccac09df4ba155064d92b003152e8384347fa06d9cef2433f6c51e87c"),
@@ -295,7 +297,7 @@ public class NativeLoader {
         for (String dep : deps) {
             String fileName = isWindows() ? "ravex_" + dep + ".dll" : "libravex_" + dep + ".so";
             File f = new File(dir, fileName);
-            if (!f.exists()) f = obtainLibrary(dep);
+            if (!f.exists()) f = obtainLibrary("ravex_" + dep);
             if (f != null) {
                 try {
                     System.load(f.getAbsolutePath());

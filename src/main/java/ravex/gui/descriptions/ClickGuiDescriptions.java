@@ -212,8 +212,6 @@ public class ClickGuiDescriptions {
         DESCRIPTIONS.put("MiddleClick", "Middle click");
         DESCRIPTIONS.put("Telemetry", "Send data");
         DESCRIPTIONS.put("PortalGod", "Portal shield");
-        DESCRIPTIONS.put("Baritone", "Find path");
-        DESCRIPTIONS.put("PauseBaritone", "Pause path");
         DESCRIPTIONS.put("NewChunks", "New chunks");
         DESCRIPTIONS.put("AutoCart", "Send carts");
         DESCRIPTIONS.put("MessageAura", "Message nearby players");

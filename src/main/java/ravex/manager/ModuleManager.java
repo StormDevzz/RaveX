@@ -23,9 +23,6 @@ public class ModuleManager {
             try {
                 var ann = clazz.getDeclaredAnnotation(ravex.modules.annotations.Module.class);
                 if (ann == null) continue;
-                if (!ravex.integrations.baritone.BaritoneIntegration.isBaritonePresent()
-                        && (clazz.getName().equals("ravex.modules.client.Baritone")
-                            || clazz.getName().equals("ravex.modules.misc.PauseBaritone"))) continue;
                 String cat = ann.category();
                 var ctor = clazz.getDeclaredConstructor();
                 ctor.setAccessible(true);

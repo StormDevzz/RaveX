@@ -23,6 +23,10 @@ Thumbs.db
 *.tmp
 *.disabled
 libs/*.jar
+# local rescue notes
+.insurance-NOTES.txt
+# rust build artifacts
+src/main/rust/**/target/
 dist/
 src/main/java/ravex/telemetry/BuildConfig.java
 src/main/resources/assets/ravex/security/private.der

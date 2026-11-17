@@ -30,8 +30,9 @@ public class KillEffects {
         net.minecraft.world.entity.LivingEntity living = event.getEntity();
         if (living == null || living == MinecraftWrapper.getWrapper().getPlayer()) return;
         if (!shouldAffect(living)) return;
-        ClientLevel level = (ClientLevel) living.level();
-        if (level == null) return;
+        // the integrated server also fires die() on its own thread, where the
+        // entity's level is a ServerLevel — only draw client effects on ClientLevel
+        if (!(living.level() instanceof ClientLevel level)) return;
         String eff = effect;
         if (eff.equals("Lightning") || eff.equals("Both")) {
             spawnLightning(level, living.getX(), living.getY(), living.getZ());

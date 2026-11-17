@@ -12,10 +12,10 @@ import net.minecraft.world.level.ChunkPos;
 
 import ravex.utility.render.Render3DUtility;
 import org.joml.Matrix4f;
-import java.util.HashSet;
 import java.util.Set;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import ravex.mcwrapper.MinecraftWrapper;
 import ravex.modules.Modules;
 import ravex.modules.client.Notifications;
@@ -38,10 +38,11 @@ public class NewChunks {
     public int visitedColor = 0xFFFF3333;
     @Parameter(name = "1.12.2Color", color = true)
     public int old112Color = 0xFF33FF33;
-    private final Set<ChunkPos> loadedChunks = new HashSet<>();
-    private final Set<ChunkPos> visitedChunks = new HashSet<>();
-    private final Set<ChunkPos> old112Chunks = new HashSet<>();
-    private final Set<ChunkPos> analyzedChunks = new HashSet<>();
+    // mutated from the netty thread (packet handler) and read from the render thread
+    private final Set<ChunkPos> loadedChunks = ConcurrentHashMap.newKeySet();
+    private final Set<ChunkPos> visitedChunks = ConcurrentHashMap.newKeySet();
+    private final Set<ChunkPos> old112Chunks = ConcurrentHashMap.newKeySet();
+    private final Set<ChunkPos> analyzedChunks = ConcurrentHashMap.newKeySet();
     public void onTick() {
         var mc = MinecraftWrapper.getWrapper();
         if (mc.getPlayer() == null || mc.getLevel() == null) return;

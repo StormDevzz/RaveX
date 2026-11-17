@@ -57,6 +57,7 @@ loom {
             client()
             configName = "Client"
             ideConfigGenerated(true)
+            programArgs("--username", "suzuya")
             vmArgs(
                 "-Dcom.mojang.text2speech.Narrator=false",
                 "-Xmx1280M",
@@ -175,6 +176,50 @@ tasks.named('processResources') {
     mustRunAfter buildNatives
 }
 
+// Rust core (libravex_core.so): собирается cargo'м, кладётся в natives вместе с C++.
+def rustDir = file('src/main/rust/ravex-core')
+tasks.register('buildRust') {
+    description 'Build the Rust core library via cargo (skipped if cargo is not available)'
+    doLast {
+        def cargo = System.getenv("CARGO_HOME") ? file("${System.getenv("CARGO_HOME")}/bin/cargo") : null
+        if (cargo == null || !cargo.exists()) cargo = file("${System.getProperty("user.home")}/.cargo/bin/cargo")
+        if (!cargo.exists()) cargo = file("/usr/bin/cargo")
+        if (!cargo.exists()) {
+            println "[RaveX] Cargo not found, skipping Rust core build. Search falls back to Java."
+            return
+        }
+
+        try {
+            println "[RaveX] Building Rust core..."
+            exec {
+                commandLine cargo.absolutePath, "build", "--release", "--manifest-path", "${rustDir}/Cargo.toml"
+                environment "PATH", "${System.getProperty("user.home")}/.cargo/bin:${System.getenv("PATH") ?: "/usr/bin:/bin"}"
+            }
+        } catch (Throwable t) {
+            println "[RaveX] Rust build failed: ${t.message}. Search falls back to Java."
+            return
+        }
+
+        try {
+            copy {
+                from("${rustDir}/target/release") {
+                    include "libravex_core.so"
+                }
+                into(nativesDir)
+            }
+            println "[RaveX] Rust core copied to ${nativesDir.absolutePath}"
+        } catch (Throwable t) {
+            println "[RaveX] Failed to copy Rust core: ${t.message}"
+        }
+    }
+}
+tasks.named('build') {
+    dependsOn buildRust
+}
+tasks.named('processResources') {
+    mustRunAfter buildRust
+}
+
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     exclude("assets/ravex/companion/textures/**")
@@ -187,6 +232,19 @@ jar {
 
 def mcVersion = property("minecraft_version")
 def loaderVersion = property("loader_version")
+
+// Release bundle: just the RaveX jar (Baritone is no longer shipped alongside).
+tasks.register('bundleMods', Copy) {
+    description = 'Collects the RaveX jar into build/release/mods'
+    group = 'build'
+    dependsOn remapJar
+    into layout.buildDirectory.dir('release/mods')
+    from(remapJar.archiveFile)
+}
+
+tasks.named('build') {
+    dependsOn 'bundleMods'
+}
 
 // changelog в игре берётся из .github/RELEASE_NOTES.md, копируется в jar
 def changelogNotes = file('.github/RELEASE_NOTES.md')
